@@ -18,9 +18,11 @@ class ScheduleController extends ApiController
         abort_unless($r->user()->canDo("schedule.$action.all") || ($r->user()->canDo("schedule.$action.own") && $s->assignments()->where('teacher_id', $r->user()->id)->exists()), 403);
     }
 
-    private function output(ServiceSession $s): array
+    private function output(ServiceSession $s, $invitations = null, $events = null): array
     {
-        return $s->prisonData() + ['id' => $s->id, 'version' => $s->version, 'assignments' => $s->assignments()->with('teacher:id,name')->get(), 'invitations' => DB::table('invitations')->whereIn('assignment_id', $s->assignments()->pluck('id'))->get(), 'events' => Entity::where('type', 'changes')->get()->filter(fn ($e) => ($e->data['session_id'] ?? 0) === $s->id)->map->publicData()->values()];
+        $assignments = $s->relationLoaded('assignments') ? $s->assignments : $s->assignments()->with('teacher:id,name')->get();
+
+        return $s->prisonData() + ['id' => $s->id, 'version' => $s->version, 'assignments' => $assignments, 'invitations' => $invitations ?? DB::table('invitations')->whereIn('assignment_id', $assignments->pluck('id'))->get(), 'events' => $events ?? Entity::where('type', 'changes')->where('data->session_id', $s->id)->get()->map->publicData()->values()];
     }
 
     private function snapshot(ServiceSession $s): array
@@ -70,15 +72,31 @@ class ScheduleController extends ApiController
                 return $this->output($s);
             }abort_unless($r->user()->canDo('schedule.read.all') || $r->user()->canDo('schedule.read.own'), 403);
 
-            return ['data' => ServiceSession::all()->filter(function ($s) use ($r) {
-                try {
-                    $this->access($r, $s);
-                } catch (\Throwable) {
-                    return false;
-                }$d = $s->prisonData();
+            $query = ServiceSession::query();
+            if (! $r->user()->canDo('schedule.read.all')) {
+                $query->whereHas('assignments', fn ($a) => $a->where('teacher_id', $r->user()->id));
+            }
+            foreach (['from' => ['service_date', '>='], 'to' => ['service_date', '<='], 'status' => ['status', '=']] as $parameter => [$field,$operator]) {
+                if ($r->$parameter) {
+                    $query->where('data->'.$field, $operator, $r->$parameter);
+                }
+            }
+            if ($r->teacher_id) {
+                $query->whereHas('assignments', fn ($a) => $a->where('teacher_id', $r->teacher_id));
+            }
+            if ($r->prison_id) {
+                $query->where('prison_id', $r->prison_id);
+            }
+            $sessions = $query->with(['assignments.teacher:id,name', 'prison'])->get()->filter(function ($s) use ($r) {
+                $d = $s->prisonData();
 
-                return (! $r->from || $d['service_date'] >= $r->from) && (! $r->to || $d['service_date'] <= $r->to) && (! $r->status || $d['status'] === $r->status) && (! $r->teacher_id || $s->assignments()->where('teacher_id', $r->teacher_id)->exists()) && (! $r->prison_id || $s->prison_id == $r->prison_id) && (! $r->prison || str_contains($d['prison'], $r->prison)) && (! $r->q || str_contains($d['title'].' '.$d['prison'], $r->q));
-            })->map(fn ($s) => $this->output($s))->values()];
+                return (! $r->prison || str_contains((string) $d['prison'], $r->prison)) && (! $r->q || str_contains($d['title'].' '.$d['prison'], $r->q));
+            });
+            $assignmentIds = $sessions->flatMap(fn ($s) => $s->assignments->pluck('id'));
+            $invitations = DB::table('invitations')->whereIn('assignment_id', $assignmentIds)->get()->groupBy('assignment_id');
+            $events = Entity::where('type', 'changes')->whereIn('data->session_id', $sessions->pluck('id'))->get()->groupBy(fn ($e) => $e->data['session_id']);
+
+            return ['data' => $sessions->map(fn ($s) => $this->output($s, $s->assignments->flatMap(fn ($a) => $invitations->get($a->id, collect()))->values(), $events->get($s->id, collect())->map->publicData()->values()))->values()];
         }
         if (! $id) {
             $this->permit($r, 'schedule.create.all');

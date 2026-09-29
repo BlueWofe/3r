@@ -28,6 +28,10 @@ trait HasPrison
 
     public function prisonData(): array
     {
+        if ($this->relationLoaded('prison')) {
+            return array_merge($this->data, ['prison_id' => $this->prison_id, 'prison' => $this->prison?->name ?? ($this->data['prison'] ?? null)]);
+        }
+
         return app(PrisonDirectory::class)->payload($this->data, $this->prison_id);
     }
 }
