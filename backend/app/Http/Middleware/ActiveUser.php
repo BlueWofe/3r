@@ -10,11 +10,12 @@ class ActiveUser
 {
     public function handle(Request $request, Closure $next)
     {
+        $request->user()?->unsetRelation('roles');
         if ($request->user() && ! $request->user()->active) {
             Auth::logout();
             abort(401);
         }
 
-return $next($request);
+        return $next($request);
     }
 }

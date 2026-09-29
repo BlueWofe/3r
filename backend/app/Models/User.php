@@ -6,6 +6,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
+    protected $attributes = ['active' => true];
+
     protected $guarded = [];
 
     protected $hidden = ['password', 'remember_token'];

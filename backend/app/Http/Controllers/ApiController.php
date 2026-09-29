@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -25,7 +26,7 @@ class ApiController extends Controller
             }
         }
 
-return $out;
+        return $out;
     }
 
     protected function permit(Request $r, string $p): void
@@ -35,7 +36,7 @@ return $out;
 
     protected function me(User $u): array
     {
-        return ['id' => $u->id, 'name' => $u->name, 'phone' => $u->phone, 'roles' => $u->roles->where('active', true)->values(), 'permissions' => $u->roles->where('active',true)->contains('slug', 'system-admin') ? self::permissionNames() : $u->permissions()];
+        return ['id' => $u->id, 'name' => $u->name, 'phone' => $u->phone, 'roles' => $u->roles->where('active', true)->values(), 'permissions' => $u->roles->where('active', true)->contains('slug', 'system-admin') ? self::permissionNames() : $u->permissions()];
     }
 
     public function auth(Request $r, string $action)
@@ -94,6 +95,17 @@ return $out;
     private function otp(Request $r): array
     {
         $v = $r->validate(['phone' => 'required|regex:/^09[0-9]{8}$/', 'purpose' => 'required|in:register,reset,change_phone']);
+        $lock = Cache::lock('otp:'.hash('sha256', $v['phone']), 15);
+        abort_unless($lock->get(), 429, '請稍後重試');
+        try {
+            return $this->sendOtp($r, $v);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function sendOtp(Request $r, array $v): array
+    {
         if ($v['purpose'] === 'change_phone') {
             abort_unless($r->user(), 401);
         }
@@ -105,7 +117,14 @@ return $out;
             Storage::disk('local')->put('otp-mailbox/'.$v['phone'].'.json', json_encode(['code' => $code, 'purpose' => $v['purpose']]));
         } else {
             abort_unless(config('ministry.sms_driver') === 'mitake', 503);
-            Http::asForm()->post('https://smsapi.mitake.com.tw/api/mtk/SmSend', ['username' => config('ministry.mitake_username'), 'password' => config('ministry.mitake_password'), 'dstaddr' => $v['phone'], 'smbody' => '驗證碼 '.$code])->throw();
+            abort_unless(config('ministry.mitake_username') && config('ministry.mitake_password'), 503, '簡訊服務尚未設定');
+            try {
+                $response = Http::asForm()->timeout(10)->post('https://smsapi.mitake.com.tw/api/mtk/SmSend?CharsetURL=UTF8', ['username' => config('ministry.mitake_username'), 'password' => config('ministry.mitake_password'), 'dstaddr' => $v['phone'], 'smbody' => '驗證碼 '.$code]);
+            } catch (\Throwable) {
+                abort(503, '簡訊服務暫時無法使用');
+            }
+            preg_match('/(?:^|\r?\n)statuscode=([^\r\n]+)/', $response->body(), $matches);
+            abort_unless($response->successful() && in_array(trim($matches[1] ?? ''), ['0', '1', '2', '4'], true), 503, '簡訊服務未接受請求');
         }
         DB::table('otps')->insert($v + ['hash' => Hash::make($code), 'expires_at' => now()->addMinutes(5), 'created_at' => now(), 'updated_at' => now()]);
 
@@ -130,7 +149,7 @@ return $out;
 
     public function administration(Request $r, string $module, ?int $id = null)
     {
-        $this->permit($r, $module === 'roles' ? 'roles.manage.all' : 'users.'.($r->isMethod('get') ? 'read' : ($id?'update':'create')).'.all');
+        $this->permit($r, $module === 'roles' ? 'roles.manage.all' : 'users.'.($r->isMethod('get') ? 'read' : ($id ? 'update' : 'create')).'.all');
         if ($r->isMethod('get')) {
             return ['data' => ($module === 'roles' ? Role::all() : User::with('roles')->get())];
         }
@@ -140,14 +159,14 @@ return $out;
             $roles = Role::orderBy('id')->lockForUpdate()->get();
             User::orderBy('id')->lockForUpdate()->get();
             if ($module === 'roles') {
-                $v = $r->validate(['name' => 'required|string|max:100', 'slug' => ['required', 'string', Rule::unique('roles')->ignore($id)], 'active' => 'required|boolean', 'permissions' => 'required|array', 'permissions.*' => Rule::in(self::permissionNames())]);
+                $v = $r->validate(['name' => 'required|string|max:100', 'slug' => ['required', 'string', Rule::unique('roles')->ignore($id)], 'active' => 'required|boolean', 'permissions' => 'present|array', 'permissions.*' => Rule::in(self::permissionNames())]);
                 $x = $id ? Role::findOrFail($id) : new Role;
-                $before=$x->toArray();
+                $before = $x->toArray();
                 $x->fill($v)->save();
             } else {
-                $v = $r->validate(['name' => 'required|string|max:100', 'active' => 'required|boolean', 'role_ids' => 'required|array', 'role_ids.*' => 'exists:roles,id', 'phone' => ($id ? 'sometimes' : 'required').'|regex:/^09[0-9]{8}$/', 'password' => ($id ? 'sometimes' : 'required').'|min:10']);
+                $v = $r->validate(['name' => 'required|string|max:100', 'active' => 'required|boolean', 'role_ids' => 'present|array', 'role_ids.*' => 'exists:roles,id', 'phone' => ($id ? 'sometimes' : 'required').'|regex:/^09[0-9]{8}$/', 'password' => ($id ? 'sometimes' : 'required').'|min:10']);
                 $x = $id ? User::findOrFail($id) : new User;
-                $before=$x->toArray();
+                $before = $id ? $x->load('roles')->toArray() : [];
                 $x->fill(collect($v)->except('role_ids')->all());
                 if (! $id) {
                     $x->email = $v['phone'].'@demo.invalid';
@@ -155,9 +174,12 @@ return $out;
                 $x->roles()->sync($v['role_ids']);
             }
             abort_unless(User::where('active', true)->whereHas('roles', fn ($q) => $q->where('slug', 'system-admin')->where('active', true))->exists(), 409, '至少保留一位啟用的系統管理員');
-            Entity::create(['type'=>'audit','owner_id'=>$r->user()->id,'data'=>['module'=>$module,'subject_id'=>$x->id,'before'=>$before,'after'=>$x->fresh()->toArray()]]);
-            if($module==='users')DB::table('sessions')->where('user_id',$x->id)->delete();
-            else DB::table('sessions')->whereIn('user_id',DB::table('role_user')->where('role_id',$x->id)->pluck('user_id'))->delete();
+            Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => $module, 'subject_id' => $x->id, 'before' => $before, 'after' => ($module === 'users' ? $x->fresh()->load('roles') : $x->fresh())->toArray()]]);
+            if ($module === 'users') {
+                DB::table('sessions')->where('user_id', $x->id)->delete();
+            } else {
+                DB::table('sessions')->whereIn('user_id', DB::table('role_user')->where('role_id', $x->id)->pluck('user_id'))->delete();
+            }
 
             return $x->fresh();
         });
@@ -172,21 +194,60 @@ return $out;
         $roles = $e->data['role_ids'] ?? [];
         if (in_array($type, ['resources', 'meetings', 'forms'])) {
             $own = $own || (! $roles && $action === 'read') || $r->user()->roles->where('active', true)->pluck('id')->intersect($roles)->isNotEmpty();
-        }abort_unless($r->user()->canDo("$module.$action.all") || ($own && $r->user()->canDo("$module.$action.$scope")), 403);
+        }
+        if ($type === 'forms' && $action === 'read' && ($e->data['status'] ?? 'draft') !== 'published') {
+            $own = false;
+        }
+        abort_unless($r->user()->canDo("$module.$action.all") || ($own && $r->user()->canDo("$module.$action.$scope")), 403);
 
         return $e;
     }
 
     public function generic(Request $r, string $type, ?int $id = null)
     {
+        if ($r->isMethod('get')) {
+            return $this->genericOperation($r, $type, $id);
+        }
+
+        return DB::transaction(fn () => $this->genericOperation($r, $type, $id));
+    }
+
+    public function exportCases(Request $r)
+    {
+        $this->permit($r, 'cases.export.all');
+        $this->permit($r, 'cases.read.all');
+        Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'cases', 'action' => 'export']]);
+        $cases = Entity::where('type', 'cases')->get();
+
+        return response()->streamDownload(function () use ($cases) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['代碼', '姓名', '狀態', '監所', '聯絡', '服務紀錄']);
+            foreach ($cases as $e) {
+                $d = $e->data;
+                $row = [$d['code'] ?? '', $d['name'] ?? '', $d['status'] ?? '', $d['prison'] ?? '', $d['contact'] ?? '', json_encode($d['records'] ?? [], JSON_UNESCAPED_UNICODE)];
+                $row = array_map(fn ($value) => preg_match('/^[=+@\-\t\r]/', (string) $value) ? "'".$value : $value, $row);
+                fputcsv($out, $row);
+            }fclose($out);
+        }, 'cases.csv', ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'no-store']);
+    }
+
+    private function genericOperation(Request $r, string $type, ?int $id)
+    {
         $permission = $type === 'contents' ? 'content' : $type;
         if ($r->isMethod('get')) {
             if ($id) {
                 $e = $this->entity($r, $type, $id);
+                if ($type === 'cases') {
+                    Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'cases', 'subject_id' => $id, 'action' => 'read']]);
+                }
 
                 return $e->publicData();
             }
             abort_unless($r->user()->canDo("$permission.read.all") || $r->user()->canDo("$permission.read.own") || $r->user()->canDo("$permission.read.assigned"), 403);
+            if ($type === 'cases') {
+                Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'cases', 'action' => 'list']]);
+            }
 
             return ['data' => Entity::where('type', $type)->get()->filter(function ($e) use ($r, $type) {
                 try {
@@ -216,7 +277,24 @@ return $out;
             'forms' => ['title' => 'required|string|max:200', 'description' => 'nullable|string', 'status' => 'required|in:draft,published', 'deadline' => 'nullable|date', 'role_ids' => 'array', 'role_ids.*' => 'exists:roles,id', 'fields' => 'required|array|max:100', 'fields.*.key' => 'required|alpha_dash|distinct', 'fields.*.label' => 'required|string', 'fields.*.type' => 'required|in:text,textarea,number,date,select,multiselect,file', 'fields.*.required' => 'required|boolean', 'fields.*.options' => 'nullable|array'],
             default => []
         };
+        if ($id) {
+            $e = Entity::where('type', $type)->lockForUpdate()->findOrFail($id);
+        }
+        $before = $e->data;
         $v = $r->validate($rules);
+        if ($type === 'cases') {
+            if ($id && ($v['assigned_user_id'] ?? null) !== ($before['assigned_user_id'] ?? null)) {
+                $this->permit($r, 'cases.update.all');
+            }
+            $v['records'] = $before['records'] ?? [];
+            Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'cases', 'subject_id' => $id, 'action' => $id ? 'update' : 'create', 'before' => $before, 'after' => $v]]);
+        }
+        if ($type === 'meetings') {
+            foreach ($v['file_ids'] ?? [] as $fileId) {
+                $file = Entity::where('type', 'files')->findOrFail($fileId);
+                abort_unless($file->owner_id === $r->user()->id || ($file->data['visibility'] ?? 'private') === 'public', 403, '不可分享他人的私人檔案');
+            }
+        }
         if ($type === 'contents') {
             if ($v['status'] === 'published') {
                 $this->permit($r, 'content.publish.all');
@@ -246,14 +324,19 @@ return $out;
         if ($id) {
             $e = $items->first(fn ($e) => $kind === 'pages' ? ($e->data['slug'] ?? '') === $id : $e->id == (int) $id);
             abort_unless($e, 404);
-            if ($kind === 'products' && (int)$r->session()->get('view.'.$id,0)<=now()->subMinutes(30)->timestamp) {
-                $e=DB::transaction(function()use($e){$locked=Entity::lockForUpdate()->findOrFail($e->id);$locked->update(['data'=>array_merge($locked->data,['views'=>($locked->data['views']??0)+1])]);return $locked;});
-                $r->session()->put('view.'.$id,now()->timestamp);
+            if ($kind === 'products' && (int) $r->session()->get('view.'.$id, 0) <= now()->subMinutes(30)->timestamp) {
+                $e = DB::transaction(function () use ($e) {
+                    $locked = Entity::lockForUpdate()->findOrFail($e->id);
+                    $locked->update(['data' => array_merge($locked->data, ['views' => ($locked->data['views'] ?? 0) + 1])]);
+
+                    return $locked;
+                });
+                $r->session()->put('view.'.$id, now()->timestamp);
             }
 
-return ['data' => $e->publicData()];
+            return ['data' => $e->publicData()];
         }
 
-return ['data' => $items->sortBy(fn ($e) => $e->data['sort_order'] ?? 0)->map->publicData()->values()];
+        return ['data' => $items->sortBy(fn ($e) => $e->data['sort_order'] ?? 0)->map->publicData()->values()];
     }
 }

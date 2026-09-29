@@ -5,10 +5,21 @@ use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ScheduleController;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api/v1')->group(function () {
-    Route::get('health', fn () => ['status' => 'ok', 'mode' => 'synthetic-uat']);
+    Route::get('health', function () {
+        try {
+            DB::select('select 1');
+            Redis::connection()->ping();
+
+            return ['status' => 'ok', 'mode' => 'synthetic-uat'];
+        } catch (Throwable) {
+            return response()->json(['status' => 'unavailable'], 503);
+        }
+    });
     foreach (['csrf', 'me'] as $a) {
         Route::get('auth/'.$a, fn (Request $r) => (new ApiController)->auth($r, $a));
     }
@@ -39,6 +50,7 @@ Route::prefix('api/v1')->group(function () {
         Route::post('assignments/{id}/{action}', [ScheduleController::class, 'assignment'])->where('action', 'leave|withdraw-leave|invite|replace|attendance');
         Route::get('invitations', [ScheduleController::class, 'invitations']);
         Route::post('invitations/{id}/respond', [ScheduleController::class, 'invitations']);
+        Route::get('cases/export', [ApiController::class, 'exportCases']);
         foreach (['contents', 'cases', 'meetings', 'forms'] as $m) {
             Route::match(['get', 'post'], $m, fn (Request $r) => (new ApiController)->generic($r, $m));
             Route::match(['get', 'put', 'delete'], $m.'/{id}', fn (Request $r, int $id) => (new ApiController)->generic($r, $m, $id));
@@ -57,8 +69,8 @@ Route::prefix('api/v1')->group(function () {
         }
         Route::match(['get', 'put'], 'integrations/line', fn (Request $r) => (new ModuleController)->integrations($r, 'line'));
         Route::get('integrations/drive', fn (Request $r) => (new ModuleController)->integrations($r, 'drive'));
-        Route::post('integrations/drive/simulate', fn (Request $r) => (new ModuleController)->integrations($r,'drive'));
-        Route::match(['get', 'put'],'settings',[ModuleController::class, 'settings']);
-        Route::get('reports',[ModuleController::class, 'reports']);
+        Route::post('integrations/drive/simulate', fn (Request $r) => (new ModuleController)->integrations($r, 'drive'));
+        Route::match(['get', 'put'], 'settings', [ModuleController::class, 'settings']);
+        Route::get('reports', [ModuleController::class, 'reports']);
     });
 });
