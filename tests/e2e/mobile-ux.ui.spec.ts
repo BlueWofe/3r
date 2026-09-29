@@ -34,8 +34,16 @@ test('admin tables and the two workspace menus fit 320px and 390px viewports', a
     await managementMenu.click();
     await expect(serviceMenu).toHaveAttribute('aria-expanded', 'false');
     await expect(managementMenu).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.getByRole('link', { name: '排程管理', exact: true })).toBeVisible();
+    const peopleGroup = page.locator('details.management-category').filter({ hasText: '人員與系統' });
+    const serviceGroup = page.locator('details.management-category').filter({ hasText: '課務與關懷' });
+    await expect(peopleGroup).toHaveAttribute('open', '');
     await expect(page.getByRole('link', { name: '人員與角色', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: '排程管理', exact: true })).toHaveCount(0);
+    await serviceGroup.locator('summary').click();
+    await expect(serviceGroup).toHaveAttribute('open', '');
+    await expect(peopleGroup).not.toHaveAttribute('open');
+    await expect(page.getByRole('link', { name: '排程管理', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: '人員與角色', exact: true })).toHaveCount(0);
     await expectNoHorizontalOverflow(page, `workspace menu at ${width}px`);
   }
 });

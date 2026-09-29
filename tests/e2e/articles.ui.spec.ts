@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { apiContext, demoPassword, login, mutate, unique } from './helpers';
+import { apiContext, demoPassword, json, login, mutate, unique } from './helpers';
 
 test.use({ timezoneId: 'Asia/Taipei' });
 
@@ -35,7 +35,7 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     await page.getByLabel('類型').selectOption('news');
     await page.getByLabel('標題', { exact: true }).fill(title);
     await page.getByLabel('網址代稱').fill(slug);
-    await page.getByLabel('分類').fill('見證分享');
+    await page.getByLabel('分類', { exact: true }).fill('見證分享');
     await page.getByLabel('作者').fill('E2E 見證作者');
     // Use a clearly historical date so this synthetic article cannot displace live newest stories.
     await page.getByLabel('發布時間').fill(taipeiLocalDateTimeOffset(3));
