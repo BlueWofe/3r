@@ -96,8 +96,8 @@ class AssociationLogoTest extends TestCase
         $this->getJson('/api/v1/public/contact')->assertJsonPath('data.logo_url', null);
         $file->update(['data' => array_merge($file->data, ['visibility' => 'public'])]);
         Storage::delete($file->data['path']);
-        $this->getJson('/api/v1/public/contact')->assertJsonPath('data.logo_url',null);
-        Storage::put($file->data['path'],'not an image');
-        $this->getJson('/api/v1/public/contact')->assertJsonPath('data.logo_url',null);
+        $this->getJson('/api/v1/public/contact')->assertJsonPath('data.logo_url', null);
+        Storage::put($file->data['path'], 'not an image');
+        $this->getJson('/api/v1/public/contact')->assertJsonPath('data.logo_url', null);
     }
 }

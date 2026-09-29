@@ -51,6 +51,6 @@ class OtpAdapterTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $this->postJson('/api/v1/auth/register', $body)->assertUnprocessable();
         }$body['code'] = $code;
-        $this->postJson('/api/v1/auth/register',$body)->assertUnprocessable();
+        $this->postJson('/api/v1/auth/register', $body)->assertUnprocessable();
     }
 }
