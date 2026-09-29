@@ -96,6 +96,45 @@ onMounted(refresh);
   </div>
 </template>
 <style scoped>
+.public-shell {
+  background: #fffdf8;
+  min-height: 100vh;
+}
+.public-shell :deep(.section) {
+  padding-top: clamp(48px, 7vw, 88px);
+  padding-bottom: clamp(48px, 7vw, 88px);
+}
+.public-shell :deep(.pagehead) {
+  padding-top: 56px;
+  padding-bottom: 48px;
+  background: #f3f4ee;
+}
+.public-shell :deep(.pagehead h1) {
+  font-size: clamp(30px, 4vw, 48px);
+}
+.public-shell :deep(.pagehead .muted) {
+  margin-bottom: 0;
+}
+.brand {
+  white-space: normal;
+  min-width: 0;
+}
+.brand span {
+  min-width: 0;
+}
+.links {
+  gap: 14px;
+  font-size: 14px;
+}
+.links .button {
+  padding: 10px 16px;
+}
+.footer .brand {
+  line-height: 1.5;
+}
+.footer-association-logo {
+  flex-shrink: 0;
+}
 a:focus-visible,
 button:focus-visible {
   outline: 3px solid var(--gold);
@@ -124,7 +163,29 @@ button:focus-visible {
   top: 50%;
   transform: translate(-50%, -50%);
 }
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
+  .mobile-menu {
+    display: inline-flex;
+    min-height: 44px;
+    flex-shrink: 0;
+  }
+  .links {
+    display: none;
+  }
+  .links.open {
+    display: flex;
+    position: absolute;
+    top: 76px;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 20px;
+    background: #fffdf8;
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 12px 30px #14312810;
+  }
   .links.open {
     max-height: calc(100dvh - 80px);
     overflow-y: auto;
@@ -132,6 +193,16 @@ button:focus-visible {
   .links.open a,
   .links.open button {
     min-height: 44px;
+  }
+}
+@media (max-width: 400px) {
+  .navin .brand {
+    font-size: 14px;
+    gap: 8px;
+  }
+  .navin .brand :deep(img) {
+    width: 42px;
+    height: 42px;
   }
 }
 </style>

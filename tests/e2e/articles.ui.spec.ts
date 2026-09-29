@@ -54,6 +54,9 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     await editor.press('Enter');
     await page.getByRole('button', { name: '項目清單' }).click();
     await editor.pressSequentially('陪伴行動項目');
+    await expect(editor.locator('h2')).toContainText('更新的見證標題');
+    await expect(editor.locator('strong')).toContainText('以粗體呈現的格式文字');
+    await expect(editor.locator('li')).toContainText('陪伴行動項目');
     await page.locator('.rich-toolbar input[type="file"]').setInputFiles({
       name: `${slug}.png`,
       mimeType: 'image/png',
@@ -116,7 +119,7 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     await expect(publicImage).toBeVisible();
     await expect(publicImage).toHaveAttribute('src', new RegExp(`/api/v1/files/${fileId}/download`));
     await expectTallImageWithin(publicImage, richArticleMaxHeight);
-    await expect(page.locator('article p.muted').filter({ hasText: 'E2E 見證作者' })).toContainText(/\d{4}年.+\d{1,2}:\d{2}/);
+    await expect(page.locator('.pagehead p.muted').filter({ hasText: 'E2E 見證作者' })).toContainText(/\d{4}年.+\d{1,2}:\d{2}/);
 
     await page.goto('/news');
     const publicNewsLink = page.getByRole('link', { name: new RegExp(title) });

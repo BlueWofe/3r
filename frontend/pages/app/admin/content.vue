@@ -117,16 +117,7 @@ function reset(record?: Content) {
         ? record.body || ""
         : plainToHtml(record?.body || "")),
     body_format: "html",
-    metadata: { ...(record?.metadata || {}) },
-    organization_levels_text: (
-      record?.metadata?.organization_levels || []
-    ).join("\n"),
-    departments_text: (record?.metadata?.departments || [])
-      .map((x: any) => `${x.name || ""}｜${x.description || ""}`)
-      .join("\n"),
-    team_text: (record?.metadata?.team || [])
-      .map((x: any) => `${x.name || ""}｜${x.role || ""}｜${x.bio || ""}`)
-      .join("\n"),
+    metadata: JSON.parse(JSON.stringify(record?.metadata || {})),
   });
   image.value = null;
   error.value = "";
@@ -143,29 +134,6 @@ async function save() {
       body_format: "html",
       published_at: toTaipeiIso(form.published_at),
     };
-    if (body.slug === "organization") {
-      body.metadata = {
-        ...body.metadata,
-        organization_levels: body.organization_levels_text
-          .split("\n")
-          .map((x: string) => x.trim())
-          .filter(Boolean),
-        departments: body.departments_text
-          .split("\n")
-          .map((x: string) => {
-            const [name, description] = x.split("｜");
-            return { name: name?.trim(), description: description?.trim() };
-          })
-          .filter((x: any) => x.name),
-        team: body.team_text
-          .split("\n")
-          .map((x: string) => {
-            const [name, role, bio] = x.split("｜");
-            return { name: name?.trim(), role: role?.trim(), bio: bio?.trim() };
-          })
-          .filter((x: any) => x.name),
-      };
-    }
     if (image.value) {
       const payload = new FormData();
       payload.append("file", image.value);
@@ -311,26 +279,10 @@ onMounted(load);
         /></label>
       </div>
       <label class="field">摘要<textarea v-model="form.summary" /></label
-      ><template v-if="form.slug === 'organization'"
-        ><div class="card form">
-          <h3>組織架構與同工</h3>
-          <label class="field"
-            >組織層級（每行一項）<textarea
-              v-model="form.organization_levels_text"
-              placeholder="理事會&#10;執行團隊"
-            /></label
-          ><label class="field"
-            >部門（每行：名稱｜說明）<textarea
-              v-model="form.departments_text"
-              placeholder="關懷服務｜陪伴與支持"
-            /></label
-          ><label class="field"
-            >同工介紹（每行：姓名｜職務｜簡介）<textarea
-              v-model="form.team_text"
-              placeholder="姓名｜職務｜簡介"
-            />
-          </label></div
-      ></template>
+      ><OrganizationEditor
+        v-if="form.kind === 'page' && form.slug === 'organization'"
+        v-model="form.metadata"
+      />
       ><label class="field">本文</label
       ><ClientOnly
         ><RichTextEditor
@@ -340,6 +292,13 @@ onMounted(load);
       <details class="card">
         <summary>文章預覽</summary>
         <ClientOnly><RichTextPreview :html="form.body_html" /></ClientOnly>
+      </details>
+      <details
+        v-if="form.kind === 'page' && form.slug === 'organization'"
+        class="card"
+      >
+        <summary>組織與同工預覽</summary>
+        <OrganizationOverview :metadata="form.metadata" />
       </details>
       <p v-if="error" class="error">{{ error }}</p>
       <button class="button" :disabled="pending || imageUploading">

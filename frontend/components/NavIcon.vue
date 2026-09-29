@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{ name: string }>();
 const paths: Record<string, string[]> = {
+  heart: ["M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8"],
   home: ["M3 10 12 3l9 7", "M5 9v12h5v-7h4v7h5V9"],
   person: ["M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0", "M4 21v-2a8 8 0 0 1 16 0v2"],
   people: [

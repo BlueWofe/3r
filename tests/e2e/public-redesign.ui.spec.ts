@@ -49,9 +49,10 @@ test('public redesign pages stay readable at four widths and show published orga
 
       if (item.path === '/about') {
         const anchors = page.locator('nav[aria-label="協會介紹章節"]');
-        await expect(anchors.getByRole('link', { name: '宗旨', exact: true })).toHaveAttribute('href', '#mission');
-        await expect(anchors.getByRole('link', { name: '沿革', exact: true })).toHaveAttribute('href', '#history');
-        await expect(anchors.getByRole('link', { name: '組織與同工', exact: true })).toHaveAttribute('href', '#organization');
+        await expect(anchors.getByRole('link', { name: '協會宗旨', exact: true })).toHaveAttribute('href', '#mission');
+        await expect(anchors.getByRole('link', { name: '協會沿革', exact: true })).toHaveAttribute('href', '#history');
+        await expect(anchors.getByRole('link', { name: '組織架構', exact: true })).toHaveAttribute('href', '#organization');
+        await expect(anchors.getByRole('link', { name: '同工介紹', exact: true })).toHaveAttribute('href', '#team');
         await expect(page.getByRole('heading', { name: department, exact: true })).toBeVisible();
         await expect(page.getByRole('heading', { name: staff, exact: true })).toBeVisible();
       }
@@ -171,7 +172,7 @@ test('organization editor updates structured fields without dropping unrelated m
   let writePayload: Record<string, any> | undefined;
 
   await loginAsAdmin(page);
-  await page.route('**/api/v1/contents*', async route => {
+  await page.route(/\/api\/v1\/contents(?:\/\d+)?(?:\?.*)?$/, async route => {
     const request = route.request();
     if (request.method() === 'GET' && new URL(request.url()).pathname.endsWith('/contents')) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [existing] }) });

@@ -252,7 +252,7 @@ onMounted(async () => {
 .side {
   display: none;
   position: fixed;
-  top: 98px;
+  top: 101px;
   left: 50%;
   z-index: 35;
   width: min(720px, calc(100vw - 32px));
@@ -512,7 +512,7 @@ button:focus-visible {
     max-height: none;
     border-radius: 0;
     box-shadow: none;
-    top: 108px;
+    top: 109px;
     z-index: 35;
     height: auto;
     padding: 10px 16px 14px;
