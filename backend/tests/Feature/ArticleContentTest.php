@@ -112,9 +112,10 @@ class ArticleContentTest extends TestCase
     public function test_empty_html_and_invalid_article_fields_rejected(): void
     {
         $this->actingAs($this->admin());
-        foreach (['<p></p>', '<p>&nbsp; </p>', '<script>alert(1)</script>'] as $body) {
+        foreach (['<p></p>', '<p>&nbsp; </p>', '<script>alert(1)</script>', '<img alt="src=pretend">'] as $body) {
             $this->postJson('/api/v1/contents', $this->article(['body_format' => 'html', 'body' => $body]))->assertUnprocessable()->assertJsonValidationErrors('body');
         }
         $this->postJson('/api/v1/contents', $this->article(['author_name' => str_repeat('x', 101), 'published_at' => 'invalid', 'body_format' => 'xml']))->assertUnprocessable()->assertJsonValidationErrors(['author_name', 'published_at', 'body_format']);
+        $this->postJson('/api/v1/contents', $this->article(['published_at' => '2026-09-29']))->assertUnprocessable()->assertJsonValidationErrors('published_at');
     }
 }

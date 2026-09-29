@@ -23,7 +23,7 @@ class ArticleContent
         $html = (new HtmlSanitizer($config))->sanitize($body);
 
         // Invalid or revoked images must not leave empty image placeholders.
-        return preg_replace('~<img\b(?![^>]*\bsrc=)[^>]*>~i', '', $html);
+        return preg_replace('~<img\b(?![^>]*\ssrc="/api/v1/files/[1-9][0-9]*/download")[^>]*>~i', '', $html);
     }
 
     public function write(array $data, Entity $entity, string $actor): array
