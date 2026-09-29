@@ -2,7 +2,7 @@
 const { loggedIn, user, refresh, logout } = useAuth();
 const navOpen = ref(false);
 const navButton = ref<HTMLButtonElement | null>(null);
-const { servicePath, managementPath } = useWorkspaceNavigation();
+const { servicePath } = useWorkspaceNavigation();
 const route = useRoute();
 watch(
   () => route.fullPath,
@@ -55,11 +55,6 @@ onMounted(refresh);
           >會員登入</NuxtLink
         ><NuxtLink v-else class="button" :to="servicePath"
           >{{ user?.name }} 的工作台</NuxtLink
-        ><NuxtLink
-          v-if="loggedIn && managementPath"
-          class="button ghost"
-          :to="managementPath"
-          >管理工作台</NuxtLink
         ><button v-if="loggedIn" class="button ghost" @click="logout">
           登出
         </button>
