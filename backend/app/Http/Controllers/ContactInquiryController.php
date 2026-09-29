@@ -20,8 +20,10 @@ class ContactInquiryController extends ApiController
         $v = $r->validate(['name' => 'required|string|max:100', 'phone' => 'required|string|max:50', 'email' => 'nullable|email|max:254', 'category' => ['required', Rule::in(self::CATEGORIES)], 'message' => 'required|string|max:10000', 'submission_token' => 'required|uuid', 'website' => 'nullable|string|max:500']);
         abort_if($r->filled('website'), 422, '無法受理此訊息。');
         $v['submission_token'] = strtolower($v['submission_token']);
-        $data = collect($v)->only(['name', 'phone', 'email', 'category', 'message'])->all();
-        $data['email'] = $data['email'] ?? null;
+        $data = [];
+        foreach (['name', 'phone', 'email', 'category', 'message'] as $key) {
+            $data[$key] = $v[$key] ?? null;
+        }
         $hash = hash('sha256', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         try {
             $item = DB::transaction(function () use ($v, $data, $hash) {

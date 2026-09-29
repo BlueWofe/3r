@@ -39,6 +39,10 @@ class ContactInquiryTest extends TestCase
         $this->getJson('/api/v1/public/search?q=合成聯絡人')->assertJsonCount(0, 'data');
         $this->assertSame('<script>僅作純文字</script>', ContactInquiry::first()->message);
         $this->assertSame(0, Entity::whereIn('type', ['notifications', 'line-outbox', 'contents'])->count());
+        $withoutEmail = $this->payload();
+        unset($withoutEmail['email']);
+        $confirmation = $this->postJson('/api/v1/public/contact', $withoutEmail)->assertOk()->json();
+        $this->postJson('/api/v1/public/contact', array_replace($withoutEmail, ['email' => null, 'submission_token' => strtoupper($withoutEmail['submission_token'])]))->assertOk()->assertExactJson($confirmation);
     }
 
     public function test_validation_honeypot_and_isolated_ip_rate_limit(): void

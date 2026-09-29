@@ -117,6 +117,25 @@ class GroupsArticlesTest extends TestCase
         $this->postJson('/api/v1/contents/'.$id.'/broadcast', ['version' => 1])->assertUnprocessable();
     }
 
+    public function test_visibility_transitions_and_legacy_updates_preserve_the_current_audience(): void
+    {
+        $admin = $this->account([], true);
+        $member = $this->account();
+        $group = $this->group([$member]);
+        $body = $this->article();
+        $this->actingAs($admin);
+        $id = $this->postJson('/api/v1/contents', $body)->assertOk()->json('id');
+        $this->getJson('/api/v1/public/news/'.$id)->assertOk();
+        $this->putJson('/api/v1/contents/'.$id, $body + ['version' => 1, 'visibility' => 'groups', 'group_ids' => [$group->id]])->assertOk()->assertJsonPath('version', 2);
+        $this->getJson('/api/v1/public/news/'.$id)->assertNotFound();
+        $this->actingAs($member)->getJson('/api/v1/group-news/'.$id)->assertOk();
+        $this->actingAs($admin)->putJson('/api/v1/contents/'.$id, $body)->assertOk()->assertJsonPath('visibility', 'groups')->assertJsonPath('group_ids.0', $group->id);
+        $this->getJson('/api/v1/public/news/'.$id)->assertNotFound();
+        $this->putJson('/api/v1/contents/'.$id, $body + ['version' => 3, 'visibility' => 'public'])->assertOk()->assertJsonPath('group_ids', []);
+        $this->getJson('/api/v1/public/news/'.$id)->assertOk();
+        $this->actingAs($member)->getJson('/api/v1/group-news/'.$id)->assertNotFound();
+    }
+
     public function test_broadcast_deduplicates_group_union_and_versions_and_keeps_private_text_out_of_notifications(): void
     {
         $member = $this->account();
