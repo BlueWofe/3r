@@ -48,13 +48,15 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     await expect(editor).toBeVisible();
     await editor.click();
     await page.getByRole('button', { name: '標題二' }).click();
-    await editor.pressSequentially('更新的見證標題');
-    await editor.press('Enter');
+    // The toolbar keeps the active Tiptap selection. Type through the page
+    // keyboard to follow the same caret after selecting each format.
+    await page.keyboard.insertText('更新的見證標題');
+    await page.keyboard.press('Enter');
     await page.getByRole('button', { name: '粗體' }).click();
-    await editor.pressSequentially('以粗體呈現的格式文字');
-    await editor.press('Enter');
+    await page.keyboard.insertText('以粗體呈現的格式文字');
+    await page.keyboard.press('Enter');
     await page.getByRole('button', { name: '項目清單' }).click();
-    await editor.pressSequentially('陪伴行動項目');
+    await page.keyboard.insertText('陪伴行動項目');
     await expect(editor.locator('h2')).toContainText('更新的見證標題');
     await expect(editor.locator('strong')).toContainText('以粗體呈現的格式文字');
     await expect(editor.locator('li')).toContainText('陪伴行動項目');

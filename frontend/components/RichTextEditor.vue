@@ -14,6 +14,9 @@ const emit = defineEmits<{
 const imageInput = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
 const uploadError = ref("");
+// A v-model update returns through props on the next render. It must not be
+// treated as an external replacement while Tiptap is still editing.
+const emittedHtml = new Set<string>();
 const editor = useEditor({
   content: props.modelValue,
   immediatelyRender: false,
@@ -33,12 +36,20 @@ const editor = useEditor({
       "aria-multiline": "true",
     },
   },
-  onUpdate: ({ editor: current }: any) =>
-    emit("update:modelValue", current.getHTML()),
+  onUpdate: ({ editor: current }: any) => {
+    const html = current.getHTML();
+    emittedHtml.add(html);
+    emit("update:modelValue", html);
+  },
 } as any);
 watch(
   () => props.modelValue,
   (value) => {
+    if (emittedHtml.has(value)) {
+      emittedHtml.clear();
+      return;
+    }
+    emittedHtml.clear();
     if (editor.value && value !== editor.value.getHTML())
       editor.value.commands.setContent(value, { emitUpdate: false });
   },
@@ -94,7 +105,8 @@ async function uploadImage(event: Event) {
 </script>
 <template>
   <div class="rich-editor">
-    <div class="rich-toolbar" aria-label="本文格式工具列">
+    <!-- Keep the Tiptap selection while clicking formatting buttons. -->
+    <div class="rich-toolbar" aria-label="本文格式工具列" @mousedown.prevent>
       <button
         type="button"
         aria-label="粗體"
