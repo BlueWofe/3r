@@ -72,14 +72,14 @@ test('products validate variant ladders and quote server-side prices at quantity
 
     const invalidLadder = await mutate(admin, 'post', '/api/v1/products', {
       title: 'E2E 非法折扣不得儲存', slug: unique('invalid-discount').toLowerCase(), body: '合成資料', summary: '', category: 'E2E', status: 'published', sort_order: 0,
-      metadata: { currency: 'TWD', variants: [{ id: unique('variant'), sku: unique('sku'), options: [], price: 100, stock: 10, active: true, wholesale: [{ min_quantity: 10, unit_price: 90 }, { min_quantity: 5, unit_price: 80 }] }] },
+      metadata: { unit: '盒', currency: 'TWD', gallery_ids: [], spec_axes: [], variants: [{ id: unique('variant'), sku: unique('sku'), options: [], price: 100, stock: 10, active: true, wholesale: [{ min_quantity: 10, unit_price: 90 }, { min_quantity: 5, unit_price: 80 }] }] },
     });
     expect(invalidLadder.status(), `invalid discount returned ${invalidLadder.status()}: ${await invalidLadder.text()}`).toBe(422);
 
     const draftVariantId = unique('draft-variant');
     const draft = await json<{ id: number }>(await mutate(admin, 'post', '/api/v1/products', {
       title: 'E2E 草稿不可報價', slug: unique('draft-product').toLowerCase(), body: '草稿', summary: '', category: 'E2E', status: 'draft', sort_order: 0,
-      metadata: { currency: 'TWD', variants: [{ id: draftVariantId, sku: unique('draft-sku'), options: [], price: 10, stock: 2, active: true, wholesale: [] }] },
+      metadata: { unit: '盒', currency: 'TWD', gallery_ids: [], spec_axes: [], variants: [{ id: draftVariantId, sku: unique('draft-sku'), options: [], price: 10, stock: 2, active: true, wholesale: [] }] },
     }));
     const draftQuote = await admin.get(`/api/v1/public/products/${draft.id}/quote?variant_id=${encodeURIComponent(draftVariantId)}&quantity=1`);
     expect(draftQuote.ok(), 'draft products must not be publicly quotable').toBeFalsy();
