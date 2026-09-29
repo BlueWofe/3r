@@ -30,6 +30,8 @@ services:
       APP_KEY: ${APP_KEY:?Generate APP_KEY before starting}
       APP_URL: ${APP_URL:-http://localhost:3180}
       APP_TIMEZONE: Asia/Taipei
+      APP_LOCALE: zh_TW
+      APP_FALLBACK_LOCALE: zh_TW
       LOG_CHANNEL: stderr
       DB_CONNECTION: pgsql
       DB_HOST: postgres

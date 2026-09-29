@@ -36,7 +36,7 @@ async function otp() {
       body: { phone: newPhone.value, purpose: "change_phone" },
     }),
   );
-  saved.value = "驗證碼已送往允許測試的私人信箱。";
+  saved.value = "模擬驗證碼已寫入伺服器測試信箱，請由測試管理員取得。";
 }
 async function change() {
   await run(() =>

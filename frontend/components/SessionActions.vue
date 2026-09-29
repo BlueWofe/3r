@@ -18,12 +18,57 @@ const open = ref(!!props.openOnMount),
   override = ref(false),
   teachers = ref<any[]>([]);
 const { error, run } = useApiError();
-const mine = computed(() =>
-  props.session.assignments?.find((a: any) => a.teacher_id === user.value?.id),
-);
-const admin = computed(() => props.admin || can("schedule.update.all"));
+const mine = computed(() => {
+  const own = props.session.assignments.filter(
+    (a) => a.teacher_id === user.value?.id,
+  );
+  return (
+    own.find((a) => a.status === "assigned") ||
+    own.find((a) => a.status === "leave") ||
+    own[0]
+  );
+});
+const admin = computed(() => can("schedule.update.all"));
+const attendanceAdmin = computed(() => can("attendance.update.all"));
 const editable = computed(() => admin.value || can("schedule.update.own"));
 const active = computed(() => props.session.status === "scheduled");
+const mutable = computed(
+  () =>
+    active.value &&
+    new Date(
+      `${props.session.service_date}T${props.session.end_time}:00+08:00`,
+    ).getTime() > Date.now() &&
+    !props.session.assignments.some((a) => a.attendance),
+);
+const ownMutable = computed(
+  () =>
+    mutable.value &&
+    can("schedule.update.own") &&
+    ["assigned", "leave"].includes(mine.value?.status),
+);
+const canEditSession = computed(
+  () =>
+    admin.value ||
+    (ownMutable.value &&
+      mine.value?.status === "assigned" &&
+      (props.session.original_teacher_count ??
+        props.session.assignments.filter((a) => a.status !== "replaced")
+          .length) === 1),
+);
+const today = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Taipei",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).format(new Date());
+const canCheckIn = computed(
+  () =>
+    active.value &&
+    mine.value?.status === "assigned" &&
+    !mine.value.attendance &&
+    props.session.service_date === today &&
+    can("attendance.create.own"),
+);
 async function loadTeachers() {
   if (editable.value)
     try {
@@ -38,12 +83,15 @@ async function doAssignment(
 ) {
   const a =
     assignment ||
-    (admin.value
+    (admin.value || attendanceAdmin.value
       ? props.session.assignments.find(
           (item: any) => item.id === assignmentId.value,
         )
       : mine.value);
-  if (!a) return;
+  if (!a) {
+    error.value = "請先選擇目前指派的同工。";
+    return;
+  }
   if (kind !== "attendance" && !reason.value.trim()) {
     error.value = "請填寫異動原因。";
     return;
@@ -56,13 +104,14 @@ async function doAssignment(
     if (resolution.value) body.attendance_resolution = "void";
   }
   if (kind === "attendance") {
-    if (admin.value && !reason.value.trim()) {
+    if (attendanceAdmin.value && !reason.value.trim()) {
       error.value = "管理補登請填寫異動原因。";
       return;
     }
     const data = new FormData();
     if (reason.value.trim()) data.append("reason", reason.value);
-    if (admin.value) data.append("present", String(present.value));
+    if (attendanceAdmin.value)
+      data.append("present", present.value ? "1" : "0");
     if (photo.value) data.append("photo", photo.value);
     await run(() =>
       api(`/assignments/${a.id}/attendance`, { method: "POST", body: data }),
@@ -94,10 +143,13 @@ async function setStatus(status: "cancelled" | "scheduled") {
   emit("updated");
   open.value = false;
 }
-onMounted(async () => {
-  await refresh();
-  await loadTeachers();
-});
+watch(
+  open,
+  async (value) => {
+    if (value) await loadTeachers();
+  },
+  { immediate: true },
+);
 </script>
 <template>
   <button class="button ghost" @click="open = true">
@@ -134,14 +186,14 @@ onMounted(async () => {
           v-model="reason"
           placeholder="請說明異動原因"
         ></textarea></label
-      ><label v-if="admin" class="field"
+      ><label v-if="admin || attendanceAdmin" class="field"
         >目前指派<select v-model="assignmentId">
           <option :value="undefined">請選擇目前同工</option>
           <option v-for="a in session.assignments" :key="a.id" :value="a.id">
             {{ a.teacher?.name || "缺額" }} · {{ a.status }}
           </option>
         </select></label
-      ><label v-if="admin" class="field"
+      ><label v-if="admin || ownMutable" class="field"
         >選擇同工／指派對象<select v-model="teacherId">
           <option :value="undefined">請選擇</option>
           <option v-for="t in teachers" :key="t.id" :value="t.id">
@@ -164,24 +216,28 @@ onMounted(async () => {
       /></label>
       <div v-if="active" class="actions">
         <button
-          v-if="mine?.status === 'assigned'"
+          v-if="ownMutable && mine?.status === 'assigned'"
           class="button"
-          @click="doAssignment('leave')"
+          @click="doAssignment('leave', mine)"
         >
           請假</button
         ><button
-          v-if="mine?.status === 'leave'"
+          v-if="ownMutable && mine?.status === 'leave'"
           class="button ghost"
-          @click="doAssignment('withdraw-leave')"
+          @click="doAssignment('withdraw-leave', mine)"
         >
           撤回請假</button
         ><button
-          v-if="mine?.status === 'leave' && editable"
+          v-if="ownMutable"
           class="button ghost"
-          @click="doAssignment('invite')"
+          @click="doAssignment('invite', mine)"
         >
           邀請代課</button
-        ><button v-if="editable" class="button ghost" @click="editor = true">
+        ><button
+          v-if="canEditSession"
+          class="button ghost"
+          @click="editor = true"
+        >
           完整編輯場次</button
         ><button
           v-if="admin"
@@ -190,26 +246,33 @@ onMounted(async () => {
         >
           重新指派</button
         ><label
-          v-if="admin"
+          v-if="attendanceAdmin"
           class="field"
           style="display: flex; gap: 7px; align-items: center"
           ><input v-model="present" type="checkbox" /> 補登為出席</label
         ><button
-          v-if="admin"
+          v-if="attendanceAdmin"
           class="button gold"
           @click="doAssignment('attendance')"
         >
           補登簽到</button
         ><button
-          v-if="editable"
+          v-if="canEditSession"
           class="button danger"
           @click="setStatus('cancelled')"
         >
           停課
         </button>
+        <button
+          v-if="canCheckIn && !attendanceAdmin"
+          class="button gold"
+          @click="doAssignment('attendance', mine)"
+        >
+          完成簽到
+        </button>
       </div>
       <div v-else class="actions">
-        <button v-if="editable" class="button" @click="setStatus('scheduled')">
+        <button v-if="admin" class="button" @click="setStatus('scheduled')">
           恢復場次
         </button>
       </div>

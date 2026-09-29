@@ -29,6 +29,7 @@ npx playwright install chromium webkit
 npm run test:e2e
 docker compose exec -T backend php artisan test
 python scripts/verify-backup.py
+node scripts/verify-persistence.cjs
 ```
 
 後端 PHPUnit 強制使用隔離的記憶體 SQLite，API 端到端測試則使用啟動中的 PostgreSQL。備份驗證只還原到新建的暫存資料庫，比對後移除該暫存資料庫，不覆寫應用程式資料。

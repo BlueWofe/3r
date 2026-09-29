@@ -14,7 +14,7 @@ Prepare an untracked UAT environment outside the repo with fresh keys/passwords,
 
 For py VM pass `--user domaineadmin --key PATH_TO_EXISTING_ECDSA_KEY --key-type ecdsa`. Prefer `--image-bundle PATH_TO_DOCKER_SAVE_ARCHIVE` containing r3-backend:SHA and r3-frontend:SHA (same SHA as the release). No image registry credentials are transferred. The existing known_hosts entry is the source of the pinned server fingerprint.
 
-Tool deploys only committed Git content into /opt/3r/releases/SHA. Configuration stays /opt/3r/config/uat.env (0600), persistence /srv/3r/uat. Deployment builds version-tagged images, backs up an existing database/storage, migrates and checks health before marking current. Review web+API and YS health after deployment. First-time synthetic seed only; subsequent deployments never reset users or application data.
+Tool deploys only committed Git content into /opt/3r/releases/SHA. Configuration stays /opt/3r/config/uat.env (0600), persistence /srv/3r/uat. Deployment uses version-tagged images, backs up an existing database/storage, migrates and checks health before marking current. It refuses port 3180 if another service owns it and compares non-3r container identities plus existing py health before and after. First-time synthetic seed only; subsequent deployments never reset users or application data.
 
 ## Backup and rollback
 

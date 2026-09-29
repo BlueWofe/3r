@@ -9,7 +9,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 WORKDIR /app
 FROM runtime AS application
 COPY backend/ ./
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
+RUN cp .env.example .env \
+    && composer install --no-interaction --prefer-dist --optimize-autoloader \
     && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/private bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 COPY infra/php.ini /usr/local/etc/php/conf.d/3r.ini

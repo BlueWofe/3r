@@ -165,14 +165,14 @@ async function seeResponses(f: any) {
             type="button"
             class="button ghost"
             :disabled="i === 0"
-            @click="move(i, -1)"
+            @click="move(Number(i), -1)"
           >
             上移</button
           ><button
             type="button"
             class="button ghost"
             :disabled="i === form.fields.length - 1"
-            @click="move(i, 1)"
+            @click="move(Number(i), 1)"
           >
             下移</button
           ><button

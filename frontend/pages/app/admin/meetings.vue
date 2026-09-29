@@ -1,5 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
+const { can } = useAuth();
 const roles = ref<any[]>([]);
 const fields = computed(() => [
   { key: "title", label: "會議名稱" },
@@ -33,7 +34,8 @@ const { error, run } = useApiError();
 async function load() {
   try {
     resources.value = (await api<any>("/resources")).data || [];
-    roles.value = (await api<any>("/role-options")).data || [];
+    if (can("meetings.create.all") || can("meetings.update.all"))
+      roles.value = (await api<any>("/role-options")).data || [];
   } catch (e: any) {
     error.value = e.message;
   }
@@ -60,11 +62,17 @@ onMounted(load);
     title="會議管理"
     endpoint="/meetings"
     :fields="fields"
+    :can-create="can('meetings.create.all')"
+    :can-update="can('meetings.update.all')"
     description="會議議程、紀錄與決議可依角色存取。"
   />
   <section class="section" style="padding-bottom: 0">
     <h2 class="serif">會議資源與檔案</h2>
-    <form class="card toolbar" @submit.prevent="upload">
+    <form
+      v-if="can('resources.create.own') || can('resources.create.all')"
+      class="card toolbar"
+      @submit.prevent="upload"
+    >
       <input v-model="title" placeholder="檔案標題" /><input
         v-model="category"
         placeholder="分類"
@@ -85,7 +93,13 @@ onMounted(load);
               :href="`/api/v1/files/${r.file_id || r.id}/download`"
               >下載</a
             >
-            <button class="button danger" @click="remove(r)">刪除</button>
+            <button
+              v-if="can('resources.delete.all')"
+              class="button danger"
+              @click="remove(r)"
+            >
+              刪除
+            </button>
           </td>
         </tr>
       </table>

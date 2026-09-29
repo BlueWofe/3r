@@ -41,7 +41,7 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:e2e
       - name: Run backend unit tests
-        run: docker compose exec -T backend php artisan test
+        run: docker compose exec -T -e APP_ENV=testing -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: -e CACHE_STORE=array -e SESSION_DRIVER=array -e QUEUE_CONNECTION=sync backend php artisan test
       - if: always()
         run: docker compose logs --tail=150
       - if: always()

@@ -2,6 +2,8 @@
 import type { Session } from "~/types";
 const p = defineProps<{ session?: Session | null; teachers?: any[] }>();
 const emit = defineEmits(["close", "saved"]);
+const { can } = useAuth();
+const manager = computed(() => can("schedule.update.all"));
 const form = reactive<any>({
   title: p.session?.title || "",
   prison: p.session?.prison || "",
@@ -14,10 +16,29 @@ const form = reactive<any>({
   teacher_ids: p.session?.assignments?.map((a: any) => a.teacher_id) || [],
   repeat_weeks: 1,
   reason: "",
+  override_conflict: false,
+  attendance_resolution: false,
 });
 const { error, run } = useApiError();
 async function save() {
-  const body = { ...form, version: p.session?.version };
+  const body: any = {
+    ...form,
+    version: p.session?.version,
+    attendance_resolution:
+      manager.value && form.attendance_resolution ? "void" : undefined,
+  };
+  if (p.session && !manager.value) {
+    for (const key of [
+      "title",
+      "prison",
+      "participant_count",
+      "teacher_ids",
+      "repeat_weeks",
+      "override_conflict",
+      "attendance_resolution",
+    ])
+      delete body[key];
+  }
   const r = await run(() =>
     p.session
       ? api(`/sessions/${p.session.id}`, { method: "PUT", body })
@@ -37,14 +58,22 @@ async function save() {
         </button>
       </div>
       <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
-        <label class="field">主題<input v-model="form.title" required /></label
+        <label class="field"
+          >主題<input
+            v-model="form.title"
+            :disabled="!!session && !manager"
+            required /></label
         ><label class="field"
-          >監所／單位<input v-model="form.prison" required /></label
+          >監所／單位<input
+            v-model="form.prison"
+            :disabled="!!session && !manager"
+            required /></label
         ><label class="field"
           >地點<input v-model="form.location" required /></label
         ><label class="field"
           >參與人數<input
             v-model.number="form.participant_count"
+            :disabled="!!session && !manager"
             type="number"
             min="0" /></label
         ><label class="field"
@@ -52,7 +81,7 @@ async function save() {
             v-model="form.service_date"
             type="date"
             required /></label
-        ><label class="field"
+        ><label v-if="!session" class="field"
           >重複週數（建立時）<input
             v-model.number="form.repeat_weeks"
             type="number"
@@ -73,7 +102,17 @@ async function save() {
             {{ t.name }}
           </option>
         </select></label
-      ><label v-if="session" class="field"
+      ><label v-if="manager" class="field"
+        ><input v-model="form.override_conflict" type="checkbox" />
+        已確認老師時間衝突，仍要安排</label
+      >
+      <label
+        v-if="manager && session?.assignments.some((a) => a.attendance)"
+        class="field"
+        ><input v-model="form.attendance_resolution" type="checkbox" />
+        作廢既有簽到並保留更正紀錄</label
+      >
+      <label v-if="session || form.override_conflict" class="field"
         >異動說明<input
           v-model="form.reason"
           required

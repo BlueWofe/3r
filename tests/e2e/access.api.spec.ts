@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { apiContext, createSession, json, login, mutate } from './helpers';
+import { apiContext, createSession, demoPassword, json, login, mutate } from './helpers';
 
 test('own/all schedule scopes are enforced by the server', async () => {
   const teacher = await apiContext();
@@ -63,21 +63,23 @@ test('role permissions union while assigned and disappear immediately after role
       name: 'E2E 全體排程檢視', slug, active: true, permissions: ['schedule.read.all'],
     }));
     const combinedRoles = [...teacherUser!.roles.map(item => item.id), role.id];
-    const updatedUser = await mutate(admin, 'put', `/api/v1/users/${teacherUser!.id}`, {
-      name: 'E2E 教師二', active: true, role_ids: combinedRoles,
-    });
-    expect(updatedUser.ok()).toBeTruthy();
+    const phone = '09' + String(Date.now()).slice(-8);
+    const isolatedUser = await json<{id:number}>(await mutate(admin, 'post', '/api/v1/users', {
+      name: 'E2E 隔離權限帳號', phone, password: demoPassword, active: true, role_ids: combinedRoles,
+    }));
 
-    await login(teacher, '0900000002');
+    await login(teacher, phone);
     const allAccess = await teacher.get(`/api/v1/sessions/${outsideSession.id}`);
     expect(allAccess.ok()).toBeTruthy();
 
-    const revoked = await mutate(admin, 'put', `/api/v1/users/${teacherUser!.id}`, {
-      name: 'E2E 教師二', active: true, role_ids: teacherUser!.roles.map(item => item.id),
+    const revoked = await mutate(admin, 'put', `/api/v1/users/${isolatedUser.id}`, {
+      name: 'E2E 隔離權限帳號', active: true, role_ids: teacherUser!.roles.map(item => item.id),
     });
     expect(revoked.ok()).toBeTruthy();
     const deniedAfterRevoke = await teacher.get(`/api/v1/sessions/${outsideSession.id}`);
-    expect(deniedAfterRevoke.status()).toBe(403);
+    expect([401, 403]).toContain(deniedAfterRevoke.status());
+    await login(teacher, phone);
+    expect((await teacher.get(`/api/v1/sessions/${outsideSession.id}`)).status()).toBe(403);
   } finally {
     await Promise.all([admin.dispose(), teacher.dispose()]);
   }

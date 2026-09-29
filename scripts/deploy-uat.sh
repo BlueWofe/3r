@@ -10,6 +10,11 @@ envfile=/opt/3r/config/uat.env
 grep -qx 'COMPOSE_PROJECT_NAME=r3-uat' "$envfile"
 grep -qx 'WEB_PORT=3180' "$envfile"
 dc=(docker compose --env-file "$envfile" -p r3-uat -f compose.yml -f compose.uat.yml)
+# Refuse a port owned by anything other than this existing 3r web service.
+if ss -H -ltn 'sport = :3180' | grep -q .; then
+    owner=$(docker ps --filter label=com.docker.compose.project=r3-uat --filter label=com.docker.compose.service=web --format '{{.Ports}}')
+    [[ "$owner" == *':3180->80/tcp'* ]] || { echo 'Port 3180 is occupied by another service; refusing deployment'; exit 1; }
+fi
 mkdir -p /srv/3r/uat/{storage,postgres,redis,backups}
 available_kb=$(df -Pk /srv/3r | awk 'NR==2 {print $4}')
 [[ "$available_kb" -gt 8388608 ]] || { echo 'Need at least 8 GiB free disk before deploy'; exit 1; }

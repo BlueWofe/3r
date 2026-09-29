@@ -16,6 +16,7 @@ export interface Session {
   end_time: string;
   status: "scheduled" | "cancelled";
   version: number;
+  original_teacher_count?: number;
   assignments: any[];
   invitations: any[];
   events: any[];

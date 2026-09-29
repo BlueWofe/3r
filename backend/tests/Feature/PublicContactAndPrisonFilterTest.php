@@ -23,7 +23,7 @@ class PublicContactAndPrisonFilterTest extends TestCase
 
     public function test_public_contact_has_safe_defaults_when_settings_do_not_exist(): void
     {
-        $this->getJson('/api/v1/public/contact')->assertOk()->assertExactJson(['data' => ['association_name' => '示範監獄福音協會', 'contact_phone' => '', 'contact_email' => '', 'address' => '']]);
+        $this->getJson('/api/v1/public/contact')->assertOk()->assertExactJson(['data' => ['association_name' => '中華復甦更新發展協會', 'contact_phone' => '', 'contact_email' => '', 'address' => '']]);
         Entity::create(['type' => 'settings', 'data' => ['association_name' => '示範新名稱', 'contact_phone' => null, 'private_note' => 'private']]);
         $this->getJson('/api/v1/public/contact')->assertOk()->assertExactJson(['data' => ['association_name' => '示範新名稱', 'contact_phone' => '', 'contact_email' => '', 'address' => '']]);
     }

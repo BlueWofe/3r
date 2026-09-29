@@ -466,6 +466,33 @@
         }
       }
     },
+    "/role-options": {
+      "get": {
+        "summary": "GET /role-options",
+        "operationId": "get_role_options",
+        "tags": [
+          "role-options"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
     "/roles": {
       "get": {
         "summary": "GET /roles",
@@ -1576,6 +1603,62 @@
         }
       }
     },
+    "/public/pages": {
+      "get": {
+        "summary": "GET /public/pages",
+        "operationId": "get_public_pages",
+        "tags": [
+          "public"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": []
+      }
+    },
+    "/public/contact": {
+      "get": {
+        "summary": "GET /public/contact",
+        "operationId": "get_public_contact",
+        "tags": [
+          "public"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": []
+      }
+    },
     "/public/pages/{slug}": {
       "get": {
         "summary": "GET /public/pages/{slug}",
@@ -1845,6 +1928,40 @@
       }
     },
     "/contents/{id}": {
+      "get": {
+        "summary": "GET /contents/{id}",
+        "operationId": "get_contents__id_",
+        "tags": [
+          "contents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      },
       "put": {
         "summary": "PUT /contents/{id}",
         "operationId": "put_contents__id_",
@@ -2276,6 +2393,33 @@
         }
       }
     },
+    "/cases/export": {
+      "get": {
+        "summary": "GET /cases/export",
+        "operationId": "get_cases_export",
+        "tags": [
+          "cases"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
     "/cases/{id}": {
       "get": {
         "summary": "GET /cases/{id}",
@@ -2314,6 +2458,60 @@
       "put": {
         "summary": "PUT /cases/{id}",
         "operationId": "put_cases__id_",
+        "tags": [
+          "cases"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "DELETE /cases/{id}",
+        "operationId": "delete_cases__id_",
         "tags": [
           "cases"
         ],
@@ -2496,9 +2694,97 @@
       }
     },
     "/meetings/{id}": {
+      "get": {
+        "summary": "GET /meetings/{id}",
+        "operationId": "get_meetings__id_",
+        "tags": [
+          "meetings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      },
       "put": {
         "summary": "PUT /meetings/{id}",
         "operationId": "put_meetings__id_",
+        "tags": [
+          "meetings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "DELETE /meetings/{id}",
+        "operationId": "delete_meetings__id_",
         "tags": [
           "meetings"
         ],
@@ -2662,6 +2948,60 @@
       "put": {
         "summary": "PUT /forms/{id}",
         "operationId": "put_forms__id_",
+        "tags": [
+          "forms"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "DELETE /forms/{id}",
+        "operationId": "delete_forms__id_",
         "tags": [
           "forms"
         ],

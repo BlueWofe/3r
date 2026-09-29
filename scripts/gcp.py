@@ -83,12 +83,22 @@ def main():
             if args.image_bundle:
                 sftp.put(str(args.image_bundle), stage+'/images.tar')
             sftp.close()
-            command=f'''sudo -n mkdir -p {release} /opt/3r/config /srv/3r/uat/backups
+            command=f'''set -euo pipefail
+sudo -n mkdir -p {release} /opt/3r/config /srv/3r/uat/backups
 sudo -n tar -xzf {stage}/source.tar.gz -C {release}
+sudo -n python3 - {stage}/uat.env /opt/3r/config/uat.env <<'PY'
+import pathlib, sys
+def values(path):
+    return dict(line.split('=',1) for line in pathlib.Path(path).read_text().splitlines() if '=' in line and not line.startswith('#'))
+if pathlib.Path(sys.argv[2]).exists():
+    new, old = values(sys.argv[1]), values(sys.argv[2])
+    if any(new.get(k) != old.get(k) for k in ['APP_KEY','DB_PASSWORD']):
+        raise SystemExit('Refusing unintended key/password rotation on existing UAT.')
+PY
 sudo -n install -m 0600 {stage}/uat.env /opt/3r/config/uat.env
 {('sudo -n docker load -i '+stage+'/images.tar') if args.image_bundle else ''}
 sudo -n env R3_PREBUILT={'true' if args.image_bundle else 'false'} bash {release}/scripts/deploy-uat.sh {revision}
-rm -f {stage}/uat.env'''
+rm -f {stage}/uat.env {stage}/source.tar.gz {stage}/images.tar'''
             run(transport,command)
     finally:
         transport.close()

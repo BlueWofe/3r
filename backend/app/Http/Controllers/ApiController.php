@@ -214,7 +214,7 @@ class ApiController extends Controller
     public function publicContact(): array
     {
         $settings = Entity::where('type', 'settings')->first()?->data ?? [];
-        $defaults = ['association_name' => '示範監獄福音協會', 'contact_phone' => '', 'contact_email' => '', 'address' => ''];
+        $defaults = ['association_name' => '中華復甦更新發展協會', 'contact_phone' => '', 'contact_email' => '', 'address' => ''];
 
         foreach ($defaults as $key => $default) {
             $defaults[$key] = is_string($settings[$key] ?? null) ? $settings[$key] : $default;

@@ -68,7 +68,8 @@ onMounted(async () => {
         <span class="eyebrow">完成服務</span>
         <h2>{{ report.summary?.completed_sessions || 0 }} 場</h2>
         <p class="muted">
-          服務時數 {{ report.summary?.service_hours || 0 }} 小時
+          服務時數 {{ report.summary?.service_hours || 0 }} 小時 · 停課
+          {{ report.summary?.cancelled_sessions || 0 }} 場
         </p>
       </article>
       <article class="card">

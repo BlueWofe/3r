@@ -10,7 +10,7 @@ test('public site, login and calendar render at desktop and mobile sizes', async
   const fields = page.locator('input');
   await fields.nth(0).fill('0900000001');
   await fields.nth(1).fill(demoPassword!);
-  const submit = page.getByRole('button', { name: /登入|登錄|login/i });
+  const submit = page.locator('form').getByRole('button', { name: '登入', exact: true });
   await submit.click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
 

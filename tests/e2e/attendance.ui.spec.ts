@@ -41,9 +41,9 @@ test('teacher can check in today without a photo and cannot check in twice', asy
     expect(session.assignments.some(item => item.teacher_id === mobileTeacher!.id)).toBeTruthy();
 
     await page.goto('/login');
-    await page.locator('input').nth(0).fill('0900000004');
-    await page.locator('input[type="password"]').fill(demoPassword!);
-    await page.getByRole('button', { name: '登入' }).click();
+    await page.getByLabel('手機號碼').fill('0900000004');
+    await page.getByLabel('密碼', { exact: true }).fill(demoPassword!);
+    await page.locator('form').getByRole('button', { name: '登入', exact: true }).click();
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
 
     await page.goto('/app/calendar');

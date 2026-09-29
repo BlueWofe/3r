@@ -87,8 +87,8 @@ async function submit() {
               取得驗證碼
             </button></span
           ><small v-if="otpRequested" class="muted"
-            >驗證碼已發送至允許測試的私人信箱；系統不會在畫面或 API
-            顯示驗證碼。</small
+            >模擬驗證碼已寫入伺服器測試信箱，請由測試管理員取得；系統不會在畫面或
+            API 顯示驗證碼。</small
           ></label
         ><label class="field"
           >密碼<input
