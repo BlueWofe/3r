@@ -72,6 +72,14 @@ const permissionMenus = [
     },
   },
   {
+    module: "contacts",
+    title: "聯絡表單",
+    labels: {
+      "read.all": "查看訪客聯絡訊息",
+      "update.all": "處理及結案聯絡訊息",
+    },
+  },
+  {
     module: "groups",
     title: "小組管理與通知",
     labels: {

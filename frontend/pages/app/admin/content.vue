@@ -44,9 +44,11 @@ const sections = [
 const sectionOf = (record: Content) =>
   record.kind === "page"
     ? "pages"
-    : record.category === "見證分享"
-      ? "testimony"
-      : "news";
+    : record.article_type === "sharing"
+      ? "sharing"
+      : record.article_type === "testimony" || record.category === "見證分享"
+        ? "testimony"
+        : "news";
 const section = computed(() =>
   sections.some((item) => item.id === route.query.section)
     ? String(route.query.section)

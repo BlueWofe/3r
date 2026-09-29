@@ -60,6 +60,11 @@ export function useWorkspaceNavigation() {
       () => can("reports.read.all") || can("reports.read.own"),
     ],
     ["/app/admin/settings", "協會設定", () => can("settings.manage.all")],
+    [
+      "/app/admin/contact-inquiries",
+      "聯絡表單",
+      () => can("contacts.read.all") || can("contacts.update.all"),
+    ],
   ] as const;
 
   const managementLinks = computed(() =>
@@ -72,12 +77,16 @@ export function useWorkspaceNavigation() {
         icon: "calendar",
         paths: ["schedule", "classes", "prisons", "cases", "reports"],
       },
-      { title: "官網內容", icon: "edit", paths: ["content", "products"] },
+      {
+        title: "官網內容",
+        icon: "edit",
+        paths: ["content", "products", "settings", "contact-inquiries"],
+      },
       { title: "會務與資源", icon: "folder", paths: ["meetings", "forms"] },
       {
         title: "人員與系統",
         icon: "settings",
-        paths: ["users", "roles", "groups", "settings"],
+        paths: ["users", "roles", "groups"],
       },
     ]
       .map((group) => ({

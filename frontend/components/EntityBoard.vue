@@ -93,10 +93,15 @@ async function save() {
     }
     if (editing.value?.version) body.version = editing.value.version;
     await run(() =>
-      api(editing.value ? `${p.endpoint}/${editing.value.id}` : p.endpoint, {
-        method: editing.value ? "PUT" : "POST",
-        body,
-      }),
+      api(
+        editing.value
+          ? `${p.endpoint.split("?")[0]!}/${editing.value.id}`
+          : p.endpoint.split("?")[0]!,
+        {
+          method: editing.value ? "PUT" : "POST",
+          body,
+        },
+      ),
     );
     open.value = false;
     await load();
@@ -105,6 +110,7 @@ async function save() {
     pending.value = false;
   }
 }
+watch(() => p.endpoint, load);
 onMounted(load);
 </script>
 <template>
