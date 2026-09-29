@@ -6,6 +6,7 @@ use App\Models\Entity;
 use App\Models\Role;
 use App\Models\ServiceSession;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -43,6 +44,8 @@ class ModuleSecurityTest extends TestCase
         $assigned = $this->makeSession($date);
         $assigned->assignments()->create(['teacher_id' => $teacher->id, 'status' => 'assigned', 'attendance' => ['present' => false]]);
         $leave = $this->makeSession($date);
+        $leave->data = [...$leave->data, 'original_teacher_count' => 1];
+        $leave->save();
         $leave->assignments()->create(['teacher_id' => $teacher->id, 'status' => 'leave']);
         $coveringTeacher = User::where('phone', '0900000001')->firstOrFail();
         $leave->assignments()->create(['teacher_id' => $coveringTeacher->id, 'status' => 'assigned']);
@@ -69,6 +72,7 @@ class ModuleSecurityTest extends TestCase
         $all = $this->actingAs($admin)->getJson('/api/v1/reports?from='.$date.'&to='.$date);
         $all->assertOk()
             ->assertJsonPath('summary.completed_sessions', 4)
+            ->assertJsonPath('summary.cancelled_sessions', 1)
             ->assertJsonPath('summary.vacancies', 1)
             ->assertJsonPath('summary.assigned_denominator', 3)
             ->assertJsonPath('summary.attendance_count', 0)
@@ -108,6 +112,42 @@ class ModuleSecurityTest extends TestCase
         $reportManager->roles()->attach($financeRole);
         $withFinance = $this->actingAs($reportManager)->getJson('/api/v1/reports?from='.$date.'&to='.$date.'&teacher_id='.$teacher->id);
         $withFinance->assertOk()->assertJsonPath('summary.successful_test_donations_sum', 250);
+    }
+
+    public function test_report_counts_only_ended_sessions_and_each_missing_teacher_slot(): void
+    {
+        $now = Carbon::parse('2035-05-06 12:00:00', 'Asia/Taipei');
+        Carbon::setTestNow($now);
+        try {
+            $date = $now->toDateString();
+            $teacherA = User::where('phone', '0900000002')->firstOrFail();
+            $teacherB = User::where('phone', '0900000003')->firstOrFail();
+
+            $ended = $this->makeSession($date);
+            $ended->data = [...$ended->data, 'start_time' => '09:00', 'end_time' => '10:00', 'original_teacher_count' => 2];
+            $ended->save();
+            $ended->assignments()->create(['teacher_id' => $teacherA->id, 'status' => 'assigned', 'attendance' => ['present' => true]]);
+            $ended->assignments()->create(['teacher_id' => $teacherB->id, 'status' => 'leave']);
+
+            $inProgress = $this->makeSession($date);
+            $inProgress->data = [...$inProgress->data, 'start_time' => '12:30', 'end_time' => '13:30', 'original_teacher_count' => 1];
+            $inProgress->save();
+            $inProgress->assignments()->create(['teacher_id' => $teacherA->id, 'status' => 'assigned', 'attendance' => ['present' => true]]);
+
+            $cancelled = $this->makeSession($date, 'cancelled');
+            $cancelled->data = [...$cancelled->data, 'start_time' => '09:00', 'end_time' => '10:00', 'original_teacher_count' => 1];
+            $cancelled->save();
+
+            $response = $this->actingAs(User::where('phone', '0900000001')->firstOrFail())
+                ->getJson('/api/v1/reports?from='.$date.'&to='.$date);
+            $response->assertOk()
+                ->assertJsonPath('summary.completed_sessions', 1)
+                ->assertJsonPath('summary.cancelled_sessions', 1)
+                ->assertJsonPath('summary.vacancies', 1)
+                ->assertJsonPath('summary.assigned_denominator', 1);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_unlinked_private_files_are_not_readable_by_global_resource_readers(): void

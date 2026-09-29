@@ -301,19 +301,27 @@ class ModuleController extends ApiController
 
         $start = $filters['from'] ?? '0001-01-01';
         $end = min($filters['to'] ?? now('Asia/Taipei')->toDateString(), now('Asia/Taipei')->toDateString());
-        $sessions = ServiceSession::all()->filter(function ($session) use ($start, $end) {
+        $inRange = ServiceSession::all()->filter(function ($session) use ($start, $end) {
             $date = $session->data['service_date'] ?? null;
 
-            return ($session->data['status'] ?? null) !== 'cancelled' && $date && $date >= $start && $date <= $end;
+            return $date && $date >= $start && $date <= $end;
         })->keyBy('id');
         $scopeTeacherId = ! $all ? $r->user()->id : (isset($filters['teacher_id']) ? (int) $filters['teacher_id'] : null);
         if ($scopeTeacherId !== null) {
             $scopedSessionIds = Assignment::where('teacher_id', $scopeTeacherId)
-                ->whereIn('session_id', $sessions->keys())
+                ->whereIn('session_id', $inRange->keys())
                 ->pluck('session_id')
                 ->all();
-            $sessions = $sessions->only($scopedSessionIds);
+            $inRange = $inRange->only($scopedSessionIds);
         }
+        $cancelledSessions = $inRange->filter(fn ($session) => ($session->data['status'] ?? null) === 'cancelled');
+        $sessions = $inRange->reject(fn ($session) => ($session->data['status'] ?? null) === 'cancelled')
+            ->filter(function ($session) {
+                $date = $session->data['service_date'] ?? null;
+                $endTime = $session->data['end_time'] ?? null;
+
+                return $date && $endTime && Carbon::parse($date.' '.$endTime, 'Asia/Taipei')->lt(now('Asia/Taipei'));
+            });
         $teachers = User::where('active', true)->get()->filter(function ($user) use ($all, $r, $filters) {
             return ($all || $user->id === $r->user()->id)
                 && (! isset($filters['teacher_id']) || $user->id === (int) $filters['teacher_id'])
@@ -339,11 +347,18 @@ class ModuleController extends ApiController
             ];
         })->values();
 
-        $vacancies = $sessions->filter(fn ($session) => ! Assignment::where('session_id', $session->id)->where('status', 'assigned')->exists())->count();
+        $vacancies = $sessions->sum(function ($session) {
+            $assignments = Assignment::where('session_id', $session->id)->get();
+            $required = (int) ($session->data['original_teacher_count'] ?? max(1, $assignments->where('status', '!=', 'replaced')->count()));
+            $assigned = $assignments->where('status', 'assigned')->count();
+
+            return max(0, $required - $assigned);
+        });
         $denominator = $rows->sum('assigned');
         $summary = [
             'teacher_count' => $rows->count(),
             'completed_sessions' => $sessions->count(),
+            'cancelled_sessions' => $cancelledSessions->count(),
             'vacancies' => $vacancies,
             'assigned_denominator' => $denominator,
             'attendance_count' => $rows->sum('attended'),
