@@ -87,16 +87,16 @@ test('dense calendar days stay compact and expose every session in a keyboard-ac
 
 async function findEmptyDay(api: Awaited<ReturnType<typeof apiContext>>, offset: number) {
   const now = new Date();
-  const candidates: string[] = [];
-  for (let day = offset; day < offset + 8; day++) {
-    const date = new Date(now.getFullYear(), now.getMonth() + 1, day);
-    candidates.push(formatTaipeiDate(date));
-  }
-  for (const date of candidates) {
-    const { data } = await json<{ data: unknown[] }>(
-      await api.get(`/api/v1/sessions?from=${date}&to=${date}`),
-    );
-    if (data.length === 0) return date;
+  // Dev and UAT keep synthetic sessions between runs. Move to a later month
+  // once the original eight candidate days have all been used.
+  for (let month = 1; month <= 18; month++) {
+    for (let day = offset; day < offset + 8; day++) {
+      const date = formatTaipeiDate(new Date(now.getFullYear(), now.getMonth() + month, day));
+      const { data } = await json<{ data: unknown[] }>(
+        await api.get(`/api/v1/sessions?from=${date}&to=${date}`),
+      );
+      if (data.length === 0) return date;
+    }
   }
   throw new Error('Could not find an empty future calendar date for the synthetic fixture.');
 }
@@ -116,7 +116,7 @@ async function navigateToMonth(page: Page, date: string) {
   const [year, month] = date.split('-').map(Number);
   const expected = `${year} 年 ${month} 月`;
   const monthLabel = page.locator('.workhead .muted').first();
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 19; attempt++) {
     const label = (await monthLabel.textContent())?.trim();
     if (label === expected) return;
     await page.getByRole('button', { name: '→', exact: true }).click();
