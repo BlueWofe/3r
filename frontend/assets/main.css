@@ -23,8 +23,16 @@
 body {
   margin: 0;
   background:
-    radial-gradient(1100px 460px at 100% -8%, rgba(198, 157, 77, 0.16), transparent 56%),
-    radial-gradient(820px 380px at -8% 12%, rgba(14, 48, 38, 0.05), transparent 52%),
+    radial-gradient(
+      1100px 460px at 100% -8%,
+      rgba(198, 157, 77, 0.16),
+      transparent 56%
+    ),
+    radial-gradient(
+      820px 380px at -8% 12%,
+      rgba(14, 48, 38, 0.05),
+      transparent 52%
+    ),
     var(--cream);
   color: var(--ink);
   font-family: "Noto Sans TC", sans-serif;
@@ -196,7 +204,19 @@ a {
 .hero {
   position: relative;
   min-height: 640px;
-  background: linear-gradient(105deg, rgba(8, 28, 23, 0.96), rgba(8, 28, 23, 0.75) 48%, rgba(68, 106, 86, 0.72)), radial-gradient(circle at 78% 30%, rgba(225, 193, 116, 0.6), transparent 16%), radial-gradient(ellipse at 80% 70%, #e5d6ae 0 12%, transparent 13%), #315d4b;
+  background:
+    linear-gradient(
+      105deg,
+      rgba(8, 28, 23, 0.96),
+      rgba(8, 28, 23, 0.75) 48%,
+      rgba(68, 106, 86, 0.72)
+    ),
+    radial-gradient(
+      circle at 78% 30%,
+      rgba(225, 193, 116, 0.6),
+      transparent 16%
+    ),
+    radial-gradient(ellipse at 80% 70%, #e5d6ae 0 12%, transparent 13%), #315d4b;
   display: flex;
   align-items: center;
   color: #fff;
@@ -254,14 +274,32 @@ a {
   padding: 84px 0;
 }
 .section.tint {
-  background: linear-gradient(180deg, rgba(232, 223, 204, 0.55), rgba(240, 234, 219, 0.9));
+  background: linear-gradient(
+    180deg,
+    rgba(232, 223, 204, 0.55),
+    rgba(240, 234, 219, 0.9)
+  );
 }
 .section h2 {
   font: 700 clamp(28px, 4vw, 42px)/1.25 "Noto Serif TC";
   margin: 8px 0 18px;
   letter-spacing: 0.02em;
 }
-.full-verse { padding: 72px 0; background: var(--pine); color: #fff; text-align: center; }.full-verse p { max-width: 850px; margin: 0 auto 14px; font: 600 clamp(23px, 3vw, 34px)/1.6 "Noto Serif TC"; }.full-verse cite { color: #efd9a5; font-style: normal; }
+.full-verse {
+  padding: 72px 0;
+  background: var(--pine);
+  color: #fff;
+  text-align: center;
+}
+.full-verse p {
+  max-width: 850px;
+  margin: 0 auto 14px;
+  font: 600 clamp(23px, 3vw, 34px)/1.6 "Noto Serif TC";
+}
+.full-verse cite {
+  color: #efd9a5;
+  font-style: normal;
+}
 .section-lead {
   max-width: 640px;
   margin: -4px 0 8px;
@@ -310,7 +348,11 @@ a.card:hover {
 .footer {
   padding: 64px 0 48px;
   background:
-    radial-gradient(520px 180px at 0% 0%, rgba(198, 157, 77, 0.2), transparent 62%),
+    radial-gradient(
+      520px 180px at 0% 0%,
+      rgba(198, 157, 77, 0.2),
+      transparent 62%
+    ),
     var(--pine);
   color: #e7efe9;
   border-top: 3px solid var(--gold);
@@ -339,7 +381,11 @@ a.card:hover {
   position: relative;
   padding: 62px 0 46px;
   background:
-    radial-gradient(ellipse at 0% 0%, rgba(198, 157, 77, 0.22), transparent 46%),
+    radial-gradient(
+      ellipse at 0% 0%,
+      rgba(198, 157, 77, 0.22),
+      transparent 46%
+    ),
     linear-gradient(180deg, #e7efe8 0%, #f3ecdf 100%);
   border-bottom: 1px solid var(--line);
 }
@@ -528,7 +574,11 @@ a.card:hover {
   place-items: center;
   padding: 48px 16px;
   background:
-    radial-gradient(520px 240px at 50% 0%, rgba(198, 157, 77, 0.2), transparent 70%),
+    radial-gradient(
+      520px 240px at 50% 0%,
+      rgba(198, 157, 77, 0.2),
+      transparent 70%
+    ),
     linear-gradient(160deg, #e7eee4, #f6f1e6 58%);
 }
 .authbox {
@@ -569,7 +619,11 @@ a.card:hover {
   grid-template-columns: 250px 1fr;
   min-height: 100vh;
   background:
-    radial-gradient(760px 280px at 100% 0%, rgba(198, 157, 77, 0.12), transparent 55%),
+    radial-gradient(
+      760px 280px at 100% 0%,
+      rgba(198, 157, 77, 0.12),
+      transparent 55%
+    ),
     #f3eee4;
 }
 .side {
@@ -873,7 +927,11 @@ a.card:hover {
   object-fit: cover;
   border-radius: 0;
   background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.45), transparent 40%),
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(255, 255, 255, 0.45),
+      transparent 40%
+    ),
     #efe4cc;
   color: #8d6420;
   font-size: 42px;
@@ -891,8 +949,7 @@ a.card:hover {
 .value-card {
   align-self: start;
   background:
-    linear-gradient(180deg, rgba(255, 248, 232, 0.9), #fffdf8 40%),
-    var(--paper);
+    linear-gradient(180deg, rgba(255, 248, 232, 0.9), #fffdf8 40%), var(--paper);
 }
 .value-card h3 {
   margin-top: 0;
@@ -982,7 +1039,11 @@ a.card:hover {
   place-items: center;
   font-size: 72px;
   background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.55), transparent 42%),
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(255, 255, 255, 0.55),
+      transparent 42%
+    ),
     #efe4cc;
 }
 .calendar {
