@@ -105,5 +105,17 @@ for line in catalog.strip().splitlines():
         paths[path][method.lower()] = operation
 spec = {'openapi': '3.0.3', 'info': {'title': '3r Association API', 'version': '1.0.0', 'description': 'Same-origin session API. See contract.md for request/response fields. Schedule versions refer to the session. UAT mock integrations never charge or send external messages.'}, 'servers': [{'url': '/api/v1'}], 'security': [{'session': []}], 'paths': paths, 'components': {'securitySchemes': {'session': {'type': 'apiKey', 'in': 'cookie', 'name': 'r3_dev_session', 'description': 'Environment-specific session name; r3_uat_session on UAT.'}}, 'schemas': {'ScheduleChange': change}}}
 target = Path(__file__).resolve().parents[1]/'docs'/'openapi.json'
+article = {'type': 'object', 'properties': {
+    'id': integer, 'kind': {'enum': ['news', 'page']}, 'title': string,
+    'category': string, 'summary': string, 'author_name': string,
+    'published_at': {'type': 'string', 'format': 'date-time'},
+    'body_format': {'enum': ['text', 'html']}, 'body': string,
+    'body_html': {'type': 'string', 'readOnly': True, 'description': 'Server-sanitized HTML, including escaped legacy text.'},
+}}
+spec['components']['schemas']['Article'] = article
+paths['/public/news']['get']['parameters'].append({'name': 'limit', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 100}})
+paths['/public/news']['get']['description'] = 'Published articles whose publication time has arrived, ordered by published_at descending then id descending. Homepage uses limit=3. See docs/articles.md.'
+paths['/public/news']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Article'}}}}}}
+paths['/public/news/{id}']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'$ref': '#/components/schemas/Article'}}}}}
 target.write_text(json.dumps(spec, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
 print(f'Generated {len(paths)} API paths')

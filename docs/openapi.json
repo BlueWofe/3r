@@ -2033,10 +2033,36 @@
         "tags": [
           "public"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Article"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Login required"
@@ -2051,7 +2077,8 @@
             "description": "Validation failed"
           }
         },
-        "security": []
+        "security": [],
+        "description": "Published articles whose publication time has arrived, ordered by published_at descending then id descending. Homepage uses limit=3. See docs/articles.md."
       }
     },
     "/public/news/{id}": {
@@ -2073,7 +2100,19 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Article"
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Login required"
@@ -4172,6 +4211,50 @@
             "enum": [
               "void"
             ]
+          }
+        }
+      },
+      "Article": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "news",
+              "page"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "body_format": {
+            "enum": [
+              "text",
+              "html"
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "body_html": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Server-sanitized HTML, including escaped legacy text."
           }
         }
       }
