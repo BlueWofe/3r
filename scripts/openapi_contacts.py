@@ -3,7 +3,7 @@ from copy import deepcopy
 
 
 def extend_contacts(spec):
-    categories = ['監所探訪與代禱', '更生安置與職訓', '食品採購與禮盒', '志工加入', '奉獻與收據諮詢', '其他諮詢']
+    categories = ['大宗認購專案', '試吃', '監所探訪與代禱', '更生安置與職訓', '食品採購與禮盒', '志工加入', '奉獻與收據諮詢', '其他諮詢']
     schemas = spec['components']['schemas']
     paths = spec['paths']
     schemas['ContactSubmission'] = {'type': 'object', 'required': ['name', 'phone', 'category', 'message', 'submission_token'], 'properties': {

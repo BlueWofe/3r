@@ -1,6 +1,11 @@
 <script setup lang="ts">
-const selectedCategory = ref("");
-const { data, refresh } = await useAsyncData("products", () =>
+const route = useRoute();
+const router = useRouter();
+const selectedCategory = computed({
+  get: () => String(route.query.category || ""),
+  set: (category: string) => { void router.replace({ query: { ...route.query, category: category || undefined } }); },
+});
+const { data, pending, error, refresh } = await useAsyncData("products", () =>
   api<any>(
     `/public/products?category=${encodeURIComponent(selectedCategory.value)}&limit=100`,
   ),
@@ -42,7 +47,10 @@ watch(selectedCategory, () => refresh());
           </option>
         </select></label
       >
-      <div class="grid cards" style="margin-top: 24px">
+      <p v-if="pending" class="empty">載入產品中…</p>
+      <p v-else-if="error" class="notice">產品暫時無法載入，請稍後再試。</p>
+      <p v-else-if="!products.length" class="empty">此分類目前沒有公開產品。</p>
+      <div v-else class="grid cards" style="margin-top: 24px">
         <NuxtLink
           v-for="p in products"
           :key="p.id"

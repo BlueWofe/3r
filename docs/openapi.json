@@ -2017,7 +2017,27 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "unread_count": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Login required"
@@ -2031,7 +2051,8 @@
           "422": {
             "description": "Validation failed"
           }
-        }
+        },
+        "description": "Notifications owned by the logged-in user, rechecked against current role and audience authorization. Relative action URLs are derived server-side; unread_count excludes inaccessible notices."
       }
     },
     "/notifications/{id}/read": {
@@ -2406,10 +2427,53 @@
         "tags": [
           "public"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Categories of published products only, independent of the selected category."
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Login required"
@@ -5210,6 +5274,8 @@
             "schema": {
               "type": "string",
               "enum": [
+                "大宗認購專案",
+                "試吃",
                 "監所探訪與代禱",
                 "更生安置與職訓",
                 "食品採購與禮盒",
@@ -5620,6 +5686,8 @@
           "category": {
             "type": "string",
             "enum": [
+              "大宗認購專案",
+              "試吃",
               "監所探訪與代禱",
               "更生安置與職訓",
               "食品採購與禮盒",
@@ -5662,6 +5730,8 @@
           "category": {
             "type": "string",
             "enum": [
+              "大宗認購專案",
+              "試吃",
               "監所探訪與代禱",
               "更生安置與職訓",
               "食品採購與禮盒",

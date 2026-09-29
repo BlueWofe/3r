@@ -3,6 +3,7 @@ definePageMeta({ layout: "app" });
 const { can } = useAuth();
 const canUpdate = computed(() => can("contacts.update.all"));
 const route = useRoute();
+const openedRequest = ref("");
 const categories = [
     "監所探訪與代禱",
     "更生安置與職訓",
@@ -40,9 +41,9 @@ async function load() {
     if (q.value) params.set("q", q.value);
     rows.value = (await api<any>(`/contact-inquiries?${params}`)).data || [];
     const requested = Number(route.query.id);
-    if (Number.isInteger(requested) && requested > 0) {
+    if (Number.isInteger(requested) && requested > 0 && openedRequest.value !== String(requested)) {
       const found = rows.value.find((row: any) => Number(row.id) === requested);
-      if (found) view(found);
+      if (found) { view(found); openedRequest.value = String(requested); }
     }
   } catch (e: any) {
     error.value = e.message || "無法載入聯絡表單。";
@@ -80,6 +81,7 @@ async function save() {
 }
 watch(() => route.query.id, load);
 onMounted(load);
+watch(() => route.query.id, () => { if (!pending.value) void load(); });
 </script>
 <template>
   <div class="workhead">

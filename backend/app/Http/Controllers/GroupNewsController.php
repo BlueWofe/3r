@@ -15,12 +15,17 @@ class GroupNewsController extends ApiController
 {
     public function news(Request $r, ?int $id = null): array
     {
+        $filters = $r->validate(['group_id' => 'nullable|integer|min:1']);
         $articles = Entity::where('type', 'contents')->get()->filter(fn ($e) => ($e->data['kind'] ?? '') === 'news' && ($e->data['visibility'] ?? 'public') === 'groups' && app(ArticleContent::class)->visible($e) && ($r->user()->canDo('content.read.all') || app(GroupAudience::class)->matches($r->user(), $e->data['group_ids'] ?? [])));
         if ($id) {
             $e = $articles->firstWhere('id', $id);
             abort_unless($e, 404);
 
             return ['data' => app(ArticleContent::class)->payload($e)];
+        }
+
+        if (! empty($filters['group_id'])) {
+            $articles = $articles->filter(fn ($e) => in_array((int) $filters['group_id'], array_map('intval', $e->data['group_ids'] ?? []), true));
         }
 
         return ['data' => $articles->sort(fn ($a, $b) => [app(ArticleContent::class)->date($b)->timestamp, $b->id] <=> [app(ArticleContent::class)->date($a)->timestamp, $a->id])->map(fn ($e) => app(ArticleContent::class)->payload($e))->values()];

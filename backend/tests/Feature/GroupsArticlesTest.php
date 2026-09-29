@@ -117,6 +117,22 @@ class GroupsArticlesTest extends TestCase
         $this->postJson('/api/v1/contents/'.$id.'/broadcast', ['version' => 1])->assertUnprocessable();
     }
 
+    public function test_group_news_filter_is_applied_after_membership_authorization(): void
+    {
+        $member = $this->account();
+        $first = $this->group([$member]);
+        $second = $this->group([$member]);
+        $outside = $this->group();
+        $this->actingAs($this->account([], true));
+        $firstId = $this->publish($first);
+        $this->publish($second);
+        $this->publish($outside);
+        $this->actingAs($member);
+        $this->getJson('/api/v1/group-news?group_id='.$first->id)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $firstId);
+        $this->getJson('/api/v1/group-news?group_id='.$outside->id)->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/group-news?group_id=bad')->assertUnprocessable();
+    }
+
     public function test_visibility_transitions_and_legacy_updates_preserve_the_current_audience(): void
     {
         $admin = $this->account([], true);

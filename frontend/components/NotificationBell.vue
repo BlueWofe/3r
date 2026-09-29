@@ -1,29 +1,49 @@
 <script setup lang="ts">
 const items = ref<any[]>([]),
   open = ref(false),
-  loading = ref(false);
+  loading = ref(false),
+  error = ref(""),
+  following = ref(false);
+const route = useRoute();
 const unread = computed(
   () => items.value.filter((item) => !item.read && !item.read_at).length,
 );
 async function load() {
   loading.value = true;
+  error.value = "";
   try {
     items.value = (await api<any>("/notifications")).data || [];
+  } catch (e: any) {
+    error.value = e.message || "通知暫時無法載入。";
   } finally {
     loading.value = false;
   }
 }
 async function follow(item: any) {
-  if (!item.read && !item.read_at)
-    await api(`/notifications/${item.id}/read`, { method: "POST" });
-  await load();
-  open.value = false;
-  if (item.url) await navigateTo(item.url);
+  if (following.value) return;
+  following.value = true;
+  try {
+    if (!item.read && !item.read_at)
+      await api(`/notifications/${item.id}/read`, { method: "POST" });
+    await load();
+    open.value = false;
+    if (typeof item.url === "string" && item.url.startsWith("/app/")) await navigateTo(item.url);
+  } catch (e: any) {
+    error.value = e.message || "此通知目前無法開啟，請重新整理。";
+  } finally {
+    following.value = false;
+  }
 }
-onMounted(load);
+let timer: ReturnType<typeof setInterval> | undefined;
+onMounted(() => {
+  void load();
+  timer = setInterval(() => { if (document.visibilityState === "visible") void load(); }, 30000);
+});
+onBeforeUnmount(() => { if (timer) clearInterval(timer); });
+watch(() => route.fullPath, () => { open.value = false; void load(); });
 </script>
 <template>
-  <div class="notification-bell">
+  <div class="notification-bell" @keydown.esc.stop="open = false">
     <button
       type="button"
       class="bell"
@@ -49,12 +69,14 @@ onMounted(load);
         >
       </div>
       <p v-if="loading" class="muted">載入中…</p>
+      <p v-else-if="error" class="error">{{ error }}</p>
       <p v-else-if="!items.length" class="muted">目前沒有通知。</p>
       <button
         v-for="item in items.slice(0, 8)"
         :key="item.id"
         class="notification-item"
         type="button"
+        :disabled="following"
         @click="follow(item)"
       >
         <strong>{{

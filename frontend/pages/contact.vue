@@ -29,8 +29,7 @@ const form = reactive({
 const pending = ref(false),
   ready = ref(false),
   success = ref(""),
-  error = ref(""),
-  filledAt = ref(0);
+  error = ref("");
 function token() {
   const b = new Uint8Array(16);
   crypto.getRandomValues(b);
@@ -49,14 +48,9 @@ function reset() {
     website: "",
     submission_token: token(),
   });
-  filledAt.value = Date.now();
 }
 async function submit() {
   if (pending.value || !ready.value) return;
-  if (Date.now() - filledAt.value < 1500) {
-    error.value = "請稍候片刻後再送出。";
-    return;
-  }
   pending.value = true;
   error.value = "";
   success.value = "";
@@ -82,7 +76,6 @@ watch(
 );
 onMounted(() => {
   reset();
-  filledAt.value = Date.now();
   ready.value = true;
 });
 </script>

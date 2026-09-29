@@ -122,7 +122,6 @@ onMounted(async () => {
             alt="中華復甦更新發展協會後台標誌" /></span
         ><span>復甦更新</span></NuxtLink
       >
-      <NotificationBell />
       <div class="workspace-menu-buttons" aria-label="工作台選單">
         <button
           ref="serviceButton"
@@ -146,6 +145,7 @@ onMounted(async () => {
           <NavIcon name="settings" />管理工作台<NavIcon name="chevron" />
         </button>
       </div>
+      <NotificationBell />
     </header>
     <aside
       v-if="ready"
@@ -488,8 +488,8 @@ button:focus-visible {
   .workspace-mobile-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
+    gap: 6px;
+    padding: 10px 12px;
     background: linear-gradient(180deg, #164538, #0e3026);
     color: #fff;
     position: sticky;
@@ -504,13 +504,15 @@ button:focus-visible {
   }
   .workspace-menu-buttons {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
   }
   .workspace-menu-buttons button {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     flex: 1;
     min-height: 44px;
     border: 1px solid #ffffff66;
@@ -518,10 +520,11 @@ button:focus-visible {
     color: inherit;
     border-radius: 999px;
     font: inherit;
-    font-size: clamp(11px, 3.4vw, 14px);
+    font-size: clamp(11px, 3.2vw, 14px);
     cursor: pointer;
-    padding: 6px 8px;
+    padding: 6px;
   }
+  .workspace-menu-buttons button .nav-icon:last-child { display: none; }
   .workspace-menu-buttons button.selected {
     background: #ffffff20;
     border-color: var(--gold);

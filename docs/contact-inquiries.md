@@ -2,7 +2,7 @@
 
 協會設定選單移至「官網內容」；其 settings.manage.all 功能權限不變。新增「聯絡表單」同分類下，需 contacts.read.all 閱覽、contacts.update.all 處理，中文權限說明。系統管理員具完整權限，其他角色可由角色管理指派。
 
-参考兩份HTML的主題，使用統一分類：監所探訪與代禱、更生安置與職訓、食品採購與禮盒、志工加入、奉獻與收據諮詢、其他諮詢。內容不複製「24小時回覆」等未確認承諾。
+參考兩份HTML的主題，使用統一分類：大宗認購專案、試吃、監所探訪與代禱、更生安置與職訓、食品採購與禮盒、志工加入、奉獻與收據諮詢、其他諮詢。產品頁兩個洽詢入口分別連至 /contact?category=大宗認購專案 與 /contact?category=試吃，前台只預選白名單中的分类，不從網址插入任意分類。內容不複製「24小時回覆」等未確認承諾。
 
 POST /public/contact（無需登入、需同源 CSRF、IP 限流）輸入 {name,phone,email?,category,message,submission_token:uuid,website?:honeypot}。姓名100、電話50、email254、訊息10000字，category必須以上中文之一。保存到 private contact inquiries，而非公開contents。submission_token資料庫唯一，同token同內容重試回相同成功確認；同token不同內容回409。回應僅 {message:"已收到您的訊息",reference}，不返回電話、訊息或私人ID；无對外郵件/LINE發送。website有值拒絕。不需收集位置或其他識別資料。
 

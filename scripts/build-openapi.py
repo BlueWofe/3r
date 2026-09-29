@@ -132,5 +132,22 @@ paths['/public/news']['get']['responses']['200']['content'] = {'application/json
 paths['/public/news/{id}']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'$ref': '#/components/schemas/Article'}}}}}
 extend_groups(spec)
 extend_contacts(spec)
+paths['/public/products']['get']['parameters'].extend([
+    {'name': 'category', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'maxLength': 100}},
+    {'name': 'limit', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 100}},
+])
+paths['/public/products']['get']['responses']['200']['content'] = {'application/json': {'schema': {
+    'type': 'object', 'properties': {
+        'data': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': True}},
+        'categories': {'type': 'array', 'items': {'type': 'string'}, 'description': 'Categories of published products only, independent of the selected category.'},
+    },
+}}}
+paths['/notifications']['get']['description'] = 'Notifications owned by the logged-in user, rechecked against current role and audience authorization. Relative action URLs are derived server-side; unread_count excludes inaccessible notices.'
+paths['/notifications']['get']['responses']['200']['content'] = {'application/json': {'schema': {
+    'type': 'object', 'properties': {
+        'data': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': True}},
+        'unread_count': {'type': 'integer', 'minimum': 0},
+    },
+}}}
 target.write_text(json.dumps(spec, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
 print(f'Generated {len(paths)} API paths')
