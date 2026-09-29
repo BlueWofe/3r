@@ -730,7 +730,14 @@ a {
     width: 100%;
   }
   .table thead {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
   }
   .table tr {
     margin: 0 0 14px;
@@ -755,6 +762,21 @@ a {
     font-size: 13px;
     font-weight: 700;
   }
+  .table td[data-label="操作"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .table td[data-label="操作"]::before {
+    width: 100%;
+  }
+  .table td[data-label="操作"] .button,
+  .table td[data-label="操作"] button,
+  .table td[data-label="操作"] a {
+    flex: 1 1 100%;
+    width: 100%;
+  }
   .table td.empty,
   .table td[colspan] {
     display: block;
@@ -767,6 +789,9 @@ a {
   .table td .button,
   .table td .actions {
     width: 100%;
+  }
+  .table td a {
+    overflow-wrap: anywhere;
   }
   .modal {
     padding: 12px;
