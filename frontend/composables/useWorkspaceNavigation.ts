@@ -57,8 +57,10 @@ export function useWorkspaceNavigation() {
     schedule() ? "/app" : can("forms.read.own") ? "/app/forms" : "/app/profile",
   );
   const managementPath = computed(() => managementLinks.value[0]?.[0] ?? null);
-  const workspacePath = computed(
-    () => managementPath.value ?? servicePath.value,
+  const workspacePath = computed(() =>
+    schedule()
+      ? servicePath.value
+      : (managementPath.value ?? servicePath.value),
   );
   return {
     schedule,

@@ -746,6 +746,16 @@ a {
     border-radius: 8px;
     background: var(--paper);
   }
+  .table thead tr,
+  .table thead th {
+    display: block;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+  }
   .table td {
     display: grid;
     grid-template-columns: minmax(92px, 38%) minmax(0, 1fr);
