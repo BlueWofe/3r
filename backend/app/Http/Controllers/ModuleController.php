@@ -22,17 +22,27 @@ class ModuleController extends ApiController
             $d = $e->data;
             $allowed = ($d['visibility'] ?? 'private') === 'public';
             if (! $allowed && $r->user()) {
-                $allowed = $e->owner_id === $r->user()->id || $r->user()->canDo('resources.read.all');
+                // Read-all grants access through a linked resource, never to every private file.
+                $allowed = $e->owner_id === $r->user()->id;
                 if (isset($d['resource_id'])) {
                     try {
                         $this->entity($r, 'resources', $d['resource_id']);
                         $allowed = true;
                     } catch (\Throwable) {
                     }
-                }if (isset($d['assignment_id'])) {
+                }
+                if (isset($d['assignment_id'])) {
                     $a = Assignment::find($d['assignment_id']);
-                    $allowed = $allowed || ($a && ($a->teacher_id === $r->user()->id || $r->user()->canDo('attendance.update.all')));
-                }foreach (Entity::where('type', 'meetings')->get() as $m) {
+                    $allowed = $allowed || ($a && (($a->teacher_id === $r->user()->id && $r->user()->canDo('attendance.create.own')) || $r->user()->canDo('attendance.update.all')));
+                }
+                if (isset($d['form_id'])) {
+                    try {
+                        $this->entity($r, 'forms', (int) $d['form_id']);
+                        $allowed = true;
+                    } catch (\Throwable) {
+                    }
+                }
+                foreach (Entity::where('type', 'meetings')->get() as $m) {
                     if (in_array($id, $m->data['file_ids'] ?? [])) {
                         try {
                             $this->entity($r, 'meetings', $m->id);
@@ -46,11 +56,40 @@ class ModuleController extends ApiController
 
             return Storage::disk('local')->download($d['path'], $d['name'], ['X-Content-Type-Options' => 'nosniff']);
         }
-        $v = $r->validate(['file' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,webp,txt,csv', 'visibility' => 'required|in:public,private', 'title' => 'nullable|string|max:200', 'category' => 'nullable|string|max:100']);
-        abort_unless($r->user()->canDo('resources.create.own') || $r->user()->canDo('resources.create.all') || $r->user()->canDo('content.create.all') || $r->user()->canDo('meetings.create.all'), 403);
-        if ($v['visibility'] === 'public') {
+        $v = $r->validate([
+            'file' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,webp,txt,csv',
+            'visibility' => [Rule::requiredIf(fn () => ! $r->filled('form_id')), 'nullable', 'in:public,private'],
+            'title' => 'nullable|string|max:200',
+            'category' => 'nullable|string|max:100',
+            'form_id' => 'nullable|integer|exists:entities,id',
+            'field_key' => 'required_with:form_id|nullable|string|alpha_dash',
+        ]);
+        $form = null;
+        if (! empty($v['form_id'])) {
+            $form = $this->entity($r, 'forms', (int) $v['form_id']);
+            abort_unless(($form->data['status'] ?? null) === 'published', 422, '表單尚未發布');
+            $fileField = collect($form->data['fields'] ?? [])->first(fn ($field) => ($field['key'] ?? null) === $v['field_key'] && ($field['type'] ?? null) === 'file');
+            abort_unless($fileField, 422, '欄位不是檔案欄位');
+            abort_if(($v['visibility'] ?? 'private') !== 'private', 422, '表單回覆檔案必須為私人檔案');
+        } else {
+            abort_unless(array_key_exists('visibility', $v), 422, '請指定檔案可見範圍');
+            abort_unless($r->user()->canDo('resources.create.own') || $r->user()->canDo('resources.create.all') || $r->user()->canDo('content.create.all') || $r->user()->canDo('meetings.create.all'), 403);
+        }
+        if (($v['visibility'] ?? 'private') === 'public') {
             $this->permit($r, 'content.publish.all');
-        }$e = Entity::create(['type' => 'files', 'owner_id' => $r->user()->id, 'data' => ['path' => $r->file('file')->store('files'), 'name' => $r->file('file')->getClientOriginalName(), 'visibility' => $v['visibility'], 'category' => $v['category'] ?? null, 'title' => $v['title'] ?? null]]);
+        }
+        $data = [
+            'path' => $r->file('file')->store('files'),
+            'name' => $r->file('file')->getClientOriginalName(),
+            'visibility' => $form ? 'private' : $v['visibility'],
+            'category' => $v['category'] ?? null,
+            'title' => $v['title'] ?? null,
+        ];
+        if ($form) {
+            $data['form_id'] = $form->id;
+            $data['form_field'] = $v['field_key'];
+        }
+        $e = Entity::create(['type' => 'files', 'owner_id' => $r->user()->id, 'data' => $data]);
 
         return ['id' => $e->id, 'name' => $e->data['name'], 'url' => '/api/v1/files/'.$e->id.'/download'];
     }
@@ -77,13 +116,26 @@ class ModuleController extends ApiController
 
     public function records(Request $r, int $id)
     {
-        $e = $this->entity($r, 'cases', $id, 'update');
         $v = $r->validate(['service_date' => 'required|date', 'type' => 'required|string|max:100', 'summary' => 'required|string|max:10000', 'follow_up' => 'nullable|string|max:10000']);
-        $d = $e->data;
-        $d['records'][] = $v + ['author_id' => $r->user()->id, 'created_at' => now()->toIso8601String()];
-        $e->update(['data' => $d]);
 
-        return $e->publicData();
+        return DB::transaction(function () use ($r, $id, $v) {
+            $e = Entity::where('type', 'cases')->lockForUpdate()->findOrFail($id);
+            $this->entity($r, 'cases', $id, 'update');
+            $before = $e->data['records'] ?? [];
+            $after = [...$before, $v + ['author_id' => $r->user()->id, 'created_at' => now()->toIso8601String()]];
+            $data = $e->data;
+            $data['records'] = $after;
+            $e->update(['data' => $data]);
+            Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => [
+                'module' => 'cases',
+                'action' => 'record.created',
+                'subject_id' => $e->id,
+                'before' => $before,
+                'after' => $after,
+            ]]);
+
+            return $e->fresh()->publicData();
+        });
     }
 
     public function responses(Request $r, int $id, bool $export = false)
@@ -93,17 +145,22 @@ class ModuleController extends ApiController
             $this->permit($r, $export ? 'forms.export.all' : 'forms.read.all');
             $data = Entity::where('type', 'responses')->get()->filter(fn ($e) => $e->data['form_id'] === $id)->map->publicData()->values();
             if ($export) {
-                return response()->streamDownload(function () use ($data) {
+                $snapshots = $f->data['snapshots'] ?? [];
+
+                return response()->streamDownload(function () use ($data, $snapshots) {
                     $out = fopen('php://output', 'w');
-                    fputcsv($out, ['ID', '填答者', '版本', '答案']);
+                    fputcsv($out, ['ID', '填答者', '版本', '欄位快照', '答案']);
                     foreach ($data as $row) {
-                        $answers = json_encode($row['answers'], JSON_UNESCAPED_UNICODE);
-                        fputcsv($out, [$row['id'], $row['owner_id'], $row['version'], $answers]);
-                    }fclose($out);
+                        $snapshot = collect($snapshots)->firstWhere('version', $row['version']);
+                        $fields = json_encode($this->safeCsvValue($snapshot['fields'] ?? []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        $answers = json_encode($this->safeCsvValue($row['answers'] ?? []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        fputcsv($out, [$row['id'], $row['owner_id'], $row['version'], $this->safeCsvCell($fields), $this->safeCsvCell($answers)]);
+                    }
+                    fclose($out);
                 }, 'form-'.$id.'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
             }
 
-return ['data' => $data];
+            return ['data' => $data];
         }
         abort_unless($f->data['status'] === 'published', 422, '表單尚未發布');
         abort_if(! empty($f->data['deadline']) && now('Asia/Taipei')->gt($f->data['deadline'].' 23:59:59'), 422, '已截止');
@@ -117,14 +174,21 @@ return ['data' => $data];
             $rule[] = match ($field['type']) {
                 'number' => 'numeric','date' => 'date','multiselect' => 'array','file' => 'integer',default => 'string'
             };
+            if ($field['type'] === 'file') {
+                $rule[] = 'exists:entities,id';
+            }
             if ($field['type'] === 'select') {
                 $rule[] = Rule::in($field['options'] ?? []);
             }$rules['answers.'.$field['key']] = $rule;
             if ($field['type'] === 'multiselect') {
                 $rules['answers.'.$field['key'].'.*'] = [Rule::in($field['options'] ?? [])];
             }if ($field['type'] === 'file' && isset($answers[$field['key']])) {
-                $file = Entity::where('type', 'files')->findOrFail($answers[$field['key']]);
-                abort_unless($file->owner_id === $r->user()->id, 403);
+                $file = Entity::where('type', 'files')->find($answers[$field['key']]);
+                abort_unless($file
+                    && $file->owner_id === $r->user()->id
+                    && ($file->data['form_id'] ?? null) === $id
+                    && ($file->data['form_field'] ?? null) === $field['key']
+                    && ($file->data['visibility'] ?? 'private') === 'private', 422, '檔案必須先上傳至此表單的指定欄位');
             }
         }$r->validate($rules);
         $e = Entity::create(['type' => 'responses', 'owner_id' => $r->user()->id, 'data' => ['form_id' => $id, 'version' => $f->data['version'], 'answers' => $answers]]);
@@ -166,7 +230,9 @@ return ['data' => $data];
                 $d['read'] = true;
             } else {
                 $s = ServiceSession::findOrFail($d['session_id']);
-                abort_unless($r->user()->canDo('schedule.read.all') || $s->assignments()->where('teacher_id', $r->user()->id)->exists(), 403);
+                $canReadAll = $r->user()->canDo('schedule.read.all');
+                $canReadOwn = $r->user()->canDo('schedule.read.own') && $s->assignments()->where('teacher_id', $r->user()->id)->exists();
+                abort_unless($canReadAll || $canReadOwn, 403);
                 $d['acknowledged_by'] = array_values(array_unique(array_merge($d['acknowledged_by'] ?? [], [$r->user()->id])));
             }$e->update(['data' => $d]);
 
@@ -178,7 +244,8 @@ return ['data' => $data];
                 return $e->owner_id === $r->user()->id;
             }$s = ServiceSession::find($e->data['session_id']);
 
-            return $r->user()->canDo('schedule.read.all') || ($s && $s->assignments()->where('teacher_id', $r->user()->id)->exists());
+            return $r->user()->canDo('schedule.read.all')
+                || ($r->user()->canDo('schedule.read.own') && $s && $s->assignments()->where('teacher_id', $r->user()->id)->exists());
         })->map->publicData()->values()];
     }
 
@@ -193,7 +260,7 @@ return ['data' => $data];
                 abort_unless($r->user()->canDo('resources.create.own') || $r->user()->canDo('resources.create.all'), 403);
             }
 
-return ['mode' => 'mock', 'status' => 'simulated'] + $v;
+            return ['mode' => 'mock', 'status' => 'simulated'] + $v;
         }
         $e = Entity::where('type', 'line')->where('owner_id', $r->user()->id)->first();
         if (! $e) {
@@ -204,31 +271,122 @@ return ['mode' => 'mock', 'status' => 'simulated'] + $v;
             $e->update(['data' => $v + ['mode' => 'mock']]);
         }
 
-return $e->data;
+        return $e->data;
     }
 
     public function settings(Request $r)
     {
         $this->permit($r, 'settings.manage.all');
-        $e = Entity::firstOrCreate(['type' => 'settings'], ['data' => ['association_name' => '示範監獄福音協會', 'contact_phone' => '', 'contact_email' => '', 'address' => '']]);
+        $e = Entity::firstOrCreate(['type' => 'settings'], ['data' => ['association_name' => '中華復甦更新發展協會', 'contact_phone' => '', 'contact_email' => '', 'address' => '']]);
         if (! $r->isMethod('get')) {
             $e->update(['data' => $r->validate(['association_name' => 'required|string|max:200', 'contact_phone' => 'nullable|string|max:100', 'contact_email' => 'nullable|email', 'address' => 'nullable|string|max:500'])]);
         }
 
-return $e->data;
+        return $e->data;
     }
 
     public function reports(Request $r)
     {
         $all = $r->user()->canDo('reports.read.all');
         abort_unless($all || $r->user()->canDo('reports.read.own'), 403);
-        $teachers = User::where('active', true)->get()->filter(fn ($u) => ($all || $u->id === $r->user()->id) && $u->canDo('schedule.read.own'));
-        $rows = $teachers->map(function ($u) {
-            $as = Assignment::where('teacher_id', $u->id)->with('session')->get();
+        $filters = $r->validate([
+            'from' => 'nullable|date_format:Y-m-d',
+            'to' => 'nullable|date_format:Y-m-d',
+            'teacher_id' => 'nullable|integer|exists:users,id',
+        ]);
+        abort_if(isset($filters['from'], $filters['to']) && $filters['to'] < $filters['from'], 422, '結束日期不可早於開始日期');
+        if (! $all && isset($filters['teacher_id'])) {
+            abort_unless((int) $filters['teacher_id'] === $r->user()->id, 403);
+        }
 
-            return ['teacher_id' => $u->id, 'name' => $u->name, 'assigned' => $as->where('status', 'assigned')->count(), 'leave' => $as->where('status', 'leave')->count(), 'replaced' => $as->where('status', 'replaced')->count(), 'attended' => $as->filter(fn ($a) => ($a->attendance['present'] ?? false))->count(), 'hours' => $as->filter(fn ($a) => ($a->attendance['present'] ?? false))->sum(fn ($a) => Carbon::parse($a->session->data['start_time'])->diffInMinutes(Carbon::parse($a->session->data['end_time'])) / 60)];
+        $start = $filters['from'] ?? '0001-01-01';
+        $end = min($filters['to'] ?? now('Asia/Taipei')->toDateString(), now('Asia/Taipei')->toDateString());
+        $sessions = ServiceSession::all()->filter(function ($session) use ($start, $end) {
+            $date = $session->data['service_date'] ?? null;
+
+            return ($session->data['status'] ?? null) !== 'cancelled' && $date && $date >= $start && $date <= $end;
+        })->keyBy('id');
+        $scopeTeacherId = ! $all ? $r->user()->id : (isset($filters['teacher_id']) ? (int) $filters['teacher_id'] : null);
+        if ($scopeTeacherId !== null) {
+            $scopedSessionIds = Assignment::where('teacher_id', $scopeTeacherId)
+                ->whereIn('session_id', $sessions->keys())
+                ->pluck('session_id')
+                ->all();
+            $sessions = $sessions->only($scopedSessionIds);
+        }
+        $teachers = User::where('active', true)->get()->filter(function ($user) use ($all, $r, $filters) {
+            return ($all || $user->id === $r->user()->id)
+                && (! isset($filters['teacher_id']) || $user->id === (int) $filters['teacher_id'])
+                && $user->canDo('schedule.read.own');
+        });
+        $rows = $teachers->map(function ($user) use ($sessions) {
+            $assignments = Assignment::where('teacher_id', $user->id)->with('session')->get()
+                ->filter(fn ($assignment) => $assignment->session && $sessions->contains('id', (int) $assignment->session_id));
+            $completed = $assignments->filter(fn ($assignment) => $assignment->status === 'assigned');
+            $attended = $completed->filter(fn ($assignment) => ($assignment->attendance['present'] ?? false));
+            $denominator = $completed->count();
+
+            return [
+                'teacher_id' => $user->id,
+                'name' => $user->name,
+                'assigned' => $denominator,
+                'leave' => $assignments->where('status', 'leave')->count(),
+                'replaced' => $assignments->where('status', 'replaced')->count(),
+                'attended' => $attended->count(),
+                'attendance_rate' => $denominator === 0 ? null : round($attended->count() / $denominator, 4),
+                'completed_sessions' => $completed->pluck('session_id')->unique()->count(),
+                'hours' => $attended->sum(fn ($assignment) => Carbon::parse($assignment->session->data['start_time'])->diffInMinutes(Carbon::parse($assignment->session->data['end_time'])) / 60),
+            ];
         })->values();
 
-        return ['summary' => ['teacher_count' => $rows->count(), 'attendance_count' => $rows->sum('attended'), 'service_hours' => $rows->sum('hours')], 'teachers' => $rows, 'data' => $rows];
+        $vacancies = $sessions->filter(fn ($session) => ! Assignment::where('session_id', $session->id)->where('status', 'assigned')->exists())->count();
+        $denominator = $rows->sum('assigned');
+        $summary = [
+            'teacher_count' => $rows->count(),
+            'completed_sessions' => $sessions->count(),
+            'vacancies' => $vacancies,
+            'assigned_denominator' => $denominator,
+            'attendance_count' => $rows->sum('attended'),
+            'attendance_rate' => $denominator === 0 ? null : round($rows->sum('attended') / $denominator, 4),
+            'leave_count' => $rows->sum('leave'),
+            'replaced_count' => $rows->sum('replaced'),
+            'service_hours' => $rows->sum('hours'),
+        ];
+
+        // Financial and association-wide usage values are only available to all-scope readers.
+        if ($all) {
+            $summary['product_views'] = Entity::where('type', 'contents')->get()->filter(fn ($content) => ($content->data['kind'] ?? null) === 'product' && ($content->data['status'] ?? null) === 'published')->sum(fn ($content) => (int) ($content->data['views'] ?? 0));
+        }
+        if ($all && $r->user()->canDo('donations.read.all')) {
+            $summary['successful_test_donations_sum'] = Entity::where('type', 'donations')->get()->filter(function ($donation) use ($start, $end) {
+                $date = substr((string) ($donation->data['simulated_at'] ?? $donation->created_at), 0, 10);
+
+                return ($donation->data['status'] ?? null) === 'success'
+                    && in_array($donation->data['provider'] ?? null, ['mock', 'test'], true)
+                    && $date >= $start && $date <= $end;
+            })->sum(fn ($donation) => (int) ($donation->data['amount'] ?? 0));
+        }
+
+        return ['summary' => $summary, 'teachers' => $rows, 'data' => $rows, 'filters' => ['from' => $filters['from'] ?? null, 'to' => $filters['to'] ?? null, 'teacher_id' => isset($filters['teacher_id']) ? (int) $filters['teacher_id'] : null]];
+    }
+
+    private function safeCsvCell(?string $value): string
+    {
+        $value ??= '';
+
+        return preg_match('/^[\s\x00-\x1f]*[=+\-@]/u', $value) === 1 ? "'".$value : $value;
+    }
+
+    private function safeCsvValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $item) {
+                $value[$key] = $this->safeCsvValue($item);
+            }
+
+            return $value;
+        }
+
+        return is_string($value) ? $this->safeCsvCell($value) : $value;
     }
 }
