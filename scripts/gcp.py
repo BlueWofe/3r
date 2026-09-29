@@ -21,7 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def connect(args):
     secret = os.getenv('R3_SSH_PASSPHRASE') or getpass.getpass('SSH key passphrase: ')
-    key = paramiko.Ed25519Key.from_private_key_file(str(args.key), password=secret)
+    key_class = paramiko.ECDSAKey if args.key_type == 'ecdsa' else paramiko.Ed25519Key
+    key = key_class.from_private_key_file(str(args.key), password=secret)
     transport = paramiko.Transport(socket.create_connection((args.host, 22), timeout=15))
     transport.banner_timeout = 15
     transport.start_client(timeout=15)
@@ -52,6 +53,8 @@ def main():
     p.add_argument('--user', default='z51bluewofe')
     p.add_argument('--key', type=Path, default=Path.home()/'.ssh'/'ys-instance-51-ed25519')
     p.add_argument('--fingerprint', required=True)
+    p.add_argument('--key-type', choices=['ed25519', 'ecdsa'], default='ed25519')
+    p.add_argument('--image-bundle', type=Path, help='Local docker save archive containing SHA-tagged images; avoids remote compilation')
     p.add_argument('--env-file', type=Path, help='3r UAT env file, never source YS env')
     args = p.parse_args()
     transport = connect(args)
@@ -77,11 +80,14 @@ def main():
             sftp.put(str(archive),stage+'/source.tar.gz')
             sftp.put(str(args.env_file),stage+'/uat.env')
             sftp.chmod(stage+'/uat.env',0o600)
+            if args.image_bundle:
+                sftp.put(str(args.image_bundle), stage+'/images.tar')
             sftp.close()
             command=f'''sudo -n mkdir -p {release} /opt/3r/config /srv/3r/uat/backups
 sudo -n tar -xzf {stage}/source.tar.gz -C {release}
 sudo -n install -m 0600 {stage}/uat.env /opt/3r/config/uat.env
-sudo -n bash {release}/scripts/deploy-uat.sh {revision}
+{('sudo -n docker load -i '+stage+'/images.tar') if args.image_bundle else ''}
+sudo -n env R3_PREBUILT={'true' if args.image_bundle else 'false'} bash {release}/scripts/deploy-uat.sh {revision}
 rm -f {stage}/uat.env'''
             run(transport,command)
     finally:
