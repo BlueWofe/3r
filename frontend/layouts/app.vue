@@ -34,11 +34,7 @@ const adminLinks = [
     "會議管理",
     () => can("meetings.read.all") || can("meetings.read.own"),
   ],
-  [
-    "/app/admin/forms",
-    "表單中心",
-    () => can("forms.read.all") || can("forms.read.own"),
-  ],
+  ["/app/admin/forms", "表單中心", () => can("forms.read.all")],
   [
     "/app/admin/reports",
     "服務報表",
@@ -58,7 +54,10 @@ const adminLinks = [
       ><NuxtLink v-if="schedule()" to="/app/calendar">行事曆</NuxtLink
       ><NuxtLink v-if="schedule()" to="/app/changes">異動通知</NuxtLink
       ><NuxtLink to="/app/invitations">邀請與通知</NuxtLink
-      ><NuxtLink to="/app/resources">資源下載</NuxtLink
+      ><NuxtLink
+        v-if="can('resources.read.own') || can('resources.read.all')"
+        to="/app/resources"
+        >資源下載</NuxtLink
       ><NuxtLink to="/app/forms">我的表單</NuxtLink
       ><NuxtLink to="/app/profile">個人資料與奉獻</NuxtLink>
       <div v-if="adminLinks.some((x) => x[2]())" class="group">管理工作台</div>

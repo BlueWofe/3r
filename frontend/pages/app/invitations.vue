@@ -2,12 +2,20 @@
 definePageMeta({ layout: "app" });
 const invitations = ref<any[]>([]),
   notifications = ref<any[]>([]);
+const { can, refresh } = useAuth();
+const canRespond = () =>
+  can("schedule.update.own") || can("schedule.update.all");
 const { error, run } = useApiError();
 async function load() {
-  [invitations.value, notifications.value] = await Promise.all([
-    api<any>("/invitations").then((x) => x.data || []),
-    api<any>("/notifications").then((x) => x.data || []),
-  ]);
+  error.value = "";
+  try {
+    notifications.value = (await api<any>("/notifications")).data || [];
+    invitations.value = canRespond()
+      ? (await api<any>("/invitations")).data || []
+      : [];
+  } catch (e: any) {
+    error.value = e.message;
+  }
 }
 async function respond(i: any, action: string) {
   await run(() =>
@@ -19,7 +27,10 @@ async function read(n: any) {
   await run(() => api(`/notifications/${n.id}/read`, { method: "POST" }));
   load();
 }
-onMounted(load);
+onMounted(async () => {
+  await refresh();
+  await load();
+});
 </script>
 <template>
   <div class="workhead">
@@ -28,7 +39,7 @@ onMounted(load);
       <h1>邀請與通知</h1>
     </div>
   </div>
-  <section>
+  <section v-if="canRespond()">
     <h2 class="serif">代課邀請</h2>
     <div v-if="!invitations.length" class="card empty">
       目前沒有待回覆的邀請。
