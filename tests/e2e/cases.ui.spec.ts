@@ -78,7 +78,7 @@ test('admin creates a case and sees its owner, prison, and refreshed service-rec
     await expect(page.getByText('已更新', { exact: true }).first()).toBeVisible();
 
     await page.getByRole('button', { name: '服務紀錄', exact: true }).click();
-    await page.getByLabel('個案').selectOption(String(createdCase.id));
+    await page.getByRole('combobox', { name: /^個案/ }).selectOption(String(createdCase.id));
     const summary = unique('即時服務紀錄');
     const followUp = '一週後再聯繫';
     await page.getByLabel('服務類型').fill('電話關懷');
@@ -91,9 +91,9 @@ test('admin creates a case and sees its owner, prison, and refreshed service-rec
     await expect(timeline).toContainText(followUp);
     await expect(timeline).toContainText(admin.name);
 
-    await page.getByLabel('個案').selectOption(String(otherCase.id));
+    await page.getByRole('combobox', { name: /^個案/ }).selectOption(String(otherCase.id));
     await expect(page.getByText('此個案尚無服務紀錄。', { exact: true })).toBeVisible();
-    await page.getByLabel('個案').selectOption(String(createdCase.id));
+    await page.getByRole('combobox', { name: /^個案/ }).selectOption(String(createdCase.id));
     await expect(page.locator('ol.story-timeline')).toContainText(summary);
   } finally {
     await api.dispose();

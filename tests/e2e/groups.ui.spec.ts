@@ -45,12 +45,12 @@ test('admin publishes and broadcasts a group article; a member can read it on de
     await page.getByLabel('分類', { exact: true }).fill('小組事工');
     await page.getByLabel('作者', { exact: true }).fill('E2E 小組編輯');
     await page.getByLabel('公開範圍').selectOption('groups');
-    await expect(page.getByLabel('公開圖片')).toHaveCount(0);
+    await expect(page.locator('input[type="file"]')).toHaveCount(0);
     const groupPicker = page.getByLabel('指定小組（可複選）');
     await groupPicker.selectOption(String(group!.id));
     await page.getByLabel('狀態').selectOption('published');
     await page.getByLabel('摘要').fill('僅提供給目前小組成員閱讀');
-    await page.getByLabel('本文').fill('這則合成文章只屬於指定小組。');
+    await page.getByRole('textbox', { name: '本文', exact: true }).fill('這則合成文章只屬於指定小組。');
     const createResponsePromise = page.waitForResponse(response =>
       response.request().method() === 'POST' && new URL(response.url()).pathname.endsWith('/api/v1/contents'),
     );

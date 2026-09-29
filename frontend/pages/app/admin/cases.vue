@@ -5,10 +5,14 @@ const route = useRoute();
 const router = useRouter();
 const users = ref<any[]>([]),
   caseRows = ref<any[]>([]),
-  error = ref(""),
-  activeTab = ref<"directory" | "records">(
-    route.query.section === "records" ? "records" : "directory",
-  );
+  caseRowsLoaded = ref(false),
+  error = ref("");
+const activeTab = computed<"directory" | "records">({
+  get: () => route.query.section === "records" ? "records" : "directory",
+  set: (tab) => {
+    void router.replace({ query: { ...route.query, section: tab === "records" ? "records" : undefined } });
+  },
+});
 const canAssign = () =>
   can("cases.create.all") && can("cases.update.all") && can("users.read.all");
 const canCreate = () => can("cases.create.all");
@@ -37,18 +41,6 @@ const fields = computed(() => [
     readonly: !canAssign(),
   },
 ]);
-
-watch(activeTab, async (tab) => {
-  const section = tab === "records" ? "records" : undefined;
-  if (route.query.section !== section)
-    await router.replace({ query: { ...route.query, section } });
-});
-watch(
-  () => route.query.section,
-  (section) => {
-    activeTab.value = section === "records" ? "records" : "directory";
-  },
-);
 
 onMounted(async () => {
   await loadPrisons();
@@ -92,14 +84,14 @@ onMounted(async () => {
       :fields="fields"
       :can-create="canCreate()"
       :can-update="canUpdate()"
-      @updated="caseRows = $event"
+      @updated="caseRows = $event; caseRowsLoaded = true"
     />
     <p v-if="error" class="notice">
       負責同工選單暫時無法取得，既有指派仍會保留。
     </p>
   </section>
   <section v-show="activeTab === 'records'" class="records-pane">
-    <CaseRecordEntry :cases="caseRows" :can-write="canUpdate()" />
+    <CaseRecordEntry :cases="caseRows" :loaded="caseRowsLoaded" :can-write="canUpdate()" />
   </section>
 </template>
 <style scoped>

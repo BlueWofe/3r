@@ -17,7 +17,8 @@ const taipei = (value?: string) =>
     : "";
 onMounted(async () => {
   try {
-    item.value = await api<any>(`/group-news/${route.params.id}`);
+    const response = await api<any>(`/group-news/${route.params.id}`);
+    item.value = response.data;
   } catch (e: any) {
     error.value = e.message || "找不到這則小組消息。";
   } finally {

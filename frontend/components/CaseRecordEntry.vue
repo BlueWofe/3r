@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ cases: any[]; canWrite: boolean }>();
+const props = defineProps<{ cases: any[]; canWrite: boolean; loaded: boolean }>();
 const route = useRoute();
 const router = useRouter();
 const pending = ref(false);
@@ -7,8 +7,13 @@ const queryCaseId = () => {
   const value = Number(route.query.case_id);
   return Number.isInteger(value) && value > 0 ? value : null;
 };
-const caseId = ref<number | null>(queryCaseId()),
-  records = ref<any[]>([]),
+const caseId = computed<number | null>({
+  get: queryCaseId,
+  set: (id) => {
+    void router.replace({ query: { ...route.query, case_id: id ? String(id) : undefined } });
+  },
+});
+const records = ref<any[]>([]),
   saved = ref(""),
   loading = ref(false);
 let request = 0;
@@ -57,26 +62,15 @@ async function loadRecords() {
     if (sequence === request) loading.value = false;
   }
 }
-watch(caseId, async (id) => {
+watch(caseId, () => {
   saved.value = "";
   records.value = [];
-  const next = id ? String(id) : undefined;
-  if (route.query.case_id !== next)
-    await router.replace({ query: { ...route.query, case_id: next } });
   loadRecords();
 });
 watch(
-  () => route.query.case_id,
-  (value) => {
-    const next = Number(value);
-    const valid = Number.isInteger(next) && next > 0 ? next : null;
-    if (caseId.value !== valid) caseId.value = valid;
-  },
-);
-watch(
-  () => props.cases,
-  (rows) => {
-    if (!rows.length) return;
+  () => [props.cases, props.loaded] as const,
+  ([rows, loaded]) => {
+    if (!loaded) return;
     if (
       caseId.value &&
       !rows.some((row) => Number(row.id) === Number(caseId.value))

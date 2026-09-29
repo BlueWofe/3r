@@ -15,7 +15,7 @@ test('case records survive page reloads and tab switches preserve selectable cas
     await page.goto('/app/admin/cases');
     await expect(page.getByRole('heading', { name: '個案紀錄', exact: true })).toBeVisible();
     await page.getByRole('button', { name: '服務紀錄', exact: true }).click();
-    const casePicker = page.getByLabel('個案');
+    const casePicker = page.getByRole('combobox', { name: /^個案/ });
     await expect(casePicker.locator(`option[value="${caseId}"]`)).toContainText(caseRow.name);
     await casePicker.selectOption(String(caseId));
     const summary = unique('Reloadable service record');
@@ -43,7 +43,7 @@ test('case records survive page reloads and tab switches preserve selectable cas
     // A new document request rehydrates the record from the API instead of local component state.
     await page.reload();
     await expect(page.getByRole('button', { name: '服務紀錄', exact: true })).toHaveAttribute('aria-pressed', 'true');
-    const reloadedPicker = page.getByLabel('個案');
+    const reloadedPicker = page.getByRole('combobox', { name: /^個案/ });
     await expect(reloadedPicker.locator(`option[value="${caseId}"]`)).toContainText(caseRow.name);
     await expect(reloadedPicker).toHaveValue(String(caseId));
     await expect(page.locator('ol.story-timeline')).toContainText(summary);
