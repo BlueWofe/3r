@@ -173,8 +173,13 @@ onMounted(load);
           <option v-if="f.optional && f.type !== 'multiselect'" value="">
             未選擇
           </option>
-          <option v-for="o in f.options" :key="o.id ?? o" :value="o.id ?? o">
-            {{ o.name ?? o }}
+          <option
+            v-for="o in f.options"
+            :key="o.id ?? o"
+            :value="o.id ?? o"
+            :disabled="o.active === false && o.id !== editing?.[f.key]"
+          >
+            {{ o.name ?? o }}{{ o.active === false ? "（已停用）" : "" }}
           </option></select
         ><input
           v-else-if="f.type === 'file'"
