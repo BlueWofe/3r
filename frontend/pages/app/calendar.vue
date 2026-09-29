@@ -103,7 +103,7 @@ async function sessionUpdated() {
     </div>
   </div>
   <div v-if="error" class="notice">{{ error }}</div>
-  <div class="calendar">
+  <div class="calendar" :class="{ agenda: view === 'agenda' }">
     <div
       v-for="d in days"
       :key="d"

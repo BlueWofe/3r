@@ -116,20 +116,20 @@ onMounted(async () => {
       </thead>
       <tbody>
         <tr v-for="s in rows" :key="s.id">
-          <td>{{ s.service_date }} {{ s.start_time }}</td>
-          <td>
+          <td data-label="日期時間">{{ s.service_date }} {{ s.start_time }}</td>
+          <td data-label="服務">
             {{ s.title }}<br /><small>{{ s.prison }}</small>
           </td>
-          <td>{{ s.location }}</td>
-          <td>
+          <td data-label="地點">{{ s.location }}</td>
+          <td data-label="同工">
             {{ assignmentSummary(s) }}<br /><small v-if="s.invitations?.length"
               >邀請中 {{ s.invitations.length }} 位同工</small
             >
           </td>
-          <td>
+          <td data-label="狀態">
             <span :class="['status', s.status]">{{ s.status }}</span>
           </td>
-          <td>
+          <td data-label="操作">
             <SessionActions
               v-if="!refreshing"
               :session="s"

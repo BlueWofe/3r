@@ -88,10 +88,10 @@ async function lineSave() {
       <div v-if="donations.length" class="tablewrap" style="margin-top: 12px">
         <table class="table">
           <tr v-for="d in donations" :key="d.id">
-            <td>{{ d.created_at }}</td>
-            <td>{{ d.purpose }}</td>
-            <td>{{ d.amount }}</td>
-            <td>{{ d.status }}</td>
+            <td data-label="日期">{{ d.created_at }}</td>
+            <td data-label="用途">{{ d.purpose }}</td>
+            <td data-label="金額">{{ d.amount }}</td>
+            <td data-label="狀態">{{ d.status }}</td>
           </tr>
         </table>
       </div>

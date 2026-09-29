@@ -137,13 +137,15 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="row.id">
-          <td>{{ row.kind === "news" ? "消息" : "頁面" }}</td>
-          <td>{{ row.title }}</td>
-          <td>{{ row.category || "—" }}</td>
-          <td>{{ row.author_name || "—" }}</td>
-          <td>{{ formatLocalTaipei(row.published_at) || "尚未設定" }}</td>
-          <td>{{ statusLabel(row) }}</td>
-          <td>
+          <td data-label="類型">{{ row.kind === "news" ? "消息" : "頁面" }}</td>
+          <td data-label="標題">{{ row.title }}</td>
+          <td data-label="分類">{{ row.category || "—" }}</td>
+          <td data-label="作者">{{ row.author_name || "—" }}</td>
+          <td data-label="發布時間">
+            {{ formatLocalTaipei(row.published_at) || "尚未設定" }}
+          </td>
+          <td data-label="狀態">{{ statusLabel(row) }}</td>
+          <td data-label="操作">
             <button class="button ghost" @click="reset(row)">編輯</button>
           </td>
         </tr>

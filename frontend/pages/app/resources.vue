@@ -130,9 +130,9 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="r in rows" :key="r.id">
-          <td>{{ r.title }}</td>
-          <td>{{ r.category }}</td>
-          <td>
+          <td data-label="名稱">{{ r.title }}</td>
+          <td data-label="分類">{{ r.category }}</td>
+          <td data-label="操作">
             <a
               class="button"
               :href="`/api/v1/files/${r.file_id || r.id}/download`"

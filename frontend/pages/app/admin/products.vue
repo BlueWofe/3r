@@ -52,12 +52,12 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="p in rows" :key="p.id">
-          <td>{{ p.title }}</td>
-          <td>{{ p.category }}</td>
-          <td>{{ p.metadata?.variants?.length || 0 }} 組</td>
-          <td>{{ p.status }}</td>
-          <td>{{ p.sort_order }}</td>
-          <td>
+          <td data-label="名稱">{{ p.title }}</td>
+          <td data-label="分類">{{ p.category }}</td>
+          <td data-label="規格">{{ p.metadata?.variants?.length || 0 }} 組</td>
+          <td data-label="狀態">{{ p.status }}</td>
+          <td data-label="排序">{{ p.sort_order }}</td>
+          <td data-label="操作">
             <button
               class="button ghost"
               @click="

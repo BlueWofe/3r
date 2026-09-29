@@ -153,12 +153,12 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="t in templates" :key="t.id">
-          <td>{{ t.name }}</td>
-          <td>{{ t.prison }}／{{ t.location }}</td>
-          <td>{{ t.teacher_ids?.length || 0 }} 位</td>
-          <td>{{ t.rules?.length || 0 }} 組</td>
-          <td>{{ t.active ? "啟用" : "停用" }}</td>
-          <td>
+          <td data-label="班別">{{ t.name }}</td>
+          <td data-label="監所／地點">{{ t.prison }}／{{ t.location }}</td>
+          <td data-label="同工">{{ t.teacher_ids?.length || 0 }} 位</td>
+          <td data-label="規則">{{ t.rules?.length || 0 }} 組</td>
+          <td data-label="狀態">{{ t.active ? "啟用" : "停用" }}</td>
+          <td data-label="操作">
             <button class="button ghost" @click="edit(t)">編輯／預覽</button>
             <button class="button" :disabled="pending" @click="generate(t)">
               生成場次
@@ -292,9 +292,9 @@ onMounted(load);
               v-for="row in preview.data"
               :key="`${row.rule_id}-${row.service_date}-${row.start_time}`"
             >
-              <td>{{ row.service_date }}</td>
-              <td>{{ row.start_time }}–{{ row.end_time }}</td>
-              <td>{{ ruleDescription(row.rule_id) }}</td>
+              <td data-label="日期">{{ row.service_date }}</td>
+              <td data-label="時間">{{ row.start_time }}–{{ row.end_time }}</td>
+              <td data-label="規則">{{ ruleDescription(row.rule_id) }}</td>
             </tr>
           </tbody>
         </table>

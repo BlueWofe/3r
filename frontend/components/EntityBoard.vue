@@ -24,7 +24,9 @@ const { error, run } = useApiError();
 async function load() {
   try {
     const r: any = await api(p.endpoint);
-    rows.value = (r.data || []).filter((row: any) => !p.excludeKinds?.includes(row.kind));
+    rows.value = (r.data || []).filter(
+      (row: any) => !p.excludeKinds?.includes(row.kind),
+    );
     error.value = "";
   } catch (e: any) {
     error.value = e.message;
@@ -93,14 +95,14 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="r in rows" :key="r.id">
-          <td v-for="f in fields" :key="f.key">
+          <td v-for="f in fields" :key="f.key" :data-label="f.label">
             {{
               Array.isArray(r[f.key])
                 ? r[f.key].map((x: any) => x.name || x).join("、")
                 : r[f.key]
             }}
           </td>
-          <td>
+          <td data-label="操作">
             <button
               v-if="canUpdate !== false"
               class="button ghost"

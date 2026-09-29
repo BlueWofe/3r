@@ -31,14 +31,16 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="r in rows" :key="r.id">
-          <td>{{ r.created_at || r.service_date }}</td>
-          <td>{{ r.message || r.reason || r.type }}</td>
-          <td>
+          <td data-label="時間">{{ r.created_at || r.service_date }}</td>
+          <td data-label="異動內容">{{ r.message || r.reason || r.type }}</td>
+          <td data-label="變更前 → 後">
             {{ r.before || r.before_value || "—" }} →
             {{ r.after || r.after_value || "—" }}
           </td>
-          <td>{{ r.acknowledged_at ? "已確認" : "待確認" }}</td>
-          <td>
+          <td data-label="狀態">
+            {{ r.acknowledged_at ? "已確認" : "待確認" }}
+          </td>
+          <td data-label="操作">
             <button v-if="!r.acknowledged_at" class="button" @click="ack(r)">
               確認已閱
             </button>

@@ -121,14 +121,14 @@ onMounted(async () => {
             v-for="r in report.teachers || report.data || []"
             :key="r.teacher_id"
           >
-            <td>{{ r.name }}</td>
-            <td>{{ r.completed_sessions || 0 }}</td>
-            <td>{{ r.assigned || 0 }}</td>
-            <td>{{ r.attended || 0 }}</td>
-            <td>{{ rate(r.attendance_rate) }}</td>
-            <td>{{ r.leave || 0 }}</td>
-            <td>{{ r.replaced || 0 }}</td>
-            <td>{{ r.hours || 0 }}</td>
+            <td data-label="同工">{{ r.name }}</td>
+            <td data-label="完成場次">{{ r.completed_sessions || 0 }}</td>
+            <td data-label="應出席">{{ r.assigned || 0 }}</td>
+            <td data-label="已出席">{{ r.attended || 0 }}</td>
+            <td data-label="出席率">{{ rate(r.attendance_rate) }}</td>
+            <td data-label="請假">{{ r.leave || 0 }}</td>
+            <td data-label="代課">{{ r.replaced || 0 }}</td>
+            <td data-label="時數">{{ r.hours || 0 }}</td>
           </tr>
           <tr v-if="!(report.teachers || report.data || []).length">
             <td colspan="8" class="empty">此區間沒有可呈現的服務資料。</td>

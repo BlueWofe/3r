@@ -85,11 +85,15 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="u in users" :key="u.id">
-          <td>{{ u.name }}</td>
-          <td>{{ u.phone }}</td>
-          <td>{{ u.roles?.map((r: any) => r.name).join("、") }}</td>
-          <td>{{ u.active ? "是" : "否" }}</td>
-          <td><button class="button ghost" @click="edit(u)">編輯</button></td>
+          <td data-label="姓名">{{ u.name }}</td>
+          <td data-label="電話">{{ u.phone }}</td>
+          <td data-label="角色">
+            {{ u.roles?.map((r: any) => r.name).join("、") }}
+          </td>
+          <td data-label="啟用">{{ u.active ? "是" : "否" }}</td>
+          <td data-label="操作">
+            <button class="button ghost" @click="edit(u)">編輯</button>
+          </td>
         </tr>
         <tr v-if="!users.length">
           <td colspan="5" class="empty">尚無可查看的人員。</td>

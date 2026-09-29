@@ -85,9 +85,9 @@ onMounted(load);
     <div class="tablewrap" style="margin-top: 12px">
       <table class="table">
         <tr v-for="r in resources" :key="r.id">
-          <td>{{ r.title }}</td>
-          <td>{{ r.category }}</td>
-          <td>
+          <td data-label="名稱">{{ r.title }}</td>
+          <td data-label="分類">{{ r.category }}</td>
+          <td data-label="操作">
             <a
               class="button ghost"
               :href="`/api/v1/files/${r.file_id || r.id}/download`"
