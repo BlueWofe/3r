@@ -6,6 +6,7 @@ const cursor = ref(new Date());
 const sessions = ref<Session[]>([]);
 const selected = ref<Session | null>(null);
 const refreshing = ref(false);
+const loading = ref(false);
 const error = ref("");
 const dayDialog = ref<HTMLDialogElement | null>(null);
 const selectedDay = ref("");
@@ -44,6 +45,7 @@ const range = computed(() => {
 });
 const load = async () => {
   const sequence = ++request;
+  loading.value = true;
   try {
     const next =
       (
@@ -57,6 +59,8 @@ const load = async () => {
     }
   } catch (e: any) {
     if (sequence === request) error.value = e.message;
+  } finally {
+    if (sequence === request) loading.value = false;
   }
 };
 onMounted(load);
@@ -135,10 +139,11 @@ async function sessionUpdated() {
     </div>
   </div>
   <div v-if="error" class="notice">{{ error }}</div>
+  <p v-if="loading" role="status" class="muted">正在載入課程…</p>
   <div v-if="view !== 'agenda'" class="calendar-weekdays" aria-hidden="true">
     <span v-for="weekday in ['日', '一', '二', '三', '四', '五', '六']" :key="weekday">{{ weekday }}</span>
   </div>
-  <div class="calendar iphone-calendar" :class="{ agenda: view === 'agenda' }">
+  <div class="calendar iphone-calendar" :aria-busy="loading" :class="{ agenda: view === 'agenda' }">
     <div
       v-for="d in days"
       :key="d"
@@ -151,7 +156,8 @@ async function sessionUpdated() {
         class="calendar-day-tap"
         :class="{ 'is-today': d === today, 'other-month': view === 'month' && Number(d.slice(5, 7)) !== cursor.getMonth() + 1 }"
         :aria-current="d === today ? 'date' : undefined"
-        :aria-label="`${d}，${sessionsFor(d).length} 場服務`"
+        :disabled="loading || refreshing"
+        :aria-label="loading ? `${d}，載入中` : `${d}，${sessionsFor(d).length} 場服務`"
         @click="openDay(d, $event)"
       >
         <b>{{ Number(d.slice(8)) }}</b
@@ -169,7 +175,7 @@ async function sessionUpdated() {
           v-for="s in sessionsFor(d)"
           :key="s.id"
           class="event"
-          :disabled="refreshing"
+          :disabled="refreshing || loading"
           @click="selected = s"
         >
           <span :class="['status', s.status]">{{
