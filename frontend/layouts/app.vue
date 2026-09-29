@@ -7,9 +7,6 @@ const openMenu = ref<"service" | "management" | null>(null);
 const serviceButton = ref<HTMLButtonElement | null>(null);
 const managementButton = ref<HTMLButtonElement | null>(null);
 const route = useRoute();
-const { data: contact } = await useAsyncData("workspace-public-contact", () =>
-  api<any>("/public/contact").catch(() => ({ data: null })),
-);
 const serviceLinks = computed(() =>
   [
     ["/app", "今日行程", "calendar", schedule()],
@@ -107,10 +104,7 @@ onMounted(async () => {
       class="workspace-mobile-header"
       @keydown.esc.prevent="closeMenu(true)"
     >
-      <NuxtLink class="brand workspace-brand" to="/" @click="closeMenu()"
-        ><BrandLogo :logo-url="contact?.data?.logo_url" /><span
-          >復甦更新</span
-        ></NuxtLink
+      <NuxtLink class="brand workspace-brand" to="/" @click="closeMenu()"><span class="backend-logo-frame"><img src="/images/association-backend-logo.png" alt="中華復甦更新發展協會後台標誌" /></span><span>復甦更新</span></NuxtLink
       >
       <NuxtLink class="public-return" to="/" @click="closeMenu()"
         ><NavIcon name="home" />回到官網</NuxtLink
@@ -144,8 +138,7 @@ onMounted(async () => {
       :class="['side', { 'menu-open': openMenu }]"
       @keydown.esc.prevent="closeMenu(true)"
     >
-      <NuxtLink class="brand desktop-brand" to="/"
-        ><BrandLogo :logo-url="contact?.data?.logo_url" />復甦更新</NuxtLink
+      <NuxtLink class="brand desktop-brand" to="/"><span class="backend-logo-frame"><img src="/images/association-backend-logo.png" alt="中華復甦更新發展協會後台標誌" /></span>復甦更新</NuxtLink
       >
       <NuxtLink class="public-return desktop-return" to="/"
         ><NavIcon name="home" />回到官網</NuxtLink
@@ -249,7 +242,7 @@ onMounted(async () => {
 .side {
   display: none;
   position: fixed;
-  top: 66px;
+  top: 98px;
   left: 50%;
   z-index: 35;
   width: min(720px, calc(100vw - 32px));
@@ -278,10 +271,8 @@ onMounted(async () => {
   margin-right: auto;
   color: #fff;
 }
-.workspace-brand :deep(.brand-logo) {
-  width: 46px;
-  height: 46px;
-}
+.backend-logo-frame { width: 78px; height: 78px; overflow: hidden; display: grid; place-items: center; flex: 0 0 auto; border-radius: 10px; background: #f7f0df; }
+.backend-logo-frame img { width: 134px; height: 168px; max-width: none; transform: translate(-35px, -47px); }
 .side.menu-open {
   display: block;
 }
