@@ -26,7 +26,7 @@ GET/POST /groups、GET/PUT /groups/{id}，需 groups.manage.all。群組 {id,nam
 
 meetings、resources 增加 group_ids，可複選，回應 group_names。GET 列表支持 group_id 篩選，必須先套權限，不能只依篩選隱藏。建立／更新只能選有效小組；未传保留原值，舊資料維持既有角色規則。roles 與 groups 是閱覽對象聯集：有任一設定時，匹配角色或有效小組成員可閱覽；兩者皆空時維持有 read.own 權限者可閱覽。仍需相應模組 read.own 功能權限；read.all 及符合功能權限的擁有者可查看。小組本身不自動升級角色或管理權限。
 
-私人附件下載重查會議／資源對象。不能透過另一個較寬鬆的會議連結，擴大一份小組資源附件的對象；會議選取已上傳資源不會改寫資源存取範圍。群組資源移出小組後直接 API 與檔案 URL 都拒絕。resources.create.own 可上傳到本人有效小組，但不能指定他組／角色；create.all 可選所有有效小組。
+私人附件下載重查會議／資源對象。不能透過另一個較寬鬆的會議連結，擴大一份小組資源附件的對象；會議選取已上傳資源不會改寫資源存取範圍。僅靠小組資格閱覽的成員移出後，直接 API 與檔案 URL 都拒絕；擁有者、read.all 或仍符合分享角色者依原有授權判斷。resources.create.own 可上傳到本人有效小組，但不能指定他組／角色；create.all 可選所有有效小組。
 
 PUT /resources/{id} 可編輯 title、category、role_ids、group_ids，需 resources.update.all；未傳欄位保留，檔案本身不替換，保存稽核。group_ids 最多 100 個、小組 member_ids 最多 500 人，儲存時去重。
 
