@@ -66,9 +66,11 @@ onMounted(refresh);
     <div class="container grid">
       <div>
         <div class="brand">
-          <BrandLogo :logo-url="contact?.data?.logo_url" footer />{{
-            contact?.data?.association_name || "中華復甦更新發展協會"
-          }}
+          <span class="footer-association-logo"
+            ><img
+              src="/images/association-backend-logo.png"
+              alt="中華復甦更新發展協會標誌" /></span
+          >{{ contact?.data?.association_name || "中華復甦更新發展協會" }}
         </div>
         <p>
           陪伴生命走過幽谷，在盼望中重新站立。<br /><span class="demo"
@@ -99,6 +101,26 @@ button:focus-visible {
 }
 .links {
   flex-wrap: wrap;
+}
+.footer-association-logo {
+  position: relative;
+  display: inline-block;
+  width: 88px;
+  height: 88px;
+  margin-right: 10px;
+  overflow: hidden;
+  vertical-align: middle;
+  border-radius: 10px;
+  background: #f7f0df;
+}
+.footer-association-logo img {
+  position: absolute;
+  width: 136px;
+  height: 170px;
+  max-width: none;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 @media (max-width: 760px) {
   .links.open {

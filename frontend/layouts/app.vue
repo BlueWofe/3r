@@ -104,7 +104,12 @@ onMounted(async () => {
       class="workspace-mobile-header"
       @keydown.esc.prevent="closeMenu(true)"
     >
-      <NuxtLink class="brand workspace-brand" to="/" @click="closeMenu()"><span class="backend-logo-frame"><img src="/images/association-backend-logo.png" alt="中華復甦更新發展協會後台標誌" /></span><span>復甦更新</span></NuxtLink
+      <NuxtLink class="brand workspace-brand" to="/" @click="closeMenu()"
+        ><span class="backend-logo-frame"
+          ><img
+            src="/images/association-backend-logo.png"
+            alt="中華復甦更新發展協會後台標誌" /></span
+        ><span>復甦更新</span></NuxtLink
       >
       <NuxtLink class="public-return" to="/" @click="closeMenu()"
         ><NavIcon name="home" />回到官網</NuxtLink
@@ -138,7 +143,12 @@ onMounted(async () => {
       :class="['side', { 'menu-open': openMenu }]"
       @keydown.esc.prevent="closeMenu(true)"
     >
-      <NuxtLink class="brand desktop-brand" to="/"><span class="backend-logo-frame"><img src="/images/association-backend-logo.png" alt="中華復甦更新發展協會後台標誌" /></span>復甦更新</NuxtLink
+      <NuxtLink class="brand desktop-brand" to="/"
+        ><span class="backend-logo-frame"
+          ><img
+            src="/images/association-backend-logo.png"
+            alt="中華復甦更新發展協會後台標誌" /></span
+        >復甦更新</NuxtLink
       >
       <NuxtLink class="public-return desktop-return" to="/"
         ><NavIcon name="home" />回到官網</NuxtLink
@@ -271,8 +281,25 @@ onMounted(async () => {
   margin-right: auto;
   color: #fff;
 }
-.backend-logo-frame { width: 78px; height: 78px; overflow: hidden; display: grid; place-items: center; flex: 0 0 auto; border-radius: 10px; background: #f7f0df; }
-.backend-logo-frame img { width: 134px; height: 168px; max-width: none; transform: translate(-35px, -47px); }
+.backend-logo-frame {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  overflow: hidden;
+  display: block;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: #f7f0df;
+}
+.backend-logo-frame img {
+  position: absolute;
+  width: 120px;
+  height: 150px;
+  max-width: none;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
 .side.menu-open {
   display: block;
 }
@@ -427,8 +454,12 @@ button:focus-visible {
   outline-offset: 3px;
 }
 @media (max-width: 760px) {
-  .workspace { padding: 20px 16px; }
-  .workspace-brand { display: none; }
+  .workspace {
+    padding: 20px 16px;
+  }
+  .workspace-brand {
+    display: none;
+  }
   .workspace-mobile-header {
     display: grid;
     gap: 10px;
