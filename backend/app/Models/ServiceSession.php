@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPrison;
 use Illuminate\Database\Eloquent\Model;
 
 class ServiceSession extends Model
 {
+    use HasPrison;
+
     protected $attributes = ['version' => 1];
 
     protected $guarded = [];

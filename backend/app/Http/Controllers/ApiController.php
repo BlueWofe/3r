@@ -6,6 +6,7 @@ use App\Models\Entity;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\ArticleContent;
+use App\Services\PrisonDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -20,7 +21,7 @@ class ApiController extends Controller
 {
     public static function permissionNames(): array
     {
-        $modules = ['schedule' => ['read.own', 'read.all', 'update.own', 'update.all', 'create.all'], 'attendance' => ['create.own', 'update.all'], 'content' => ['read.all', 'create.all', 'update.all', 'delete.all', 'publish.all'], 'users' => ['read.all', 'update.all', 'create.all'], 'roles' => ['manage.all'], 'cases' => ['read.assigned', 'read.all', 'create.all', 'update.assigned', 'update.all', 'export.all'], 'resources' => ['read.own', 'read.all', 'create.own', 'create.all', 'update.all', 'delete.all'], 'meetings' => ['read.own', 'read.all', 'create.all', 'update.all'], 'forms' => ['read.own', 'read.all', 'create.all', 'update.all', 'export.all'], 'donations' => ['read.own', 'read.all'], 'reports' => ['read.own', 'read.all'], 'settings' => ['manage.all']];
+        $modules = ['schedule' => ['read.own', 'read.all', 'update.own', 'update.all', 'create.all'], 'attendance' => ['create.own', 'update.all'], 'content' => ['read.all', 'create.all', 'update.all', 'delete.all', 'publish.all'], 'users' => ['read.all', 'update.all', 'create.all'], 'roles' => ['manage.all'], 'cases' => ['read.assigned', 'read.all', 'create.all', 'update.assigned', 'update.all', 'export.all'], 'resources' => ['read.own', 'read.all', 'create.own', 'create.all', 'update.all', 'delete.all'], 'meetings' => ['read.own', 'read.all', 'create.all', 'update.all'], 'forms' => ['read.own', 'read.all', 'create.all', 'update.all', 'export.all'], 'donations' => ['read.own', 'read.all'], 'reports' => ['read.own', 'read.all'], 'settings' => ['manage.all'], 'prisons' => ['manage.all']];
         $out = [];
         foreach ($modules as $m => $actions) {
             foreach ($actions as $a) {
@@ -263,7 +264,7 @@ class ApiController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['代碼', '姓名', '狀態', '監所', '聯絡', '服務紀錄']);
             foreach ($cases as $e) {
-                $d = $e->data;
+                $d = $e->publicData();
                 $row = [$d['code'] ?? '', $d['name'] ?? '', $d['status'] ?? '', $d['prison'] ?? '', $d['contact'] ?? '', json_encode($d['records'] ?? [], JSON_UNESCAPED_UNICODE)];
                 $row = array_map(fn ($value) => preg_match('/^[=+@\-\t\r]/', (string) $value) ? "'".$value : $value, $row);
                 fputcsv($out, $row);
@@ -318,7 +319,7 @@ class ApiController extends Controller
         }
         $rules = match ($type) {
             'contents' => ['kind' => 'required|in:page,news,product', 'title' => 'required|string|max:200', 'slug' => 'required|string|max:200', 'body' => 'required|string|max:100000', 'summary' => 'nullable|string|max:2000', 'category' => 'nullable|string|max:100', 'status' => 'required|in:draft,published', 'sort_order' => 'nullable|integer', 'metadata' => 'nullable|array', 'image_id' => 'nullable|integer', 'author_name' => 'nullable|string|max:100', 'published_at' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?$/'], 'body_format' => 'sometimes|in:text,html'],
-            'cases' => ['code' => 'required|string|max:100', 'name' => 'required|string|max:100', 'status' => 'required|string|max:100', 'prison' => 'nullable|string|max:100', 'contact' => 'nullable|string|max:500', 'assigned_user_id' => 'nullable|exists:users,id'],
+            'cases' => ['code' => 'required|string|max:100', 'name' => 'required|string|max:100', 'status' => 'required|string|max:100', 'prison' => 'nullable|string|max:100', 'prison_id' => 'nullable|integer|exists:prisons,id', 'contact' => 'nullable|string|max:500', 'assigned_user_id' => 'nullable|exists:users,id'],
             'meetings' => ['title' => 'required|string|max:200', 'meeting_date' => 'required|date', 'agenda' => 'nullable|string', 'minutes' => 'nullable|string', 'decisions' => 'nullable|string', 'role_ids' => 'array', 'role_ids.*' => 'exists:roles,id', 'file_ids' => 'array', 'file_ids.*' => 'integer'],
             'forms' => ['title' => 'required|string|max:200', 'description' => 'nullable|string', 'status' => 'required|in:draft,published', 'deadline' => 'nullable|date', 'role_ids' => 'array', 'role_ids.*' => 'exists:roles,id', 'fields' => 'required|array|max:100', 'fields.*.key' => 'required|alpha_dash|distinct', 'fields.*.label' => 'required|string', 'fields.*.type' => 'required|in:text,textarea,number,date,select,multiselect,file', 'fields.*.required' => 'required|boolean', 'fields.*.options' => 'nullable|array'],
             default => []
@@ -329,6 +330,16 @@ class ApiController extends Controller
         $before = $e->data;
         $v = $r->validate($rules);
         if ($type === 'cases') {
+            if ($id && ! array_key_exists('assigned_user_id', $v)) {
+                $v['assigned_user_id'] = $before['assigned_user_id'] ?? null;
+            }
+            if (! $id && empty($v['assigned_user_id']) && ! $r->user()->canDo('cases.read.all') && $r->user()->canDo('cases.read.assigned')) {
+                $v['assigned_user_id'] = $r->user()->id;
+            }
+            if ($e->prison_id && ! array_key_exists('prison_id', $v) && ($v['prison'] ?? null) === ($before['prison'] ?? null)) {
+                $v['prison_id'] = $e->prison_id;
+            }
+            $v = array_merge($v, app(PrisonDirectory::class)->resolve($v, $e->prison_id, $r->user()->canDo('cases.create.all') || $r->user()->canDo('prisons.manage.all'), false));
             if ($id && ($v['assigned_user_id'] ?? null) !== ($before['assigned_user_id'] ?? null)) {
                 $this->permit($r, 'cases.update.all');
             }

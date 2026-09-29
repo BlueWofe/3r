@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Entity;
+use App\Models\Prison;
 use App\Models\Role;
 use App\Models\ServiceSession;
 use App\Models\User;
@@ -19,6 +20,7 @@ class DemoSeeder extends Seeder
         if (! $password || strlen($password) < 10) {
             throw new \RuntimeException('DEMO_PASSWORD must be supplied and at least 10 characters.');
         }
+        $demoPrison = Prison::firstOrCreate(['name' => '示範監所']);
         $admin = Role::firstOrCreate(['slug' => 'system-admin'], ['name' => '系統管理員', 'permissions' => []]);
         $teacher = Role::firstOrCreate(['slug' => 'teacher'], ['name' => '教師', 'permissions' => ['schedule.read.own', 'schedule.update.own', 'attendance.create.own', 'resources.read.own', 'resources.create.own', 'meetings.read.own', 'forms.read.own', 'donations.read.own', 'reports.read.own']]);
         $member = Role::firstOrCreate(['slug' => 'member'], ['name' => '會員', 'permissions' => ['forms.read.own', 'donations.read.own']]);
@@ -43,14 +45,14 @@ class DemoSeeder extends Seeder
         }
         if (! ServiceSession::exists()) {
             foreach ([0, 7, 14] as $days) {
-                $s = ServiceSession::create(['data' => ['title' => '示範福音陪伴服務', 'prison' => '示範監所', 'location' => '示範教室', 'participant_count' => 12, 'service_date' => now('Asia/Taipei')->addDays($days)->format('Y-m-d'), 'start_time' => '09:00', 'end_time' => '11:00', 'status' => 'scheduled', 'original_teacher_count' => 2]]);
+                $s = ServiceSession::create(['data' => ['title' => '示範福音陪伴服務', 'prison' => '示範監所', 'prison_id' => $demoPrison->id, 'location' => '示範教室', 'participant_count' => 12, 'service_date' => now('Asia/Taipei')->addDays($days)->format('Y-m-d'), 'start_time' => '09:00', 'end_time' => '11:00', 'status' => 'scheduled', 'original_teacher_count' => 2]]);
                 foreach ([1, 2] as $n) {
                     $s->assignments()->create(['teacher_id' => $users[$n]->id]);
                 }
             }
         }
         if (! Entity::where('type', 'cases')->exists()) {
-            Entity::create(['type' => 'cases', 'owner_id' => $users[1]->id, 'data' => ['code' => 'DEMO-001', 'name' => '示範個案甲', 'status' => '服務中', 'prison' => '示範監所', 'contact' => '合成資料', 'assigned_user_id' => $users[2]->id, 'records' => []]]);
+            Entity::create(['type' => 'cases', 'owner_id' => $users[1]->id, 'data' => ['code' => 'DEMO-001', 'name' => '示範個案甲', 'status' => '服務中', 'prison' => '示範監所', 'prison_id' => $demoPrison->id, 'contact' => '合成資料', 'assigned_user_id' => $users[2]->id, 'records' => []]]);
         }
         if (! Entity::where('type', 'meetings')->exists()) {
             Entity::create(['type' => 'meetings', 'owner_id' => $users[1]->id, 'data' => ['title' => '示範事工會議', 'meeting_date' => now('Asia/Taipei')->format('Y-m-d'), 'agenda' => '示範議程', 'minutes' => '示範紀錄', 'decisions' => '示範決議', 'role_ids' => [], 'file_ids' => []]]);

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ClassTemplateController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\PrisonController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Middleware\ActiveUser;
@@ -51,6 +52,9 @@ Route::prefix('api/v1')->group(function () {
     }
     Route::get('files/{id}/download', [ModuleController::class, 'files']);
     Route::middleware('auth')->group(function () {
+        Route::get('prisons/options', [PrisonController::class, 'options']);
+        Route::match(['get', 'post'], 'prisons', [PrisonController::class, 'prisons']);
+        Route::put('prisons/{id}', [PrisonController::class, 'prisons']);
         Route::get('permissions', fn () => ['data' => ApiController::permissionNames()]);
         Route::post('class-templates/preview', [ClassTemplateController::class, 'preview']);
         Route::match(['get', 'post'], 'class-templates', [ClassTemplateController::class, 'templates']);

@@ -7,6 +7,7 @@ use App\Models\Entity;
 use App\Models\User;
 use App\Services\ClassGeneration;
 use App\Services\ClassRecurrence;
+use App\Services\PrisonDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -16,7 +17,7 @@ class ClassTemplateController extends ApiController
 {
     private function validated(Request $r, bool $update = false): array
     {
-        $v = $r->validate(['name' => 'required|string|max:200', 'prison' => 'required|string|max:100', 'location' => 'required|string|max:200', 'participant_count' => 'required|integer|min:0|max:1000000', 'teacher_ids' => 'present|array|max:20', 'teacher_ids.*' => 'integer|distinct|exists:users,id', 'active' => 'required|boolean', 'start_date' => 'required|date_format:Y-m-d', 'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date', 'rules' => 'required|array|min:1|max:12', 'rules.*.id' => 'required|string|max:100|distinct', 'rules.*.frequency' => 'required|in:weekly,monthly_date,monthly_weekday', 'rules.*.start_time' => 'required|date_format:H:i', 'rules.*.end_time' => 'required|date_format:H:i', 'rules.*.weekdays' => 'sometimes|array|max:7', 'rules.*.weekdays.*' => 'integer|between:1,7', 'rules.*.month_day' => 'sometimes|integer|between:1,31', 'rules.*.week_of_month' => 'sometimes|integer|in:-1,1,2,3,4,5', 'rules.*.weekday' => 'sometimes|integer|between:1,7', 'version' => $update ? 'required|integer|min:1' : 'sometimes|integer|min:1']);
+        $v = $r->validate(['name' => 'required|string|max:200', 'prison' => 'required_without:prison_id|string|max:100', 'prison_id' => 'required_without:prison|integer|exists:prisons,id', 'location' => 'required|string|max:200', 'participant_count' => 'required|integer|min:0|max:1000000', 'teacher_ids' => 'present|array|max:20', 'teacher_ids.*' => 'integer|distinct|exists:users,id', 'active' => 'required|boolean', 'start_date' => 'required|date_format:Y-m-d', 'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date', 'rules' => 'required|array|min:1|max:12', 'rules.*.id' => 'required|string|max:100|distinct', 'rules.*.frequency' => 'required|in:weekly,monthly_date,monthly_weekday', 'rules.*.start_time' => 'required|date_format:H:i', 'rules.*.end_time' => 'required|date_format:H:i', 'rules.*.weekdays' => 'sometimes|array|max:7', 'rules.*.weekdays.*' => 'integer|between:1,7', 'rules.*.month_day' => 'sometimes|integer|between:1,31', 'rules.*.week_of_month' => 'sometimes|integer|in:-1,1,2,3,4,5', 'rules.*.weekday' => 'sometimes|integer|between:1,7', 'version' => $update ? 'required|integer|min:1' : 'sometimes|integer|min:1']);
         $rules = [];
         foreach ($v['rules'] as $i => $rule) {
             $fields = match ($rule['frequency']) {
@@ -75,7 +76,10 @@ class ClassTemplateController extends ApiController
             if ($id) {
                 abort_unless($template->version === (int) $v['version'], 409, '班別版本已更新。');
             }
-            $data = collect($v)->except('version')->all();
+            if ($template->prison_id && ! array_key_exists('prison_id', $v) && ($v['prison'] ?? null) === ($template->data['prison'] ?? null)) {
+                $v['prison_id'] = $template->prison_id;
+            }
+            $data = array_merge(collect($v)->except('version')->all(), app(PrisonDirectory::class)->resolve($v, $template->prison_id, $r->user()->canDo('schedule.create.all') || $r->user()->canDo('prisons.manage.all')));
             $template->data = $data;
             $template->active = $v['active'];
             if ($id) {

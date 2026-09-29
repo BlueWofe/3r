@@ -6,6 +6,7 @@ use App\Models\Assignment;
 use App\Models\Entity;
 use App\Models\ServiceSession;
 use App\Models\User;
+use App\Services\PrisonDirectory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,12 +20,12 @@ class ScheduleController extends ApiController
 
     private function output(ServiceSession $s): array
     {
-        return $s->data + ['id' => $s->id, 'version' => $s->version, 'assignments' => $s->assignments()->with('teacher:id,name')->get(), 'invitations' => DB::table('invitations')->whereIn('assignment_id', $s->assignments()->pluck('id'))->get(), 'events' => Entity::where('type', 'changes')->get()->filter(fn ($e) => ($e->data['session_id'] ?? 0) === $s->id)->map->publicData()->values()];
+        return $s->prisonData() + ['id' => $s->id, 'version' => $s->version, 'assignments' => $s->assignments()->with('teacher:id,name')->get(), 'invitations' => DB::table('invitations')->whereIn('assignment_id', $s->assignments()->pluck('id'))->get(), 'events' => Entity::where('type', 'changes')->get()->filter(fn ($e) => ($e->data['session_id'] ?? 0) === $s->id)->map->publicData()->values()];
     }
 
     private function snapshot(ServiceSession $s): array
     {
-        return $s->data + ['version' => $s->version, 'assignments' => $s->assignments()->get()->toArray()];
+        return $s->prisonData() + ['version' => $s->version, 'assignments' => $s->assignments()->get()->toArray()];
     }
 
     private function mutable(ServiceSession $s): void
@@ -74,17 +75,19 @@ class ScheduleController extends ApiController
                     $this->access($r, $s);
                 } catch (\Throwable) {
                     return false;
-                }$d = $s->data;
+                }$d = $s->prisonData();
 
-                return (! $r->from || $d['service_date'] >= $r->from) && (! $r->to || $d['service_date'] <= $r->to) && (! $r->status || $d['status'] === $r->status) && (! $r->teacher_id || $s->assignments()->where('teacher_id', $r->teacher_id)->exists()) && (! $r->prison || str_contains($d['prison'], $r->prison)) && (! $r->q || str_contains($d['title'].' '.$d['prison'], $r->q));
+                return (! $r->from || $d['service_date'] >= $r->from) && (! $r->to || $d['service_date'] <= $r->to) && (! $r->status || $d['status'] === $r->status) && (! $r->teacher_id || $s->assignments()->where('teacher_id', $r->teacher_id)->exists()) && (! $r->prison_id || $s->prison_id == $r->prison_id) && (! $r->prison || str_contains($d['prison'], $r->prison)) && (! $r->q || str_contains($d['title'].' '.$d['prison'], $r->q));
             })->map(fn ($s) => $this->output($s))->values()];
         }
         if (! $id) {
             $this->permit($r, 'schedule.create.all');
         }
-        $rules = ['title' => 'required|string|max:200', 'prison' => 'required|string|max:100', 'location' => 'required|string|max:200', 'participant_count' => 'required|integer|min:0', 'service_date' => 'required|date_format:Y-m-d', 'start_time' => 'required|date_format:H:i', 'end_time' => 'required|date_format:H:i|after:start_time'];
+        $rules = ['title' => 'required|string|max:200', 'prison' => 'required_without:prison_id|string|max:100', 'prison_id' => 'required_without:prison|integer|exists:prisons,id', 'location' => 'required|string|max:200', 'participant_count' => 'required|integer|min:0', 'service_date' => 'required|date_format:Y-m-d', 'start_time' => 'required|date_format:H:i', 'end_time' => 'required|date_format:H:i|after:start_time'];
         if ($id) {
             $rules = array_map(fn ($x) => str_replace('required', 'sometimes', $x), $rules) + ['version' => 'required|integer', 'reason' => 'required|string|max:1000', 'status' => 'sometimes|in:scheduled,cancelled', 'override_conflict' => 'boolean', 'attendance_resolution' => 'nullable|in:void'];
+            $rules['prison'] = 'sometimes|string|max:100';
+            $rules['prison_id'] = 'sometimes|integer|exists:prisons,id';
         } else {
             $rules += ['teacher_ids' => 'required|array|min:1', 'teacher_ids.*' => 'required|integer|distinct|exists:users,id', 'repeat_weeks' => 'nullable|integer|min:1|max:52', 'override_conflict' => 'sometimes|boolean', 'reason' => 'required_if:override_conflict,true|string|max:1000'];
         }
@@ -109,17 +112,31 @@ class ScheduleController extends ApiController
                     $this->mutable($s);
                     abort_if($v['override_conflict'] ?? false, 403);
                     abort_if(isset($v['attendance_resolution']), 403);
-                    foreach (['title', 'prison', 'participant_count'] as $field) {
+                    foreach (['title', 'participant_count'] as $field) {
                         abort_if(isset($v[$field]) && $v[$field] !== $s->data[$field], 403, '此欄位須由管理員修改');
+                    }
+                    abort_if(isset($v['prison_id']) && (int) $v['prison_id'] !== $s->prison_id, 403, '監所須由管理員修改');
+                    abort_if(isset($v['prison']) && ! in_array($v['prison'], [$s->data['prison'], $s->prisonData()['prison']], true), 403, '監所須由管理員修改');
+                    if ($s->prison_id) {
+                        $v['prison_id'] = $s->prison_id;
                     }
                 }
                 abort_unless($s->version === $v['version'], 409, '版本已更新');
+                if ($s->prison_id && ! array_key_exists('prison_id', $v) && ($v['prison'] ?? null) === ($s->data['prison'] ?? null)) {
+                    $v['prison_id'] = $s->prison_id;
+                }
+                if ($admin && ! $s->prison_id && ! array_key_exists('prison_id', $v) && ! array_key_exists('prison', $v)) {
+                    $v['prison'] = $s->data['prison'];
+                }
+                if ($admin || $s->prison_id) {
+                    $v = array_merge($v, app(PrisonDirectory::class)->resolve($v, $s->prison_id, $r->user()->canDo('schedule.create.all') || $r->user()->canDo('prisons.manage.all')));
+                }
                 $d = array_merge($s->data, collect($v)->except(['version', 'reason', 'override_conflict', 'attendance_resolution'])->all());
                 abort_unless($d['end_time'] > $d['start_time'], 422);
                 if (! $admin) {
                     abort_if(now('Asia/Taipei')->gte(Carbon::parse($d['service_date'].' '.$d['end_time'], 'Asia/Taipei')), 422, '不可將排課改至已結束的時間');
                 }
-                $changed = $d['service_date'] !== $s->data['service_date'] || $d['start_time'] !== $s->data['start_time'] || $d['end_time'] !== $s->data['end_time'] || $d['location'] !== $s->data['location'] || $d['status'] !== $s->data['status'];
+                $changed = ($d['prison_id'] ?? null) !== $s->prison_id || $d['service_date'] !== $s->data['service_date'] || $d['start_time'] !== $s->data['start_time'] || $d['end_time'] !== $s->data['end_time'] || $d['location'] !== $s->data['location'] || $d['status'] !== $s->data['status'];
                 if ($changed) {
                     DB::table('invitations')->whereIn('assignment_id', $s->assignments()->pluck('id'))->where('status', 'pending')->update(['status' => 'cancelled']);
                 }
@@ -133,6 +150,7 @@ class ScheduleController extends ApiController
 
                 return $this->output($s);
             }
+            $v = array_merge($v, app(PrisonDirectory::class)->resolve($v));
             $out = [];
             for ($i = 0; $i < ($v['repeat_weeks'] ?? 1); $i++) {
                 $d = collect($v)->except(['teacher_ids', 'repeat_weeks', 'reason', 'override_conflict'])->all();
