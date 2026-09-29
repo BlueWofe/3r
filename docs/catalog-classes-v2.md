@@ -21,7 +21,11 @@
 
 POST `/class-templates/preview` 接收班別內容，回 `{data:[{rule_id,service_date,start_time,end_time}],skipped:[],through:date}`。預覽與生成範圍為今日至未來90天，並套用起迄日；不存在的每月31日／第五週不挪期，直接略過。
 
+今日已結束的時段也略過，避免補建過去場次造成錯誤的出席率分母。
+
 POST `/class-templates/{id}/generate` 接收 `{version}`，回 `{created:int,existing:int,skipped:[{service_date,rule_id,reason}],through:date}`。生成一般課程場次，保留 template/rule/occurrence_date 關聯，DB唯一鍵加交易確保手動及排程重跑不重複。老師衝突略過該場並回報；不靜默強制覆核。沒有預設老師時可建立待補老師場次，original_teacher_count 至少1。
+
+尚無任何老師安排的場次，管理員以 POST `/sessions/{id}/assign` `{version,teacher_id,reason,override_conflict?:bool}` 補師，回傳完整場次；需 schedule.update.all、版本吻合、有效老師及時段衝突檢查。已有安排使用原換師功能，不用此入口覆寫；補師留下異動及通知。
 
 每天 Asia/Taipei 00:10 執行 `classes:generate`，自動維持未來90天視窗。模板修改僅影響尚未生成的場次；既有停課、改期、請假與出勤不覆寫。停用只停止後續生成；已產生場次由既有排課介面處理。模板 PUT 必須version匹配，所有修改與生成保留稽核。生成時再次檢查老師有效權限；資料狀態不適合時記錄 skipped。
 

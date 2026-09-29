@@ -18,6 +18,16 @@ pwsh -File scripts/setup-dev.ps1
 
 API 契約見 [docs/contract.md](docs/contract.md) 與 [docs/openapi.json](docs/openapi.json)。部署、備份及回復方式見 [docs/deployment.md](docs/deployment.md)。UAT 指定 py VM 的獨立 `3180` port、`r3-uat` Compose project，現有 py UAT 的容器與入口維持原配置。
 
+## 產品與固定班別
+
+登入後由管理導覽進入 `/app/admin/products`（產品管理）或 `/app/admin/classes`（班別管理）。產品使用內容管理權限；班別使用排課管理權限。多角色帳號沿用授權聯集。
+
+產品可設定最多兩組規格、各規格 SKU／庫存／單價，以及依同一規格數量計算的大量優惠。門檻必須遞增，優惠單價不得遞增或高於原價。公開展示頁由後端計算報價，不含購物車或結帳。
+
+班別保留監所、地點、預設老師及每週／每月固定日期／每月第幾個星期的時段規則。儲存後可預覽並生成未來 90 天場次；啟用的班別每天臺北時間 00:10 自動補足此範圍。沒有第 31 日或第五個星期的月份略過，不挪到其他日期。沒有預設老師的場次列為缺額，由排課管理員指派。
+
+修改班別只影響尚未生成的場次；已生成場次的改期、停課、代課及出勤紀錄不會被覆寫。重複生成不重複建立。需調整既有日期時，請從排課管理操作該場次。詳細欄位與規則見 [產品與班別契約](docs/catalog-classes-v2.md)。
+
 ## E2E 驗收
 
 `tests/e2e` 同時驗證 API 與桌機/手機瀏覽器。每次執行會產生唯一頁面、表單與排程，日期由執行當天計算，不依賴固定種子日期。可用 `BASE_URL` 指向已啟動的本機環境；CI 使用合成密碼、mock integrations 和可拋棄的 Compose volumes。

@@ -778,6 +778,279 @@
         }
       }
     },
+    "/class-templates": {
+      "get": {
+        "summary": "GET /class-templates",
+        "operationId": "get_class_templates",
+        "tags": [
+          "class-templates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md."
+      },
+      "post": {
+        "summary": "POST /class-templates",
+        "operationId": "post_class_templates",
+        "tags": [
+          "class-templates"
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/class-templates/preview": {
+      "post": {
+        "summary": "POST /class-templates/preview",
+        "operationId": "post_class_templates_preview",
+        "tags": [
+          "class-templates"
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/class-templates/{id}": {
+      "get": {
+        "summary": "GET /class-templates/{id}",
+        "operationId": "get_class_templates__id_",
+        "tags": [
+          "class-templates"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md."
+      },
+      "put": {
+        "summary": "PUT /class-templates/{id}",
+        "operationId": "put_class_templates__id_",
+        "tags": [
+          "class-templates"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/class-templates/{id}/generate": {
+      "post": {
+        "summary": "POST /class-templates/{id}/generate",
+        "operationId": "post_class_templates__id__generate",
+        "tags": [
+          "class-templates"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
     "/sessions": {
       "get": {
         "summary": "GET /sessions",
@@ -928,6 +1201,63 @@
             "description": "Validation failed"
           }
         },
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{id}/assign": {
+      "post": {
+        "summary": "POST /sessions/{id}/assign",
+        "operationId": "post_sessions__id__assign",
+        "tags": [
+          "sessions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
         "requestBody": {
           "description": "See contract.md for required module fields and validation.",
           "content": {
@@ -1826,6 +2156,62 @@
         "security": []
       }
     },
+    "/public/products/{id}/quote": {
+      "get": {
+        "summary": "GET /public/products/{id}/quote",
+        "operationId": "get_public_products__id__quote",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "variant_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "quantity",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "security": []
+      }
+    },
     "/public/search": {
       "get": {
         "summary": "GET /public/search",
@@ -1852,6 +2238,228 @@
           }
         },
         "security": []
+      }
+    },
+    "/products": {
+      "get": {
+        "summary": "GET /products",
+        "operationId": "get_products",
+        "tags": [
+          "products"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md."
+      },
+      "post": {
+        "summary": "POST /products",
+        "operationId": "post_products",
+        "tags": [
+          "products"
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "summary": "GET /products/{id}",
+        "operationId": "get_products__id_",
+        "tags": [
+          "products"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md."
+      },
+      "put": {
+        "summary": "PUT /products/{id}",
+        "operationId": "put_products__id_",
+        "tags": [
+          "products"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "DELETE /products/{id}",
+        "operationId": "delete_products__id_",
+        "tags": [
+          "products"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
       }
     },
     "/contents": {

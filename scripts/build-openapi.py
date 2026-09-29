@@ -21,8 +21,13 @@ PUT /roles/{id}
 GET,POST /users
 PUT /users/{id}
 GET /teachers
+GET,POST /class-templates
+POST /class-templates/preview
+GET,PUT /class-templates/{id}
+POST /class-templates/{id}/generate
 GET,POST /sessions
 GET,PUT /sessions/{id}
+POST /sessions/{id}/assign
 POST /assignments/{id}/leave
 POST /assignments/{id}/withdraw-leave
 POST /assignments/{id}/invite
@@ -42,7 +47,10 @@ GET /public/news
 GET /public/news/{id}
 GET /public/products
 GET /public/products/{id}
+GET /public/products/{id}/quote
 GET /public/search
+GET,POST /products
+GET,PUT,DELETE /products/{id}
 GET,POST /contents
 GET,PUT,DELETE /contents/{id}
 POST /files
@@ -77,6 +85,13 @@ for line in catalog.strip().splitlines():
         operation = {'summary': method+' '+path, 'operationId': method.lower()+re.sub('[^a-zA-Z0-9]', '_', path), 'tags': [path.split('/')[1]], 'parameters': [], 'responses': {'200': {'description': 'Success. Lists use {data:[]}; detailed shapes in contract.md.'}, '401': {'description': 'Login required'}, '403': {'description': 'Role or data scope denied'}, '409': {'description': 'Stale session version, scheduling conflict or invalid transition'}, '422': {'description': 'Validation failed'}}}
         for name in re.findall(r'{(.*?)}', path):
             operation['parameters'].append({'name': name, 'in': 'path', 'required': True, 'schema': integer if name == 'id' else string})
+        if path.endswith('/quote'):
+            operation['parameters'].extend([
+                {'name': 'variant_id', 'in': 'query', 'required': True, 'schema': string},
+                {'name': 'quantity', 'in': 'query', 'required': True, 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 1000000}},
+            ])
+        if path.startswith(('/products', '/class-templates')) or path.endswith(('/quote', '/assign')):
+            operation['description'] = 'Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.'
         if method != 'GET':
             operation['parameters'].append({'name': 'X-CSRF-TOKEN', 'in': 'header', 'required': True, 'schema': string, 'description': 'Fetch /auth/csrf with the current session. Refresh after login/logout.'})
             schema = change if '/assignments/' in path and not path.endswith('attendance') else {'type': 'object', 'additionalProperties': True}
