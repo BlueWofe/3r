@@ -48,6 +48,7 @@ Route::prefix('api/v1')->group(function () {
     Route::get('files/{id}/download', [ModuleController::class, 'files']);
     Route::middleware('auth')->group(function () {
         Route::get('permissions', fn () => ['data' => ApiController::permissionNames()]);
+        Route::get('role-options', [ApiController::class, 'roleOptions']);
         foreach (['roles', 'users'] as $m) {
             Route::match(['get', 'post'], $m, fn (Request $r) => (new ApiController)->administration($r, $m));
             Route::put($m.'/{id}', fn (Request $r, int $id) => (new ApiController)->administration($r, $m, $id));

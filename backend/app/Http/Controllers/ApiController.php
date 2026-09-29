@@ -202,6 +202,15 @@ class ApiController extends Controller
         });
     }
 
+    public function roleOptions(Request $r): array
+    {
+        $allowed = collect(['roles.manage.all', 'forms.create.all', 'forms.update.all', 'meetings.create.all', 'meetings.update.all', 'resources.create.all'])
+            ->contains(fn ($permission) => $r->user()->canDo($permission));
+        abort_unless($allowed, 403);
+
+        return ['data' => Role::where('active', true)->orderBy('name')->get(['id', 'name'])];
+    }
+
     protected function entity(Request $r, string $type, int $id, string $action = 'read'): Entity
     {
         $e = Entity::where('type', $type)->findOrFail($id);
