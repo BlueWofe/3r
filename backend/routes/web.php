@@ -39,6 +39,7 @@ Route::prefix('api/v1')->group(function () {
         }
     }
     Route::put('auth/profile', fn (Request $r) => (new ApiController)->auth($r, 'profile'));
+    Route::get('public/contact', [ApiController::class, 'publicContact']);
     foreach (['pages', 'news', 'products', 'search'] as $kind) {
         Route::get('public/'.$kind, fn (Request $r) => (new ApiController)->publicContent($r, $kind));
         if ($kind !== 'search') {

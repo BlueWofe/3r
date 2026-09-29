@@ -76,7 +76,7 @@ class ScheduleController extends ApiController
                     return false;
                 }$d = $s->data;
 
-                return (! $r->from || $d['service_date'] >= $r->from) && (! $r->to || $d['service_date'] <= $r->to) && (! $r->status || $d['status'] === $r->status) && (! $r->teacher_id || $s->assignments()->where('teacher_id', $r->teacher_id)->exists()) && (! $r->q || str_contains($d['title'].' '.$d['prison'], $r->q));
+                return (! $r->from || $d['service_date'] >= $r->from) && (! $r->to || $d['service_date'] <= $r->to) && (! $r->status || $d['status'] === $r->status) && (! $r->teacher_id || $s->assignments()->where('teacher_id', $r->teacher_id)->exists()) && (! $r->prison || str_contains($d['prison'], $r->prison)) && (! $r->q || str_contains($d['title'].' '.$d['prison'], $r->q));
             })->map(fn ($s) => $this->output($s))->values()];
         }
         if (! $id) {

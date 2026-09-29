@@ -211,6 +211,18 @@ class ApiController extends Controller
         return ['data' => Role::where('active', true)->orderBy('name')->get(['id', 'name'])];
     }
 
+    public function publicContact(): array
+    {
+        $settings = Entity::where('type', 'settings')->first()?->data ?? [];
+        $defaults = ['association_name' => '示範監獄福音協會', 'contact_phone' => '', 'contact_email' => '', 'address' => ''];
+
+        foreach ($defaults as $key => $default) {
+            $defaults[$key] = is_string($settings[$key] ?? null) ? $settings[$key] : $default;
+        }
+
+        return ['data' => $defaults];
+    }
+
     protected function entity(Request $r, string $type, int $id, string $action = 'read'): Entity
     {
         $e = Entity::where('type', $type)->findOrFail($id);
