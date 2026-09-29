@@ -2227,6 +2227,27 @@
               "minimum": 1,
               "maximum": 100
             }
+          },
+          {
+            "name": "article_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "news",
+                "sharing",
+                "testimony"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2262,7 +2283,7 @@
           }
         },
         "security": [],
-        "description": "Published articles whose publication time has arrived, ordered by published_at descending then id descending. Homepage uses limit=3. See docs/articles.md."
+        "description": "Published articles whose publication time has arrived, ordered by published_at descending then id descending. Homepage uses limit=3. See docs/articles.md. Public visibility only, even for authenticated calls. Filters are applied before limit. See groups-articles.md."
       }
     },
     "/public/news/{id}": {
@@ -2751,7 +2772,35 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "properties": {
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "uniqueItems": true
+                  },
+                  "article_type": {
+                    "type": "string",
+                    "enum": [
+                      "news",
+                      "sharing",
+                      "testimony"
+                    ]
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "groups"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
               }
             }
           }
@@ -2841,7 +2890,35 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "properties": {
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "uniqueItems": true
+                  },
+                  "article_type": {
+                    "type": "string",
+                    "enum": [
+                      "news",
+                      "sharing",
+                      "testimony"
+                    ]
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "groups"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
               }
             }
           }
@@ -3011,7 +3088,16 @@
         "tags": [
           "resources"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
@@ -3028,7 +3114,8 @@
           "422": {
             "description": "Validation failed"
           }
-        }
+        },
+        "description": "Functional permission and role/group audience checked before filtering. Group membership does not grant a role."
       },
       "post": {
         "summary": "POST /resources",
@@ -3087,6 +3174,13 @@
                   },
                   "reason": {
                     "type": "string"
+                  },
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "uniqueItems": true
                   }
                 }
               }
@@ -3458,7 +3552,16 @@
         "tags": [
           "meetings"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
@@ -3475,7 +3578,8 @@
           "422": {
             "description": "Validation failed"
           }
-        }
+        },
+        "description": "Functional permission and role/group audience checked before filtering. Group membership does not grant a role."
       },
       "post": {
         "summary": "POST /meetings",
@@ -3517,7 +3621,16 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "properties": {
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "uniqueItems": true
+                  }
+                }
               }
             }
           }
@@ -3607,7 +3720,16 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "properties": {
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "uniqueItems": true
+                  }
+                }
               }
             }
           }
@@ -4426,6 +4548,509 @@
           }
         }
       }
+    },
+    "/groups": {
+      "get": {
+        "summary": "Manage all groups and membership; groups.manage.all required",
+        "operationId": "get_groups",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Group"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "description": "Manage all groups and membership; groups.manage.all required See groups-articles.md."
+      },
+      "post": {
+        "summary": "Create a group; groups.manage.all required",
+        "operationId": "post_groups",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupWrite"
+              }
+            }
+          }
+        },
+        "description": "Create a group; groups.manage.all required See groups-articles.md."
+      }
+    },
+    "/groups/{id}": {
+      "get": {
+        "summary": "Read group membership; groups.manage.all required",
+        "operationId": "get_groups_id",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "description": "Read group membership; groups.manage.all required See groups-articles.md."
+      },
+      "put": {
+        "summary": "Update group with version check; groups.manage.all required",
+        "operationId": "put_groups_id",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupWrite"
+              }
+            }
+          }
+        },
+        "description": "Update group with version check; groups.manage.all required See groups-articles.md."
+      }
+    },
+    "/groups/options": {
+      "get": {
+        "summary": "Active group id/name options for current permitted scope",
+        "operationId": "get_groups_options",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "description": "Active group id/name options for current permitted scope See groups-articles.md."
+      }
+    },
+    "/groups/member-options": {
+      "get": {
+        "summary": "Member id/name/active options; groups.manage.all required; no phone disclosure",
+        "operationId": "get_groups_member-options",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "description": "Member id/name/active options; groups.manage.all required; no phone disclosure See groups-articles.md."
+      }
+    },
+    "/group-news": {
+      "get": {
+        "summary": "Published group messages for current members or content.read.all",
+        "operationId": "get_group-news",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Article"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "description": "Published group messages for current members or content.read.all See groups-articles.md."
+      }
+    },
+    "/group-news/{id}": {
+      "get": {
+        "summary": "Read group message with current membership check",
+        "operationId": "get_group-news_id",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Article"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "description": "Read group message with current membership check See groups-articles.md."
+      }
+    },
+    "/contents/{id}/broadcast": {
+      "post": {
+        "summary": "Send station notifications plus LINE mock once per article version; content.publish.all and groups.broadcast.all required",
+        "operationId": "post_contents_id_broadcast",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Broadcast"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "version"
+                ],
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Send station notifications plus LINE mock once per article version; content.publish.all and groups.broadcast.all required See groups-articles.md."
+      }
+    },
+    "/contents/{id}/broadcasts": {
+      "get": {
+        "summary": "Broadcast history; content.publish.all and groups.broadcast.all required",
+        "operationId": "get_contents_id_broadcasts",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Broadcast"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "description": "Broadcast history; content.publish.all and groups.broadcast.all required See groups-articles.md."
+      }
     }
   },
   "components": {
@@ -4505,6 +5130,38 @@
             "type": "string",
             "readOnly": true,
             "description": "Server-sanitized HTML, including escaped legacy text."
+          },
+          "article_type": {
+            "type": "string",
+            "enum": [
+              "news",
+              "sharing",
+              "testimony"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "groups"
+            ]
+          },
+          "group_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "uniqueItems": true
+          },
+          "group_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
           }
         }
       },
@@ -4526,6 +5183,104 @@
           },
           "version": {
             "type": "integer"
+          }
+        }
+      },
+      "GroupWrite": {
+        "type": "object",
+        "required": [
+          "name",
+          "active",
+          "member_ids"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "member_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "uniqueItems": true
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Required for PUT; mismatch returns 409."
+          }
+        }
+      },
+      "Group": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GroupWrite"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              },
+              "member_count": {
+                "type": "integer"
+              }
+            }
+          }
+        ]
+      },
+      "Broadcast": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "content_id": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "recipient_count": {
+            "type": "integer"
+          },
+          "sent_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "line_mode": {
+            "type": "string",
+            "enum": [
+              "mock"
+            ]
           }
         }
       }
