@@ -248,12 +248,13 @@ onMounted(async () => {
 }
 .side {
   display: none;
-  position: absolute;
+  position: fixed;
   top: 66px;
   left: 50%;
   z-index: 35;
   width: min(720px, calc(100vw - 32px));
   max-height: min(320px, calc(100dvh - 100px));
+  height: auto;
   transform: translateX(-50%);
   overflow-y: auto;
   padding: 12px;
@@ -373,9 +374,9 @@ onMounted(async () => {
   font-weight: 600;
 }
 .navigation-group + .navigation-group {
-  margin-top: 18px;
-  padding-top: 4px;
-  border-top: 1px solid #ffffff26;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 .logout-link {
   color: inherit;
@@ -435,6 +436,8 @@ button:focus-visible {
   outline-offset: 3px;
 }
 @media (max-width: 760px) {
+  .workspace { padding: 20px 16px; }
+  .workspace-brand { display: none; }
   .workspace-mobile-header {
     display: grid;
     gap: 10px;
@@ -477,6 +480,12 @@ button:focus-visible {
   .side {
     display: none;
     position: sticky;
+    left: auto;
+    transform: none;
+    width: auto;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
     top: 108px;
     z-index: 35;
     height: auto;
