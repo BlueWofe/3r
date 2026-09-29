@@ -61,7 +61,11 @@ function syncManagementGroup() {
     )?.title || "";
 }
 watch(() => route.fullPath, syncManagementGroup);
-watch(managementGroups, syncManagementGroup, { immediate: true });
+watch(managementGroups, (groups) => {
+  // Auth refresh must not close a category the user has just expanded.
+  if (!groups.some((group) => group.title === activeManagementGroup.value))
+    syncManagementGroup();
+}, { immediate: true });
 watch(
   () => route.fullPath,
   () => closeMenu(),

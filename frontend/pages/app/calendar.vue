@@ -11,10 +11,10 @@ const yyyyMMdd = (d: Date) => {
   const z = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
 };
-const monday = (d: Date) => {
+const sunday = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  x.setDate(x.getDate() - x.getDay());
   return x;
 };
 const range = computed(() => {
@@ -24,12 +24,12 @@ const range = computed(() => {
       cursor.value.getMonth(),
       1,
     );
-    const from = monday(first),
+    const from = sunday(first),
       to = new Date(from);
     to.setDate(to.getDate() + 41);
     return { from, to, count: 42 };
   }
-  const from = monday(cursor.value),
+  const from = sunday(cursor.value),
     count = view.value === "week" ? 7 : 14,
     to = new Date(from);
   to.setDate(to.getDate() + count - 1);
@@ -67,7 +67,10 @@ const label = computed(() =>
 );
 function shift(n: number) {
   const d = new Date(cursor.value);
-  if (view.value === "month") d.setMonth(d.getMonth() + n);
+  if (view.value === "month") {
+    d.setDate(1);
+    d.setMonth(d.getMonth() + n);
+  }
   else d.setDate(d.getDate() + n * (view.value === "week" ? 7 : 14));
   cursor.value = d;
 }
@@ -108,6 +111,7 @@ async function sessionUpdated() {
       v-for="d in days"
       :key="d"
       class="day"
+      :data-date="d"
       :style="view === 'agenda' ? 'grid-column:span 7' : ''"
     >
       <b

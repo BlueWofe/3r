@@ -22,7 +22,7 @@ def command(*parts, **kwargs):
     return subprocess.run(dc + list(parts), check=True, **kwargs)
 def count(db):
     return subprocess.check_output(dc + ['psql', '-U', 'r3', '-d', db, '-Atc',
-        "SELECT 'users:'||count(*) FROM users UNION ALL SELECT 'entities:'||count(*) FROM entities UNION ALL SELECT 'assignments:'||count(*) FROM assignments"], text=True).strip()
+        "SELECT 'users:'||count(*) FROM users UNION ALL SELECT 'entities:'||count(*) FROM entities UNION ALL SELECT 'assignments:'||count(*) FROM assignments UNION ALL SELECT 'prisons:'||count(*) FROM prisons UNION ALL SELECT 'class_templates:'||count(*) FROM class_templates UNION ALL SELECT 'service_sessions:'||count(*) FROM service_sessions"], text=True).strip()
 with tempfile.TemporaryDirectory(prefix='r3-backup-verify-') as tmp:
     archive = Path(tmp) / 'verification.dump'
     before = count('r3')
