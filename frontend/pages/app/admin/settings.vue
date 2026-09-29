@@ -13,6 +13,11 @@ const settings = reactive<any>({
   logoPreview = ref(""),
   logoPending = ref(false);
 const saved = ref("");
+function clearLogoPreview() {
+  if (logoPreview.value.startsWith("blob:")) URL.revokeObjectURL(logoPreview.value);
+  logoPreview.value = "";
+}
+onBeforeUnmount(clearLogoPreview);
 const { error, run } = useApiError();
 onMounted(async () => {
   try {
@@ -29,6 +34,9 @@ async function save() {
   saved.value = "已更新";
 }
 function selectLogo(event: Event) {
+  clearLogoPreview();
+  logo.value = null;
+  saved.value = "";
   const file = (event.target as HTMLInputElement).files?.[0] || null;
   if (!file) return;
   if (
@@ -52,7 +60,8 @@ async function uploadLogo() {
       settings,
       await run(() => api("/settings/logo", { method: "POST", body: data })),
     );
-    logoPreview.value = settings.logo_url;
+    clearLogoPreview();
+    logo.value = null;
     saved.value = "Logo 已更新";
   } finally {
     logoPending.value = false;
@@ -81,7 +90,7 @@ async function drive(action: string) {
       <h1>整合與設定</h1>
     </div>
   </div>
-  <div class="grid" style="grid-template-columns: 1fr 1fr">
+  <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
     <form class="card form" @submit.prevent="save">
       <h3>協會資料</h3>
       <label class="field"
@@ -106,6 +115,7 @@ async function drive(action: string) {
         >選擇 Logo（JPEG、PNG、WebP，最多 5MB）<input
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          :disabled="logoPending"
           @change="selectLogo" /></label
       ><button class="button" :disabled="!logo || logoPending">
         {{ logoPending ? "上傳中…" : "上傳並套用 Logo" }}

@@ -76,6 +76,7 @@ GET,PUT /integrations/line
 GET /integrations/drive
 POST /integrations/drive/simulate
 GET,PUT /settings
+POST /settings/logo
 '''
 string = {'type': 'string'}
 integer = {'type': 'integer'}
@@ -99,7 +100,7 @@ for line in catalog.strip().splitlines():
             operation['parameters'].append({'name': 'X-CSRF-TOKEN', 'in': 'header', 'required': True, 'schema': string, 'description': 'Fetch /auth/csrf with the current session. Refresh after login/logout.'})
             schema = change if '/assignments/' in path and not path.endswith('attendance') else {'type': 'object', 'additionalProperties': True}
             media = 'application/json'
-            if path in ['/files', '/resources'] or path.endswith('/attendance'):
+            if path in ['/files', '/resources', '/settings/logo'] or path.endswith('/attendance'):
                 media = 'multipart/form-data'
                 schema = {'type': 'object', 'properties': {'file': {'type': 'string', 'format': 'binary'}, 'photo': {'type': 'string', 'format': 'binary'}, 'title': string, 'category': string, 'reason': string}}
             operation['requestBody'] = {'description': 'See contract.md for required module fields and validation.', 'content': {media: {'schema': schema}}}
