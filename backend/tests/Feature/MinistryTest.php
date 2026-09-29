@@ -178,7 +178,7 @@ class MinistryTest extends TestCase
     public function test_public_drafts_hidden_and_markup_removed(): void
     {
         $admin = $this->admin();
-        $body = ['kind' => 'product', 'title' => '示範', 'slug' => 'example', 'body' => '<script>alert(1)</script><b>示範</b>', 'status' => 'draft'];
+        $body = ['kind' => 'product', 'title' => '示範', 'slug' => 'example', 'body' => '<script>alert(1)</script><b>示範</b>', 'status' => 'draft', 'metadata' => ['unit' => '盒', 'currency' => 'TWD', 'gallery_ids' => [], 'spec_axes' => [], 'variants' => [['id' => 'default', 'sku' => 'DEMO', 'options' => [], 'price' => 0, 'stock' => 0, 'active' => true, 'wholesale' => []]]]];
         $id = $this->actingAs($admin)->postJson('/api/v1/contents', $body)->assertOk()->json('id');
         $this->getJson('/api/v1/public/products/'.$id)->assertNotFound();
         $body['status'] = 'published';
@@ -195,7 +195,7 @@ class MinistryTest extends TestCase
         $this->assertArrayNotHasKey('code', $response->json());
         $code = json_decode(Storage::disk('local')->get('otp-mailbox/0912345678.json'), true)['code'];
         $body = ['phone' => '0912345678', 'name' => '示範', 'password' => 'Temporary-Test-Only', 'password_confirmation' => 'Temporary-Test-Only', 'code' => $code];
-        $this->postJson('/api/v1/auth/register',$body)->assertOk();
-        $this->postJson('/api/v1/auth/register',$body)->assertUnprocessable();
+        $this->postJson('/api/v1/auth/register', $body)->assertOk();
+        $this->postJson('/api/v1/auth/register', $body)->assertUnprocessable();
     }
 }

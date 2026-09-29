@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Middleware\ActiveUser;
 use App\Models\User;
@@ -40,6 +41,7 @@ Route::prefix('api/v1')->group(function () {
     }
     Route::put('auth/profile', fn (Request $r) => (new ApiController)->auth($r, 'profile'));
     Route::get('public/contact', [ApiController::class, 'publicContact']);
+    Route::get('public/products/{id}/quote', [ProductController::class, 'quote']);
     foreach (['pages', 'news', 'products', 'search'] as $kind) {
         Route::get('public/'.$kind, fn (Request $r) => (new ApiController)->publicContent($r, $kind));
         if ($kind !== 'search') {
@@ -49,6 +51,8 @@ Route::prefix('api/v1')->group(function () {
     Route::get('files/{id}/download', [ModuleController::class, 'files']);
     Route::middleware('auth')->group(function () {
         Route::get('permissions', fn () => ['data' => ApiController::permissionNames()]);
+        Route::match(['get', 'post'], 'products', [ProductController::class, 'products']);
+        Route::match(['get', 'put', 'delete'], 'products/{id}', [ProductController::class, 'products']);
         Route::get('role-options', [ApiController::class, 'roleOptions']);
         foreach (['roles', 'users'] as $m) {
             Route::match(['get', 'post'], $m, fn (Request $r) => (new ApiController)->administration($r, $m));

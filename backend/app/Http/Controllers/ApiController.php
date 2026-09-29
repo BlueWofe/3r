@@ -272,6 +272,13 @@ class ApiController extends Controller
 
     private function genericOperation(Request $r, string $type, ?int $id)
     {
+        if ($type === 'contents' && ! $r->isMethod('get')) {
+            $existing = $id ? Entity::where('type', 'contents')->findOrFail($id) : null;
+            if (($existing?->data['kind'] ?? null) === 'product' || $r->input('kind') === 'product') {
+                return app(ProductController::class)->products($r, $id);
+            }
+            Role::orderBy('id')->lockForUpdate()->get();
+        }
         $permission = $type === 'contents' ? 'content' : $type;
         if ($r->isMethod('get')) {
             if ($id) {
