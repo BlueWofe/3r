@@ -1,2 +1,63 @@
-<script setup lang="ts">definePageMeta({layout:'app'});const invitations=ref<any[]>([]),notifications=ref<any[]>([]);const {error,run}=useApiError();async function load(){[invitations.value,notifications.value]=await Promise.all([api<any>('/invitations').then(x=>x.data||[]),api<any>('/notifications').then(x=>x.data||[])])}async function respond(i:any,action:string){await run(()=>api(`/invitations/${i.id}/respond`,{method:'POST',body:{action}}));load()}async function read(n:any){await run(()=>api(`/notifications/${n.id}/read`,{method:'POST'}));load()}onMounted(load)</script>
-<template><div class="workhead"><div><p class="eyebrow">INBOX</p><h1>邀請與通知</h1></div></div><section><h2 class="serif">代課邀請</h2><div v-if="!invitations.length" class="card empty">目前沒有待回覆的邀請。</div><article v-for="i in invitations" :key="i.id" class="card"><h3>{{i.session?.title||i.title}}</h3><p class="muted">{{i.reason}} · {{i.session?.service_date}}</p><div class="actions"><button class="button" @click="respond(i,'accept')">接受</button><button class="button ghost" @click="respond(i,'decline')">婉拒</button></div></article></section><section class="section" style="padding-bottom:0"><h2 class="serif">通知收件匣</h2><article v-for="n in notifications" :key="n.id" class="card" style="margin:8px 0"><b>{{n.title||n.type}}</b><p class="muted">{{n.body||n.message}}</p><button v-if="!n.read_at" class="button ghost" @click="read(n)">標為已讀</button></article><p v-if="error" class="error">{{error}}</p></section></template>
+<script setup lang="ts">
+definePageMeta({ layout: "app" });
+const invitations = ref<any[]>([]),
+  notifications = ref<any[]>([]);
+const { error, run } = useApiError();
+async function load() {
+  [invitations.value, notifications.value] = await Promise.all([
+    api<any>("/invitations").then((x) => x.data || []),
+    api<any>("/notifications").then((x) => x.data || []),
+  ]);
+}
+async function respond(i: any, action: string) {
+  await run(() =>
+    api(`/invitations/${i.id}/respond`, { method: "POST", body: { action } }),
+  );
+  load();
+}
+async function read(n: any) {
+  await run(() => api(`/notifications/${n.id}/read`, { method: "POST" }));
+  load();
+}
+onMounted(load);
+</script>
+<template>
+  <div class="workhead">
+    <div>
+      <p class="eyebrow">INBOX</p>
+      <h1>邀請與通知</h1>
+    </div>
+  </div>
+  <section>
+    <h2 class="serif">代課邀請</h2>
+    <div v-if="!invitations.length" class="card empty">
+      目前沒有待回覆的邀請。
+    </div>
+    <article v-for="i in invitations" :key="i.id" class="card">
+      <h3>{{ i.session?.title || i.title }}</h3>
+      <p class="muted">{{ i.reason }} · {{ i.session?.service_date }}</p>
+      <div class="actions">
+        <button class="button" @click="respond(i, 'accept')">接受</button
+        ><button class="button ghost" @click="respond(i, 'decline')">
+          婉拒
+        </button>
+      </div>
+    </article>
+  </section>
+  <section class="section" style="padding-bottom: 0">
+    <h2 class="serif">通知收件匣</h2>
+    <article
+      v-for="n in notifications"
+      :key="n.id"
+      class="card"
+      style="margin: 8px 0"
+    >
+      <b>{{ n.title || n.type }}</b>
+      <p class="muted">{{ n.body || n.message }}</p>
+      <button v-if="!n.read_at" class="button ghost" @click="read(n)">
+        標為已讀
+      </button>
+    </article>
+    <p v-if="error" class="error">{{ error }}</p>
+  </section>
+</template>
