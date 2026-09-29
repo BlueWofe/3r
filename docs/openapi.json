@@ -778,6 +778,181 @@
         }
       }
     },
+    "/prisons": {
+      "get": {
+        "summary": "GET /prisons",
+        "operationId": "get_prisons",
+        "tags": [
+          "prisons"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Prison"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Shared prison directory and inactive-reference rules: docs/prisons-cases.md."
+      },
+      "post": {
+        "summary": "POST /prisons",
+        "operationId": "post_prisons",
+        "tags": [
+          "prisons"
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "description": "Shared prison directory and inactive-reference rules: docs/prisons-cases.md."
+      }
+    },
+    "/prisons/{id}": {
+      "put": {
+        "summary": "PUT /prisons/{id}",
+        "operationId": "put_prisons__id_",
+        "tags": [
+          "prisons"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "description": "See contract.md for required module fields and validation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "description": "Shared prison directory and inactive-reference rules: docs/prisons-cases.md."
+      }
+    },
+    "/prisons/options": {
+      "get": {
+        "summary": "GET /prisons/options",
+        "operationId": "get_prisons_options",
+        "tags": [
+          "prisons"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "Shared prison directory and inactive-reference rules: docs/prisons-cases.md."
+      }
+    },
     "/class-templates": {
       "get": {
         "summary": "GET /class-templates",
@@ -1058,7 +1233,16 @@
         "tags": [
           "sessions"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "prison_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
@@ -4255,6 +4439,27 @@
             "type": "string",
             "readOnly": true,
             "description": "Server-sanitized HTML, including escaped legacy text."
+          }
+        }
+      },
+      "Prison": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer"
           }
         }
       }

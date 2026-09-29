@@ -21,6 +21,9 @@ PUT /roles/{id}
 GET,POST /users
 PUT /users/{id}
 GET /teachers
+GET,POST /prisons
+PUT /prisons/{id}
+GET /prisons/options
 GET,POST /class-templates
 POST /class-templates/preview
 GET,PUT /class-templates/{id}
@@ -113,6 +116,13 @@ article = {'type': 'object', 'properties': {
     'body_html': {'type': 'string', 'readOnly': True, 'description': 'Server-sanitized HTML, including escaped legacy text.'},
 }}
 spec['components']['schemas']['Article'] = article
+prison = {'type': 'object', 'properties': {'id': integer, 'name': string, 'address': {'type': 'string', 'nullable': True}, 'active': {'type': 'boolean'}, 'version': integer}}
+spec['components']['schemas']['Prison'] = prison
+for prison_path in ['/prisons', '/prisons/{id}', '/prisons/options']:
+    for operation in paths[prison_path].values():
+        operation['description'] = 'Shared prison directory and inactive-reference rules: docs/prisons-cases.md.'
+paths['/prisons']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Prison'}}}}}}
+paths['/sessions']['get']['parameters'].append({'name': 'prison_id', 'in': 'query', 'required': False, 'schema': integer})
 paths['/public/news']['get']['parameters'].append({'name': 'limit', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 100}})
 paths['/public/news']['get']['description'] = 'Published articles whose publication time has arrived, ordered by published_at descending then id descending. Homepage uses limit=3. See docs/articles.md.'
 paths['/public/news']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Article'}}}}}}

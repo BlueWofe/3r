@@ -1,6 +1,7 @@
 # Shared API contract v1
 
 商品規格、數量階梯報價、班別模板與自動排課擴充見 [catalog-classes-v2.md](catalog-classes-v2.md)。
+共用監所與個案欄位擴充見 [prisons-cases.md](prisons-cases.md)，消息與圖文編輯見 [articles.md](articles.md)。
 
 Base /api/v1. JSON requests, Accept application/json, credentials include. Mutations require CSRF: GET /auth/csrf returns {csrf_token}; send X-CSRF-TOKEN. Standard response direct JSON objects, list endpoints {data:[]}; validation errors {message,errors}, 403 forbidden, 409 stale/conflict, 422 invalid. Routes use session middleware. API auth endpoints: POST /auth/login {phone,password}, POST /auth/logout, GET /auth/me => {user:{id,name,phone,roles:[{id,name,slug}],permissions:[string]}}; POST /auth/otp {phone,purpose:register|reset|change_phone}; POST /auth/register {phone,name,password,password_confirmation,code}; POST /auth/reset-password {phone,code,password,password_confirmation}. PUT /auth/profile {name}; POST /auth/change-phone {phone,code}. GET /health.
 

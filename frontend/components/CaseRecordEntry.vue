@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{ cases: any[]; canWrite: boolean }>();
+const pending = ref(false);
 const caseId = ref<number | null>(null),
   records = ref<any[]>([]),
   saved = ref(""),
@@ -35,6 +36,7 @@ async function loadRecords() {
   const sequence = ++request;
   records.value = [];
   error.value = "";
+  loading.value = false;
   if (!id) return;
   loading.value = true;
   try {
@@ -47,7 +49,10 @@ async function loadRecords() {
     if (sequence === request) loading.value = false;
   }
 }
-watch(caseId, loadRecords);
+watch(caseId, () => {
+  saved.value = "";
+  loadRecords();
+});
 watch(
   () => props.cases,
   (rows) => {
@@ -58,28 +63,33 @@ watch(
   { deep: true },
 );
 async function save() {
-  if (!caseId.value) return;
-  await run(() =>
-    api(`/cases/${caseId.value}/records`, { method: "POST", body: form }),
-  );
-  await loadRecords();
-  saved.value = "服務紀錄已更新";
-  form.summary = "";
-  form.follow_up = "";
+  if (!caseId.value || pending.value) return;
+  pending.value = true;
+  try {
+    await run(() =>
+      api(`/cases/${caseId.value}/records`, { method: "POST", body: form }),
+    );
+    await loadRecords();
+    saved.value = "服務紀錄已更新";
+    form.summary = "";
+    form.follow_up = "";
+  } finally {
+    pending.value = false;
+  }
 }
 </script>
 <template>
   <section class="section" style="padding-bottom: 0">
     <h2 class="serif">服務紀錄</h2>
+    <label class="field"
+      >個案<select v-model="caseId" :disabled="pending" required>
+        <option :value="null">請選擇個案</option>
+        <option v-for="c in cases" :key="c.id" :value="c.id">
+          {{ c.code }} {{ c.name }}
+        </option>
+      </select></label
+    >
     <form v-if="canWrite" class="card form" @submit.prevent="save">
-      <label class="field"
-        >個案<select v-model="caseId" required>
-          <option :value="null">請選擇個案</option>
-          <option v-for="c in cases" :key="c.id" :value="c.id">
-            {{ c.code }} {{ c.name }}
-          </option>
-        </select></label
-      >
       <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
         <label class="field"
           >服務日期<input
@@ -93,13 +103,15 @@ async function save() {
       <label class="field"
         >服務摘要<textarea v-model="form.summary" required /></label
       ><label class="field">後續追蹤<textarea v-model="form.follow_up" /></label
-      ><button class="button">儲存紀錄</button>
+      ><button class="button" :disabled="pending || !caseId">
+        {{ pending ? "儲存中…" : "儲存紀錄" }}
+      </button>
     </form>
     <p v-if="saved" class="notice">{{ saved }}</p>
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="loading" class="muted">載入服務紀錄中…</p>
     <ol v-else-if="caseId && records.length" class="story-timeline">
-      <li v-for="record in records" :key="record.id">
+      <li v-for="(record, index) in records" :key="record.id || index">
         <b>{{ record.service_date }}｜{{ record.type }}</b
         ><br />
         {{ record.summary }}

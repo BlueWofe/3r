@@ -1,0 +1,20 @@
+# 共用監所、個案及更新回饋
+
+監所由獨立目錄維護，個案、班別與課程保存 `prison_id`，回應中的 `prison` 為目錄名稱。更名後各處顯示最新名稱；停用監所仍保留既有參照，不能用於新的關聯。舊文字資料由遷移去重匯入並回填，保留既有個案與授課歷史。
+
+| API | 授權與資料 |
+| --- | --- |
+| GET /prisons | `prisons.manage.all`；回應 `{data:[{id,name,address,active,version}]}` |
+| POST /prisons | `prisons.manage.all`；傳入 name、address（選填）、active（預設 true） |
+| PUT /prisons/{id} | `prisons.manage.all`；傳入 name、address、active、version；版本過期回傳 409 |
+| GET /prisons/options | 有排課／個案功能或監所管理授權者；只回傳 id、name、active，含停用項目以呈現歷史值 |
+
+`/cases`、`/class-templates`、`/sessions` 支援 `prison_id`。個案可留空，班別與課程必填；舊版文字欄位保留相容，沿用原功能寫入權限解析監所。老師直接異動只保留原監所關聯。課表提供 `prison_id` 精確篩選。
+
+個案回應新增 `assigned_user_name`，服務紀錄新增可顯示的 `author_name`，不需要為查看姓名額外授予完整人員管理權限。只有被指派資料範圍的建立者，未指派時由伺服器帶入自己；不擴大查閱範圍。
+
+個案建立後重新取得列表並同步服務紀錄下拉選單。選擇個案即可查看服務日期、類型、摘要、後續追蹤及填寫同工；新增紀錄後重新讀取資料。唯讀授權可查看紀錄，新增操作仍要求寫入授權。
+
+官網內容分成最新消息、見證分享、協會頁面三個區塊；對應 `/app/admin/content?section=news|testimony|pages`。見證沿用 kind=news、category=見證分享，頁面使用 kind=page，既有文章不搬移或刪除。
+
+管理導覽分成可展開／收合的課務與關懷、官網內容、會務與資源、人員與系統分類。更新成功顯示「已更新」，重新載入列表及關聯資料，並刷新官網內容快取；失敗時保留錯誤提示，不顯示成功訊息。
