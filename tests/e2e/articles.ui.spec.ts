@@ -33,7 +33,7 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     await page.getByRole('button', { name: '新增', exact: true }).click();
 
     await page.getByLabel('類型').selectOption('news');
-    await page.getByLabel('標題').fill(title);
+    await page.getByLabel('標題', { exact: true }).fill(title);
     await page.getByLabel('網址代稱').fill(slug);
     await page.getByLabel('分類').fill('見證分享');
     await page.getByLabel('作者').fill('E2E 見證作者');
