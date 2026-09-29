@@ -9,7 +9,8 @@ const rows = ref<Session[]>([]),
   prison = ref(""),
   teacher = ref(""),
   status = ref(""),
-  query = ref("");
+  query = ref(""),
+  refreshing = ref(false);
 const { error, run } = useApiError();
 async function load() {
   const end = new Date(from.value);
@@ -44,6 +45,14 @@ function assignmentSummary(s: Session) {
       )
       .join("、") || "缺額"
   );
+}
+async function scheduleUpdated() {
+  refreshing.value = true;
+  try {
+    await load();
+  } finally {
+    refreshing.value = false;
+  }
 }
 onMounted(async () => {
   await load();
@@ -120,7 +129,12 @@ onMounted(async () => {
             <span :class="['status', s.status]">{{ s.status }}</span>
           </td>
           <td>
-            <SessionActions :session="s" admin @updated="load" />
+            <SessionActions
+              v-if="!refreshing"
+              :session="s"
+              admin
+              @updated="scheduleUpdated"
+            /><span v-else class="muted">更新中…</span>
           </td>
         </tr>
       </tbody>

@@ -69,6 +69,9 @@ async function updateSession(status?: string) {
   action.value = null;
   await load();
 }
+async function sessionUpdated() {
+  await load();
+}
 onMounted(async () => {
   await refresh();
   if (!can("schedule.read.own") && !can("schedule.read.all")) {
@@ -125,7 +128,11 @@ onMounted(async () => {
             {{ s.participant_count }} 人
           </p>
         </div>
-        <SessionActions :session="s" @updated="load" />
+        <SessionActions
+          v-if="!loading"
+          :session="s"
+          @updated="sessionUpdated"
+        />
       </div>
       <div
         v-for="a in s.assignments"

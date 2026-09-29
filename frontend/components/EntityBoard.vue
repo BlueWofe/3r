@@ -6,7 +6,7 @@ const p = defineProps<{
     key: string;
     label: string;
     type?: string;
-    options?: string[];
+    options?: any[];
     optional?: boolean;
   }[];
   description?: string;
@@ -114,9 +114,13 @@ onMounted(load);
           v-if="f.type === 'textarea'"
           v-model="form[f.key]"
         ></textarea
-        ><select v-else-if="f.type === 'select'" v-model="form[f.key]">
-          <option v-for="o in f.options" :key="o" :value="o">
-            {{ o }}
+        ><select
+          v-else-if="f.type === 'select' || f.type === 'multiselect'"
+          v-model="form[f.key]"
+          :multiple="f.type === 'multiselect'"
+        >
+          <option v-for="o in f.options" :key="o.id ?? o" :value="o.id ?? o">
+            {{ o.name ?? o }}
           </option></select
         ><input
           v-else-if="f.type === 'file'"

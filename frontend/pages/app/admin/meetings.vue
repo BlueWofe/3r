@@ -1,19 +1,42 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
-const fields = [
+const roles = ref<any[]>([]);
+const fields = computed(() => [
   { key: "title", label: "會議名稱" },
   { key: "meeting_date", label: "日期", type: "date" },
   { key: "agenda", label: "議程", type: "textarea" },
   { key: "minutes", label: "紀錄", type: "textarea" },
   { key: "decisions", label: "決議", type: "textarea" },
-];
+  {
+    key: "role_ids",
+    label: "可查看角色",
+    type: "multiselect",
+    options: roles.value,
+    optional: true,
+  },
+  {
+    key: "file_ids",
+    label: "會議附件",
+    type: "multiselect",
+    options: resources.value.map((r: any) => ({
+      id: r.file_id || r.id,
+      name: r.title,
+    })),
+    optional: true,
+  },
+]);
 const resources = ref<any[]>([]),
   file = ref<File | null>(null),
   title = ref(""),
   category = ref("一般資源");
 const { error, run } = useApiError();
 async function load() {
-  resources.value = (await api<any>("/resources")).data || [];
+  try {
+    resources.value = (await api<any>("/resources")).data || [];
+    roles.value = (await api<any>("/role-options")).data || [];
+  } catch (e: any) {
+    error.value = e.message;
+  }
 }
 async function upload() {
   if (!file.value) return;

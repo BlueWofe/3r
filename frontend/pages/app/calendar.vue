@@ -5,6 +5,7 @@ const view = ref<"agenda" | "week" | "month">("month");
 const cursor = ref(new Date());
 const sessions = ref<Session[]>([]);
 const selected = ref<Session | null>(null);
+const refreshing = ref(false);
 const error = ref("");
 const yyyyMMdd = (d: Date) => {
   const z = (n: number) => String(n).padStart(2, "0");
@@ -70,6 +71,15 @@ function shift(n: number) {
   else d.setDate(d.getDate() + n * (view.value === "week" ? 7 : 14));
   cursor.value = d;
 }
+async function sessionUpdated() {
+  refreshing.value = true;
+  try {
+    await load();
+  } finally {
+    selected.value = null;
+    refreshing.value = false;
+  }
+}
 </script>
 <template>
   <div class="workhead">
@@ -111,6 +121,7 @@ function shift(n: number) {
         v-for="s in sessions.filter((x) => x.service_date === d)"
         :key="s.id"
         class="event"
+        :disabled="refreshing"
         @click="selected = s"
       >
         <span :class="['status', s.status]">{{
@@ -124,10 +135,7 @@ function shift(n: number) {
     v-if="selected"
     :session="selected"
     open-on-mount
-    @updated="
-      load();
-      selected = null;
-    "
+    @updated="sessionUpdated"
     @close="selected = null"
   />
 </template>
