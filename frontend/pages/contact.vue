@@ -6,15 +6,22 @@ const categories = [
   "志工加入",
   "奉獻與收據諮詢",
   "其他諮詢",
+  "大宗認購專案",
+  "試吃",
 ];
 const { data: contact } = await useAsyncData("contact-page", () =>
   api<any>("/public/contact").catch(() => ({ data: null })),
 );
+const route = useRoute();
+const selectedUrlCategory = () => {
+  const value = String(route.query.category || "");
+  return categories.includes(value) ? value : categories[0]!;
+};
 const form = reactive({
   name: "",
   phone: "",
   email: "",
-  category: categories[0],
+  category: selectedUrlCategory(),
   message: "",
   website: "",
   submission_token: "",
@@ -22,7 +29,8 @@ const form = reactive({
 const pending = ref(false),
   ready = ref(false),
   success = ref(""),
-  error = ref("");
+  error = ref(""),
+  filledAt = ref(0);
 function token() {
   const b = new Uint8Array(16);
   crypto.getRandomValues(b);
@@ -36,14 +44,19 @@ function reset() {
     name: "",
     phone: "",
     email: "",
-    category: categories[0],
+    category: selectedUrlCategory(),
     message: "",
     website: "",
     submission_token: token(),
   });
+  filledAt.value = Date.now();
 }
 async function submit() {
   if (pending.value || !ready.value) return;
+  if (Date.now() - filledAt.value < 1500) {
+    error.value = "請稍候片刻後再送出。";
+    return;
+  }
   pending.value = true;
   error.value = "";
   success.value = "";
@@ -60,7 +73,18 @@ async function submit() {
     pending.value = false;
   }
 }
-onMounted(() => { reset(); ready.value = true; });
+watch(
+  () => route.query.category,
+  () => {
+    if (!form.name && !form.phone && !form.message)
+      form.category = selectedUrlCategory();
+  },
+);
+onMounted(() => {
+  reset();
+  filledAt.value = Date.now();
+  ready.value = true;
+});
 </script>
 <template>
   <div class="pagehead">
@@ -87,40 +111,44 @@ onMounted(() => { reset(); ready.value = true; });
       </div>
       <form class="card form" @submit.prevent="submit">
         <h3>留下訊息</h3>
-        <fieldset class="form" :disabled="pending || !ready" style="border:0;padding:0;margin:0">
-        <label class="field"
-          >姓名<input
-            v-model.trim="form.name"
-            maxlength="100"
-            required /></label
-        ><label class="field"
-          >電話<input
-            v-model.trim="form.phone"
-            maxlength="50"
-            required /></label
-        ><label class="field"
-          >電子郵件<input
-            v-model.trim="form.email"
-            type="email"
-            maxlength="254" /></label
-        ><label class="field"
-          >諮詢分類<select v-model="form.category">
-            <option v-for="item in categories" :key="item">{{ item }}</option>
-          </select></label
-        ><label class="field"
-          >想說的話<textarea
-            v-model.trim="form.message"
-            maxlength="10000"
-            required
-          /></label
-        ><label class="visually-hidden"
-          >網站<input
-            v-model="form.website"
-            tabindex="-1"
-            autocomplete="off" /></label
-        ><button class="button" :disabled="pending || !ready">
-          {{ pending ? "送出中…" : "送出訊息" }}
-        </button>
+        <fieldset
+          class="form"
+          :disabled="pending || !ready"
+          style="border: 0; padding: 0; margin: 0"
+        >
+          <label class="field"
+            >姓名<input
+              v-model.trim="form.name"
+              maxlength="100"
+              required /></label
+          ><label class="field"
+            >電話<input
+              v-model.trim="form.phone"
+              maxlength="50"
+              required /></label
+          ><label class="field"
+            >電子郵件<input
+              v-model.trim="form.email"
+              type="email"
+              maxlength="254" /></label
+          ><label class="field"
+            >諮詢分類<select v-model="form.category">
+              <option v-for="item in categories" :key="item">{{ item }}</option>
+            </select></label
+          ><label class="field"
+            >想說的話<textarea
+              v-model.trim="form.message"
+              maxlength="10000"
+              required
+            /></label
+          ><label class="visually-hidden"
+            >網站<input
+              v-model="form.website"
+              tabindex="-1"
+              autocomplete="off" /></label
+          ><button class="button" :disabled="pending || !ready">
+            {{ pending ? "送出中…" : "送出訊息" }}
+          </button>
         </fieldset>
         <p v-if="success" class="notice">{{ success }}</p>
         <p v-if="error" class="error">{{ error }}</p>

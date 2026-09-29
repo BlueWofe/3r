@@ -122,6 +122,7 @@ onMounted(async () => {
             alt="中華復甦更新發展協會後台標誌" /></span
         ><span>復甦更新</span></NuxtLink
       >
+      <NotificationBell />
       <div class="workspace-menu-buttons" aria-label="工作台選單">
         <button
           ref="serviceButton"
