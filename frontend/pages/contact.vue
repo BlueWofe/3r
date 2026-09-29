@@ -1,5 +1,8 @@
 <script setup lang="ts">
 const sent = ref(false);
+const { data: contact } = await useAsyncData("contact-page", () =>
+  api<any>("/public/contact").catch(() => ({ data: null })),
+);
 </script>
 <template>
   <div class="pagehead">
@@ -16,8 +19,10 @@ const sent = ref(false);
           若您想認識服務、加入志工或需要轉介資訊，歡迎留下訊息。此表單為介面示範，並不會送出真實資料。
         </p>
         <p class="muted">
-          服務專線 02-0000-0000<br />service@example.test<br />台北市希望路 100
-          號（示範地址）
+          {{ contact?.data?.association_name || "中華復甦更新發展協會"
+          }}<br />服務專線 {{ contact?.data?.contact_phone || "02-0000-0000"
+          }}<br />{{ contact?.data?.contact_email || "service@example.test"
+          }}<br />{{ contact?.data?.address || "聯絡地址尚待設定" }}
         </p>
       </div>
       <form class="card form" @submit.prevent="sent = true">

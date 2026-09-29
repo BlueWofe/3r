@@ -1,6 +1,9 @@
 <script setup lang="ts">
 const { loggedIn, user, refresh, logout } = useAuth();
 const navOpen = ref(false);
+const { data: contact } = await useAsyncData("public-contact", () =>
+  api<any>("/public/contact").catch(() => ({ data: null })),
+);
 onMounted(refresh);
 </script>
 <template>
@@ -8,7 +11,9 @@ onMounted(refresh);
     <div class="container navin">
       <NuxtLink class="brand" to="/"
         ><span class="seal">✦</span
-        ><span>中華復甦更新<br />發展協會</span></NuxtLink
+        ><span>{{
+          contact?.data?.association_name || "中華復甦更新發展協會"
+        }}</span></NuxtLink
       >
       <button
         class="mobile-menu button ghost"
@@ -39,7 +44,10 @@ onMounted(refresh);
   <footer class="footer">
     <div class="container grid">
       <div>
-        <div class="brand"><span class="seal">✦</span>中華復甦更新發展協會</div>
+        <div class="brand">
+          <span class="seal">✦</span
+          >{{ contact?.data?.association_name || "中華復甦更新發展協會" }}
+        </div>
         <p>
           陪伴生命走過幽谷，在盼望中重新站立。<br /><span class="demo"
             >示範網站・所有內容均為虛構 UAT 資料</span
@@ -52,7 +60,11 @@ onMounted(refresh);
       </div>
       <div>
         <b>聯絡方式</b>
-        <p>服務專線：02-0000-0000<br />service@example.test</p>
+        <p>
+          服務專線：{{ contact?.data?.contact_phone || "02-0000-0000" }}<br />{{
+            contact?.data?.contact_email || "service@example.test"
+          }}<br />{{ contact?.data?.address || "" }}
+        </p>
       </div>
     </div>
   </footer>
