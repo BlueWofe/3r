@@ -46,3 +46,39 @@ test('system admin can read all schedules and role permissions', async () => {
     await admin.dispose();
   }
 });
+
+test('role permissions union while assigned and disappear immediately after role removal', async () => {
+  const admin = await apiContext();
+  const teacher = await apiContext();
+  try {
+    await login(admin, '0900000001');
+    const users = await json<{ data: { id: number; phone: string; roles: { id: number }[] }[] }>(await admin.get('/api/v1/users'));
+    const teacherUser = users.data.find(user => user.phone === '0900000002');
+    const otherTeacher = users.data.find(user => user.phone === '0900000004');
+    expect(teacherUser).toBeTruthy();
+    expect(otherTeacher).toBeTruthy();
+    const outsideSession = await createSession(admin, otherTeacher!.id);
+    const slug = `e2e-schedule-all-${Date.now()}`;
+    const role = await json<{ id: number }>(await mutate(admin, 'post', '/api/v1/roles', {
+      name: 'E2E 全體排程檢視', slug, active: true, permissions: ['schedule.read.all'],
+    }));
+    const combinedRoles = [...teacherUser!.roles.map(item => item.id), role.id];
+    const updatedUser = await mutate(admin, 'put', `/api/v1/users/${teacherUser!.id}`, {
+      name: 'E2E 教師二', active: true, role_ids: combinedRoles,
+    });
+    expect(updatedUser.ok()).toBeTruthy();
+
+    await login(teacher, '0900000002');
+    const allAccess = await teacher.get(`/api/v1/sessions/${outsideSession.id}`);
+    expect(allAccess.ok()).toBeTruthy();
+
+    const revoked = await mutate(admin, 'put', `/api/v1/users/${teacherUser!.id}`, {
+      name: 'E2E 教師二', active: true, role_ids: teacherUser!.roles.map(item => item.id),
+    });
+    expect(revoked.ok()).toBeTruthy();
+    const deniedAfterRevoke = await teacher.get(`/api/v1/sessions/${outsideSession.id}`);
+    expect(deniedAfterRevoke.status()).toBe(403);
+  } finally {
+    await Promise.all([admin.dispose(), teacher.dispose()]);
+  }
+});

@@ -41,15 +41,19 @@ export const unique = (prefix: string) => `${prefix}-${Date.now()}-${Math.random
 
 export function futureDate(daysAhead = 14) {
   const date = new Date();
-  date.setDate(date.getDate() + daysAhead);
+  // Spread parallel test sessions across future dates to avoid teacher conflicts.
+  date.setDate(date.getDate() + daysAhead + Math.floor(Math.random() * 7000));
   return date.toISOString().slice(0, 10);
 }
 
-export async function createSession(api: APIRequestContext, teacherId: number, title = unique('E2E')) {
-  return json<{ id: number; version: number; assignments: { id: number; teacher_id: number; attendance: unknown }[] }>(
+export interface TestAssignment { id: number; teacher_id: number; status: 'assigned' | 'leave' | 'replaced'; attendance: unknown }
+export interface TestSession { id: number; version: number; assignments: TestAssignment[]; status: 'scheduled' | 'cancelled' }
+
+export async function createSession(api: APIRequestContext, teacherId: number, title = unique('E2E'), teacherIds: number[] = [teacherId]) {
+  return json<TestSession>(
     await mutate(api, 'post', '/api/v1/sessions', {
       title, prison: '示範場域', location: 'E2E 驗收用', participant_count: 0,
-      service_date: futureDate(), start_time: '10:00', end_time: '11:00', teacher_ids: [teacherId], repeat_weeks: 1,
+      service_date: futureDate(), start_time: '10:00', end_time: '11:00', teacher_ids: teacherIds, repeat_weeks: 1,
     }),
   );
 }

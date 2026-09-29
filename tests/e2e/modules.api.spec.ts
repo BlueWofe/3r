@@ -12,11 +12,18 @@ test('public CMS, forms, resources and mock payment endpoints accept basic workf
     }));
     expect((await admin.get(`/api/v1/public/pages/${slug}`)).ok()).toBeTruthy();
 
-    const form = await json<{ id: number; fields: { key: string }[] }>(await mutate(admin, 'post', '/api/v1/forms', {
+    const form = await json<{ id: number; title: string; version: number; snapshots: { version: number }[]; fields: { key: string }[] }>(await mutate(admin, 'post', '/api/v1/forms', {
       title: unique('E2E 表單'), description: '自動驗收', status: 'published', fields: [{ key: 'feedback', label: '回饋', type: 'text', required: true }], role_ids: [],
     }));
-    const response = await mutate(admin, 'post', `/api/v1/forms/${form.id}/responses`, { answers: { feedback: '驗收完成' } });
-    expect(response.ok()).toBeTruthy();
+    expect(form.version).toBe(1);
+    expect(form.snapshots).toHaveLength(1);
+    const editedForm = await json<typeof form>(await mutate(admin, 'put', `/api/v1/forms/${form.id}`, {
+      title: form.title, description: '發布第二版', status: 'published', fields: [{ key: 'feedback', label: '回饋', type: 'text', required: true }], role_ids: [],
+    }));
+    expect(editedForm.version).toBe(2);
+    expect(editedForm.snapshots).toHaveLength(2);
+    const response = await json<{ version: number }>(await mutate(admin, 'post', `/api/v1/forms/${form.id}/responses`, { answers: { feedback: '驗收完成' } }));
+    expect(response.version).toBe(2);
 
     const resource = await admin.post('/api/v1/resources', {
       headers: { 'X-CSRF-TOKEN': await csrfToken(admin) },
@@ -32,8 +39,8 @@ test('public CMS, forms, resources and mock payment endpoints accept basic workf
     const donation = await json<{ id: number }>(await mutate(admin, 'post', '/api/v1/donations', { amount: 100, purpose: 'E2E 模擬捐款' }));
     const simulation1 = await mutate(admin, 'post', `/api/v1/donations/${donation.id}/simulate`, { result: 'success' }, { 'Idempotency-Key': unique('payment') });
     expect(simulation1.ok()).toBeTruthy();
-    const simulation2 = await mutate(admin, 'post', `/api/v1/donations/${donation.id}/simulate`, { result: 'success' }, { 'Idempotency-Key': `repeat-${donation.id}` });
-    expect([200, 409]).toContain(simulation2.status());
+    const simulation2 = await json<{ status: string }>(await mutate(admin, 'post', `/api/v1/donations/${donation.id}/simulate`, { result: 'failed' }));
+    expect(simulation2.status).toBe('success');
     const donationList = await json<{ data: { id: number }[] }>(await admin.get('/api/v1/donations'));
     expect(donationList.data.some(d => d.id === donation.id)).toBeTruthy();
 

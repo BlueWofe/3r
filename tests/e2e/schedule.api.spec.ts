@@ -71,3 +71,72 @@ test('cancelled sessions reject attendance and stale schedule versions conflict'
     await admin.dispose();
   }
 });
+
+test('shared session teachers cannot edit schedule or act on a colleague assignment; admin can acknowledge changes', async () => {
+  const admin = await apiContext();
+  const teacher = await apiContext();
+  try {
+    await login(admin, '0900000001');
+    const users = await json<{ data: { id: number; phone: string }[] }>(await admin.get('/api/v1/users'));
+    const ownTeacher = users.data.find(user => user.phone === '0900000002');
+    const otherTeacher = users.data.find(user => user.phone === '0900000004');
+    expect(ownTeacher).toBeTruthy();
+    expect(otherTeacher).toBeTruthy();
+    const session = await createSession(admin, ownTeacher!.id, undefined, [ownTeacher!.id, otherTeacher!.id]);
+    await login(teacher, '0900000002');
+    const visible = await teacher.get(`/api/v1/sessions/${session.id}`);
+    expect(visible.ok()).toBeTruthy();
+    const colleagueAssignment = session.assignments.find(item => item.teacher_id === otherTeacher!.id)!;
+    const colleagueLeave = await mutate(teacher, 'post', `/api/v1/assignments/${colleagueAssignment.id}/leave`, { version: session.version, reason: '不得替同工請假' });
+    expect(colleagueLeave.status()).toBe(403);
+    const scheduleEdit = await mutate(teacher, 'put', `/api/v1/sessions/${session.id}`, { version: session.version, reason: '教師不可改全體排程', title: '不應儲存' });
+    expect(scheduleEdit.status()).toBe(403);
+
+    const ownAssignment = session.assignments.find(item => item.teacher_id === ownTeacher!.id)!;
+    const leave = await mutate(teacher, 'post', `/api/v1/assignments/${ownAssignment.id}/leave`, { version: session.version, reason: '本人請假' });
+    expect(leave.ok()).toBeTruthy();
+    const changes = await json<{ data: { id: number; session_id: number }[] }>(await admin.get('/api/v1/changes'));
+    const change = changes.data.find(row => row.session_id === session.id);
+    expect(change).toBeTruthy();
+    const ack = await mutate(admin, 'post', `/api/v1/changes/${change!.id}/acknowledge`);
+    expect(ack.ok()).toBeTruthy();
+  } finally {
+    await Promise.all([admin.dispose(), teacher.dispose()]);
+  }
+});
+
+test('withdrawing leave cancels the pending invite and the superseded invite cannot be accepted', async () => {
+  const admin = await apiContext();
+  const teacher = await apiContext();
+  const invitee = await apiContext();
+  try {
+    await login(admin, '0900000001');
+    const users = await json<{ data: { id: number; phone: string }[] }>(await admin.get('/api/v1/users'));
+    const leaving = users.data.find(user => user.phone === '0900000002');
+    const invited = users.data.find(user => user.phone === '0900000004');
+    expect(leaving).toBeTruthy();
+    expect(invited).toBeTruthy();
+    const session = await createSession(admin, leaving!.id);
+    const assignment = session.assignments[0];
+
+    await login(teacher, '0900000002');
+    const leave = await mutate(teacher, 'post', `/api/v1/assignments/${assignment.id}/leave`, { version: session.version, reason: 'E2E 請假' });
+    expect(leave.ok()).toBeTruthy();
+    const afterLeave = await json<typeof session>(await admin.get(`/api/v1/sessions/${session.id}`));
+    const invite = await mutate(admin, 'post', `/api/v1/assignments/${assignment.id}/invite`, { version: afterLeave.version, teacher_id: invited!.id, reason: 'E2E 邀請' });
+    expect(invite.ok()).toBeTruthy();
+    await login(teacher, '0900000002');
+    const afterInvite = await json<typeof session>(await admin.get(`/api/v1/sessions/${session.id}`));
+    const withdraw = await mutate(teacher, 'post', `/api/v1/assignments/${assignment.id}/withdraw-leave`, { version: afterInvite.version, reason: 'E2E 撤回請假' });
+    expect(withdraw.ok()).toBeTruthy();
+
+    await login(invitee, '0900000004');
+    const invitations = await json<{ data: { id: number; session_id: number; status: string }[] }>(await invitee.get('/api/v1/invitations'));
+    const superseded = invitations.data.find(item => item.session_id === session.id);
+    expect(superseded?.status).toBe('cancelled');
+    const accept = await mutate(invitee, 'post', `/api/v1/invitations/${superseded!.id}/respond`, { action: 'accept' });
+    expect(accept.status()).toBe(409);
+  } finally {
+    await Promise.all([admin.dispose(), teacher.dispose(), invitee.dispose()]);
+  }
+});

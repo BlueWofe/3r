@@ -12,6 +12,7 @@ jobs:
       DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD || 'ci-only-synthetic-password' }}
       DEMO_SEED: 'true'
       BASE_URL: http://localhost:3180
+      DB_PASSWORD: ci-only-database-password
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,6 +20,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Prepare frontend dependencies and typecheck
+        working-directory: frontend
+        run: npm ci && npm run typecheck
+      - name: Generate ephemeral Laravel key
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32 | tr -d '\n')" >> "$GITHUB_ENV"
       - name: Build and start demo services
         run: docker compose up -d --build
       - name: Migrate and seed synthetic data
@@ -26,7 +32,7 @@ jobs:
       - name: Wait for web app
         run: |
           for attempt in $(seq 1 60); do
-            if curl --fail --silent http://localhost:3180/health >/dev/null; then exit 0; fi
+            if curl --fail --silent http://localhost:3180/api/v1/health >/dev/null; then exit 0; fi
             sleep 2
           done
           docker compose ps
@@ -34,6 +40,8 @@ jobs:
           exit 1
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:e2e
+      - name: Run backend unit tests
+        run: docker compose exec -T backend php artisan test
       - if: always()
         run: docker compose logs --tail=150
       - if: always()
