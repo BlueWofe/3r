@@ -34,7 +34,7 @@ const adminLinks = [
   ],
   [
     "/app/admin/products",
-    "食品展示管理",
+    "產品管理",
     () => can("content.read.all") || can("content.update.all"),
   ],
   [

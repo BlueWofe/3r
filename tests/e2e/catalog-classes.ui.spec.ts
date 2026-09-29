@@ -52,7 +52,7 @@ test('admin can create and edit a product with multiple axes and a quantity tier
   const productName = `E2E 商品 ${Date.now()}`;
   const editedName = `${productName} 已編輯`;
   const slug = `e2e-product-${Date.now()}`;
-  await page.getByLabel('名稱').fill(productName);
+  await page.getByLabel('名稱', { exact: true }).fill(productName);
   await page.getByLabel('網址代稱').fill(slug);
   await page.getByLabel('分類').fill('UI 驗收');
   await page.getByLabel('摘要').fill('建立含多規格與數量階梯的合成商品');
@@ -81,7 +81,7 @@ test('admin can create and edit a product with multiple axes and a quantity tier
   await expect(page.getByRole('heading', { name: /編輯/ })).toBeVisible();
   await expect(page.getByLabel('規格名稱').nth(0)).toHaveValue('口味');
   await expect(page.getByLabel('數量門檻')).toHaveValue('5');
-  await page.getByLabel('名稱').fill(editedName);
+  await page.getByLabel('名稱', { exact: true }).fill(editedName);
   await page.getByLabel('單價').nth(0).fill('125');
   await page.getByLabel('優惠單價').fill('115');
   await page.getByRole('button', { name: /儲存產品|儲存食品/ }).click();

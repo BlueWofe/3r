@@ -32,6 +32,7 @@ const fields = [
     title="內容管理"
     endpoint="/contents"
     :fields="fields"
-    description="管理頁面、消息與展示品；公開頁僅呈現已發布的安全內容。"
+    :exclude-kinds="['product']"
+    description="管理協會頁面與消息；食品請至產品管理設定規格與價格。"
   />
 </template>

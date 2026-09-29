@@ -33,6 +33,8 @@ async function getQuote() {
   }
 }
 watch([selected, quantity], () => {
+  requestId++;
+  quoting.value = false;
   quote.value = null;
   quoteError.value = "";
 });

@@ -20,7 +20,7 @@ const form = reactive<any>({
     variants: copy(
       p?.metadata?.variants || [
         {
-          id: crypto.randomUUID(),
+          id: newId(),
           sku: "",
           options: [],
           price: 0,
@@ -41,6 +41,8 @@ const form = reactive<any>({
 const image = ref<File | null>(null);
 const galleryFiles = ref<File[]>([]);
 const galleryPreviews = ref<string[]>([]);
+const saving = ref(false);
+onUnmounted(() => galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url)));
 const { error, run } = useApiError();
 function selectGallery(event: Event) {
   galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url));
@@ -60,7 +62,7 @@ function axis() {
 }
 function variant() {
   form.metadata.variants.push({
-    id: crypto.randomUUID(),
+    id: newId(),
     sku: "",
     options: [],
     price: 0,
@@ -73,6 +75,13 @@ function tier(v: any) {
   v.wholesale.push({ min_quantity: 2, unit_price: v.price });
 }
 async function save() {
+  if (saving.value) return;
+  if (form.metadata.gallery_ids.length + galleryFiles.value.length > 10) {
+    error.value = "圖片集最多 10 張，請先移除多餘圖片。";
+    return;
+  }
+  saving.value = true;
+  try {
   const body = copy(form);
   if (image.value) {
     const fd = new FormData();
@@ -106,6 +115,11 @@ async function save() {
   );
   emit("saved");
   emit("close");
+  } catch {
+    // useApiError already exposes the actionable API error in the form.
+  } finally {
+    saving.value = false;
+  }
 }
 </script>
 <template>
@@ -326,7 +340,7 @@ async function save() {
         </div>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
-      <button class="button">儲存食品</button>
+      <button class="button" :disabled="saving">{{ saving ? "儲存中…" : "儲存食品" }}</button>
     </form>
   </div>
 </template>

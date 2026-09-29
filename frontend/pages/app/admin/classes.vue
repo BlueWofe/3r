@@ -28,7 +28,7 @@ const blank = () => ({
   version: undefined,
   rules: [
     {
-      id: crypto.randomUUID(),
+      id: newId(),
       frequency: "weekly",
       weekdays: [1],
       start_time: "09:00",
@@ -68,7 +68,7 @@ function ruleDescription(ruleId: string) {
 }
 function rule() {
   form.rules.push({
-    id: crypto.randomUUID(),
+    id: newId(),
     frequency: "weekly",
     weekdays: [1],
     start_time: "09:00",

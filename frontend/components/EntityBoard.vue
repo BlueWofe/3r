@@ -13,6 +13,7 @@ const p = defineProps<{
   description?: string;
   canCreate?: boolean;
   canUpdate?: boolean;
+  excludeKinds?: string[];
 }>();
 const rows = ref<any[]>([]),
   open = ref(false),
@@ -23,7 +24,7 @@ const { error, run } = useApiError();
 async function load() {
   try {
     const r: any = await api(p.endpoint);
-    rows.value = r.data || [];
+    rows.value = (r.data || []).filter((row: any) => !p.excludeKinds?.includes(row.kind));
     error.value = "";
   } catch (e: any) {
     error.value = e.message;
