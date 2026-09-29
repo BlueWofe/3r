@@ -1,0 +1,64 @@
+<?php
+
+use App\Http\Controllers\ApiController;
+use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ScheduleController;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('api/v1')->group(function () {
+    Route::get('health', fn () => ['status' => 'ok', 'mode' => 'synthetic-uat']);
+    foreach (['csrf', 'me'] as $a) {
+        Route::get('auth/'.$a, fn (Request $r) => (new ApiController)->auth($r, $a));
+    }
+    foreach (['login', 'logout', 'otp', 'register', 'reset-password', 'change-phone'] as $a) {
+        Route::post('auth/'.$a, fn (Request $r) => (new ApiController)->auth($r, $a))->middleware('throttle:10,1');
+    }
+    Route::put('auth/profile', fn (Request $r) => (new ApiController)->auth($r, 'profile'));
+    foreach (['pages', 'news', 'products', 'search'] as $kind) {
+        Route::get('public/'.$kind, fn (Request $r) => (new ApiController)->publicContent($r, $kind));
+        if ($kind !== 'search') {
+            Route::get('public/'.$kind.'/{id}', fn (Request $r, string $id) => (new ApiController)->publicContent($r, $kind, $id));
+        }
+    }
+    Route::get('files/{id}/download', [ModuleController::class, 'files']);
+    Route::middleware('auth')->group(function () {
+        Route::get('permissions', fn () => ['data' => ApiController::permissionNames()]);
+        foreach (['roles', 'users'] as $m) {
+            Route::match(['get', 'post'], $m, fn (Request $r) => (new ApiController)->administration($r, $m));
+            Route::put($m.'/{id}', fn (Request $r, int $id) => (new ApiController)->administration($r, $m, $id));
+        }
+        Route::get('teachers', function (Request $r) {
+            abort_unless($r->user()->canDo('schedule.read.all') || $r->user()->canDo('schedule.read.own') || $r->user()->canDo('schedule.create.all'), 403);
+
+            return ['data' => User::where('active', true)->get()->filter(fn ($u) => $u->canDo('schedule.read.own'))->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])->values()];
+        });
+        Route::match(['get', 'post'], 'sessions', [ScheduleController::class, 'sessions']);
+        Route::match(['get', 'put'], 'sessions/{id}', [ScheduleController::class, 'sessions']);
+        Route::post('assignments/{id}/{action}', [ScheduleController::class, 'assignment'])->where('action', 'leave|withdraw-leave|invite|replace|attendance');
+        Route::get('invitations', [ScheduleController::class, 'invitations']);
+        Route::post('invitations/{id}/respond', [ScheduleController::class, 'invitations']);
+        foreach (['contents', 'cases', 'meetings', 'forms'] as $m) {
+            Route::match(['get', 'post'], $m, fn (Request $r) => (new ApiController)->generic($r, $m));
+            Route::match(['get', 'put', 'delete'], $m.'/{id}', fn (Request $r, int $id) => (new ApiController)->generic($r, $m, $id));
+        }
+        Route::post('cases/{id}/records', [ModuleController::class, 'records']);
+        Route::match(['get', 'post'], 'forms/{id}/responses', [ModuleController::class, 'responses']);
+        Route::get('forms/{id}/export', fn (Request $r, int $id) => (new ModuleController)->responses($r, $id, true));
+        Route::post('files', [ModuleController::class, 'files']);
+        Route::match(['get', 'post'], 'resources', [ModuleController::class, 'resources']);
+        Route::delete('resources/{id}', [ModuleController::class, 'resources']);
+        Route::match(['get', 'post'], 'donations', [ModuleController::class, 'donations']);
+        Route::post('donations/{id}/simulate', [ModuleController::class, 'donations']);
+        foreach (['changes', 'notifications'] as $m) {
+            Route::get($m, fn (Request $r) => (new ModuleController)->inbox($r, $m));
+            Route::post($m.'/{id}/'.($m === 'changes' ? 'acknowledge' : 'read'), fn (Request $r, int $id) => (new ModuleController)->inbox($r, $m, $id));
+        }
+        Route::match(['get', 'put'], 'integrations/line', fn (Request $r) => (new ModuleController)->integrations($r, 'line'));
+        Route::get('integrations/drive', fn (Request $r) => (new ModuleController)->integrations($r, 'drive'));
+        Route::post('integrations/drive/simulate', fn (Request $r) => (new ModuleController)->integrations($r,'drive'));
+        Route::match(['get', 'put'],'settings',[ModuleController::class, 'settings']);
+        Route::get('reports',[ModuleController::class, 'reports']);
+    });
+});
