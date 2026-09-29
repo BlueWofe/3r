@@ -2,6 +2,7 @@
 import json
 import re
 from pathlib import Path
+from openapi_groups import extend_groups
 
 catalog = '''
 GET /health
@@ -128,5 +129,6 @@ paths['/public/news']['get']['parameters'].append({'name': 'limit', 'in': 'query
 paths['/public/news']['get']['description'] = 'Published articles whose publication time has arrived, ordered by published_at descending then id descending. Homepage uses limit=3. See docs/articles.md.'
 paths['/public/news']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Article'}}}}}}
 paths['/public/news/{id}']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'$ref': '#/components/schemas/Article'}}}}}
+extend_groups(spec)
 target.write_text(json.dumps(spec, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
 print(f'Generated {len(paths)} API paths')
