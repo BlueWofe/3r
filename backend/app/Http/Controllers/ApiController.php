@@ -6,6 +6,7 @@ use App\Models\Entity;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\ArticleContent;
+use App\Services\AssociationLogo;
 use App\Services\PrisonDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -221,6 +222,7 @@ class ApiController extends Controller
         foreach ($defaults as $key => $default) {
             $defaults[$key] = is_string($settings[$key] ?? null) ? $settings[$key] : $default;
         }
+        $defaults['logo_url'] = app(AssociationLogo::class)->url($settings);
 
         return ['data' => $defaults];
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\PrisonController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Middleware\ActiveUser;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -98,7 +99,8 @@ Route::prefix('api/v1')->group(function () {
         Route::match(['get', 'put'], 'integrations/line', fn (Request $r) => (new ModuleController)->integrations($r, 'line'));
         Route::get('integrations/drive', fn (Request $r) => (new ModuleController)->integrations($r, 'drive'));
         Route::post('integrations/drive/simulate', fn (Request $r) => (new ModuleController)->integrations($r, 'drive'));
-        Route::match(['get', 'put'], 'settings', [ModuleController::class, 'settings']);
+        Route::match(['get', 'put'], 'settings', [SettingsController::class, 'settings']);
+        Route::post('settings/logo', [SettingsController::class, 'logo']);
         Route::get('reports', [ModuleController::class, 'reports']);
     });
 });
