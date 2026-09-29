@@ -758,6 +758,7 @@ a {
   }
   .table td {
     display: grid;
+    white-space: normal;
     grid-template-columns: minmax(92px, 38%) minmax(0, 1fr);
     gap: 10px;
     min-height: 38px;

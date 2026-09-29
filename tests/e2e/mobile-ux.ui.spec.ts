@@ -79,7 +79,7 @@ test('volunteer can submit leave from the calendar at 320px and 390px', async ({
       const width = index === 0 ? 320 : 390;
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/app/calendar');
-      await moveCalendarToMonth(page, fixture.serviceDate);
+      await expect(page.locator('.calendar')).toHaveClass(/agenda/);
       const event = page.getByRole('button', { name: new RegExp(fixture.title) });
       await expect(event).toBeVisible();
       const eventHeight = await event.evaluate(element => element.getBoundingClientRect().height);
@@ -144,14 +144,4 @@ function addDays(date: string, days: number) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(value);
-}
-
-async function moveCalendarToMonth(page: Page, serviceDate: string) {
-  const [year, month] = serviceDate.split('-').map(Number);
-  const monthLabel = `${year} 年 ${month} 月`;
-  const label = page.locator('.workhead .muted').first();
-  if (!(await label.textContent())?.includes(monthLabel)) {
-    await page.getByRole('button', { name: '→', exact: true }).click();
-  }
-  await expect(label).toContainText(monthLabel);
 }
