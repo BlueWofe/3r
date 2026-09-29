@@ -87,6 +87,7 @@ test('volunteer can submit leave from the calendar at 320px and 390px', async ({
       const width = index === 0 ? 320 : 390;
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/app/calendar');
+      await page.getByRole('button', { name: '議程', exact: true }).click();
       await expect(page.locator('.calendar')).toHaveClass(/agenda/);
       const event = page.getByRole('button', { name: new RegExp(fixture.title) });
       await expect(event).toBeVisible();

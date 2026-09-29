@@ -52,6 +52,7 @@ test("teacher can leave a future calendar session and invite a substitute from m
       .click();
     await expect(page).toHaveURL(/\/app(?:\/[^/]+)?$/);
     await page.goto("/app/calendar");
+    await page.getByRole("button", { name: "議程", exact: true }).click();
     await page.getByRole("button", { name: new RegExp(title) }).click();
     await page.getByPlaceholder("請說明異動原因").fill("臨時有事，請假測試");
     const leave = page.waitForResponse(

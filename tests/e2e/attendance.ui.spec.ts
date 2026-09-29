@@ -47,6 +47,7 @@ test('teacher can check in today without a photo and cannot check in twice', asy
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
 
     await page.goto('/app/calendar');
+    await page.getByRole('button', { name: '議程', exact: true }).click();
     const event = page.getByRole('button', { name: new RegExp(title) });
     await expect(event).toBeVisible({ timeout: 15_000 });
     await event.click();
