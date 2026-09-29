@@ -1,6 +1,10 @@
 <script setup lang="ts">
-const { data, pending, error } = await useAsyncData("news", () =>
-  api<any>("/public/news"),
+const articleType = ref(""),
+  category = ref("");
+const { data, pending, error, refresh } = await useAsyncData("news", () =>
+  api<any>(
+    `/public/news?article_type=${articleType.value}&category=${encodeURIComponent(category.value)}`,
+  ),
 );
 const taipeiDateTime = (value?: string) =>
   value
@@ -17,6 +21,29 @@ const taipeiDateTime = (value?: string) =>
 <template>
   <div class="pagehead">
     <div class="container">
+      <div class="toolbar">
+        <select v-model="articleType" @change="() => refresh()">
+          <option value="">全部文章</option>
+          <option value="news">最新消息</option>
+          <option value="sharing">事工分享</option>
+          <option value="testimony">生命見證</option></select
+        ><select v-model="category" @change="() => refresh()">
+          <option value="">全部主題</option>
+          <option
+            v-for="item in [
+              '監獄事工',
+              '更生輔導',
+              '志工招募',
+              '愛心義賣',
+              '代禱消息',
+              '協會公告',
+            ]"
+            :key="item"
+          >
+            {{ item }}
+          </option>
+        </select>
+      </div>
       <div class="eyebrow">NEWS</div>
       <h1>最新消息</h1>
     </div>

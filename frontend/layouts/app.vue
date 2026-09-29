@@ -104,15 +104,16 @@ onMounted(async () => {
       class="workspace-mobile-header"
       @keydown.esc.prevent="closeMenu(true)"
     >
-      <NuxtLink class="brand workspace-brand" to="/" @click="closeMenu()"
+      <NuxtLink
+        class="brand workspace-brand"
+        to="/"
+        aria-label="協會 Logo，回到官網"
+        @click="closeMenu()"
         ><span class="backend-logo-frame"
           ><img
             src="/images/association-backend-logo.png"
             alt="中華復甦更新發展協會後台標誌" /></span
         ><span>復甦更新</span></NuxtLink
-      >
-      <NuxtLink class="public-return" to="/" @click="closeMenu()"
-        ><NavIcon name="home" />回到官網</NuxtLink
       >
       <div class="workspace-menu-buttons" aria-label="工作台選單">
         <button
@@ -143,15 +144,15 @@ onMounted(async () => {
       :class="['side', { 'menu-open': openMenu }]"
       @keydown.esc.prevent="closeMenu(true)"
     >
-      <NuxtLink class="brand desktop-brand" to="/"
+      <NuxtLink
+        class="brand desktop-brand"
+        to="/"
+        aria-label="協會 Logo，回到官網"
         ><span class="backend-logo-frame"
           ><img
             src="/images/association-backend-logo.png"
             alt="中華復甦更新發展協會後台標誌" /></span
         >復甦更新</NuxtLink
-      >
-      <NuxtLink class="public-return desktop-return" to="/"
-        ><NavIcon name="home" />回到官網</NuxtLink
       >
       <section
         :class="[
