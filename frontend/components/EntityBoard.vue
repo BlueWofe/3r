@@ -8,8 +8,11 @@ const p = defineProps<{
     type?: string;
     options?: any[];
     optional?: boolean;
+    readonly?: boolean;
   }[];
   description?: string;
+  canCreate?: boolean;
+  canUpdate?: boolean;
 }>();
 const rows = ref<any[]>([]),
   open = ref(false),
@@ -29,14 +32,16 @@ async function load() {
 function newRow() {
   editing.value = null;
   Object.keys(form).forEach((k) => delete form[k]);
-  p.fields.forEach((f) => (form[f.key] = ""));
+  p.fields.forEach((f) => (form[f.key] = f.type === "multiselect" ? [] : ""));
   Object.keys(files).forEach((key) => delete files[key]);
   open.value = true;
 }
 function edit(r: any) {
   editing.value = r;
   Object.keys(form).forEach((k) => delete form[k]);
-  p.fields.forEach((f) => (form[f.key] = r[f.key] ?? ""));
+  p.fields.forEach(
+    (f) => (form[f.key] = r[f.key] ?? (f.type === "multiselect" ? [] : "")),
+  );
   Object.keys(files).forEach((key) => delete files[key]);
   open.value = true;
 }
@@ -73,7 +78,9 @@ onMounted(load);
       <h1>{{ title }}</h1>
       <p v-if="description" class="muted">{{ description }}</p>
     </div>
-    <button class="button" @click="newRow">新增</button>
+    <button v-if="canCreate !== false" class="button" @click="newRow">
+      新增
+    </button>
   </div>
   <div class="tablewrap">
     <table class="table">
@@ -92,7 +99,15 @@ onMounted(load);
                 : r[f.key]
             }}
           </td>
-          <td><button class="button ghost" @click="edit(r)">編輯</button></td>
+          <td>
+            <button
+              v-if="canUpdate !== false"
+              class="button ghost"
+              @click="edit(r)"
+            >
+              編輯
+            </button>
+          </td>
         </tr>
         <tr v-if="!rows.length">
           <td :colspan="fields.length + 1" class="empty">尚無資料</td>
@@ -113,11 +128,13 @@ onMounted(load);
         }}<textarea
           v-if="f.type === 'textarea'"
           v-model="form[f.key]"
+          :disabled="f.readonly"
         ></textarea
         ><select
           v-else-if="f.type === 'select' || f.type === 'multiselect'"
           v-model="form[f.key]"
           :multiple="f.type === 'multiselect'"
+          :disabled="f.readonly"
         >
           <option v-for="o in f.options" :key="o.id ?? o" :value="o.id ?? o">
             {{ o.name ?? o }}
@@ -126,6 +143,7 @@ onMounted(load);
           v-else-if="f.type === 'file'"
           type="file"
           accept="image/*"
+          :disabled="f.readonly"
           @change="
             files[f.key] =
               ($event.target as HTMLInputElement).files?.[0] || null
@@ -134,6 +152,7 @@ onMounted(load);
           v-model="form[f.key]"
           :type="f.type || 'text'"
           :required="!f.optional"
+          :disabled="f.readonly"
       /></label>
       <p v-if="error" class="error">{{ error }}</p>
       <button class="button">儲存</button>
