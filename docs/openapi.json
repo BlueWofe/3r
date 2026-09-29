@@ -5038,7 +5038,17 @@
         "tags": [
           "groups"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",

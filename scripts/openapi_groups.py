@@ -82,6 +82,7 @@ def extend_groups(spec):
     operation('/groups/options', 'get', 'Active group id/name options for current permitted scope')
     operation('/groups/member-options', 'get', 'Member id/name/active options; groups.manage.all required; no phone disclosure')
     operation('/group-news', 'get', 'Published group messages for current members or content.read.all', response='Article', listing=True)
+    paths['/group-news']['get']['parameters'].append({'name': 'group_id', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1}})
     operation('/group-news/{id}', 'get', 'Read group message with current membership check', response='Article')
     paths['/group-news/{id}']['get']['responses']['200']['content']['application/json']['schema'] = {
         'type': 'object', 'properties': {'data': {'$ref': '#/components/schemas/Article'}},
