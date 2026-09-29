@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { loggedIn, user, refresh, logout } = useAuth();
+const navOpen = ref(false);
 onMounted(refresh);
 </script>
 <template>
@@ -9,7 +10,15 @@ onMounted(refresh);
         ><span class="seal">✦</span
         ><span>中華復甦更新<br />發展協會</span></NuxtLink
       >
-      <nav class="links">
+      <button
+        class="mobile-menu button ghost"
+        :aria-expanded="navOpen"
+        aria-label="開啟導覽選單"
+        @click="navOpen = !navOpen"
+      >
+        ☰
+      </button>
+      <nav :class="['links', { open: navOpen }]" @click="navOpen = false">
         <NuxtLink to="/about">關於我們</NuxtLink
         ><NuxtLink to="/news">最新消息</NuxtLink
         ><NuxtLink to="/food">愛心好食</NuxtLink

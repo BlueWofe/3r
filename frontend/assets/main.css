@@ -95,6 +95,13 @@ a {
 .button.danger {
   background: var(--danger);
 }
+.mobile-menu {
+  display: none;
+}
+.hero .button.ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.72);
+}
 .hero {
   min-height: 590px;
   background:
@@ -383,8 +390,28 @@ a {
   color: var(--muted);
 }
 @media (max-width: 760px) {
+  .mobile-menu {
+    display: block;
+  }
   .links {
     display: none;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    padding: 14px 16px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 8px 18px #173c3120;
+  }
+  .links.open {
+    display: grid;
+    gap: 6px;
+  }
+  .links.open a,
+  .links.open button {
+    width: 100%;
+    text-align: left;
   }
   .cards,
   .footer .grid,

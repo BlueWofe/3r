@@ -4,6 +4,7 @@ import type { Session } from "~/types";
 const view = ref<"agenda" | "week" | "month">("month");
 const cursor = ref(new Date());
 const sessions = ref<Session[]>([]);
+const selected = ref<Session | null>(null);
 const error = ref("");
 const yyyyMMdd = (d: Date) => {
   const z = (n: number) => String(n).padStart(2, "0");
@@ -46,7 +47,10 @@ const load = async () => {
     error.value = e.message;
   }
 };
-onMounted(load);
+onMounted(() => {
+  if (window.innerWidth <= 760) view.value = "agenda";
+  load();
+});
 watch([view, cursor], load);
 const days = computed(() =>
   Array.from({ length: range.value.count }, (_, i) => {
@@ -62,10 +66,8 @@ const label = computed(() =>
 );
 function shift(n: number) {
   const d = new Date(cursor.value);
-  d.setDate(
-    d.getDate() +
-      (view.value === "month" ? n * 30 : n * (view.value === "week" ? 7 : 14)),
-  );
+  if (view.value === "month") d.setMonth(d.getMonth() + n);
+  else d.setDate(d.getDate() + n * (view.value === "week" ? 7 : 14));
   cursor.value = d;
 }
 </script>
@@ -105,16 +107,27 @@ function shift(n: number) {
             weekday: "short",
           })
         }}</small></b
-      ><NuxtLink
+      ><button
         v-for="s in sessions.filter((x) => x.service_date === d)"
         :key="s.id"
         class="event"
-        to="/app"
-        ><span :class="['status', s.status]">{{
+        @click="selected = s"
+      >
+        <span :class="['status', s.status]">{{
           s.status === "cancelled" ? "取消" : "排定"
         }}</span>
-        {{ s.start_time }} {{ s.title }}</NuxtLink
-      >
+        {{ s.start_time }} {{ s.title }}
+      </button>
     </div>
   </div>
+  <SessionActions
+    v-if="selected"
+    :session="selected"
+    open-on-mount
+    @updated="
+      load();
+      selected = null;
+    "
+    @close="selected = null"
+  />
 </template>

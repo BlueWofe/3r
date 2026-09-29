@@ -125,15 +125,7 @@ onMounted(async () => {
             {{ s.participant_count }} 人
           </p>
         </div>
-        <button
-          class="button ghost"
-          @click="
-            action = s;
-            editTitle = s.title;
-          "
-        >
-          處理服務
-        </button>
+        <SessionActions :session="s" @updated="load" />
       </div>
       <div
         v-for="a in s.assignments"

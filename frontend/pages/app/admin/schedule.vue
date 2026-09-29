@@ -35,6 +35,16 @@ async function cancel(s: Session) {
   );
   await load();
 }
+function assignmentSummary(s: Session) {
+  return (
+    s.assignments
+      .map(
+        (a: any) =>
+          `${a.teacher?.name || "待指派"}：${a.status === "leave" ? "請假" : a.status === "replaced" ? "已換師" : "已指派"}${a.attendance ? "（已簽到）" : ""}`,
+      )
+      .join("、") || "缺額"
+  );
+}
 onMounted(async () => {
   await load();
   try {
@@ -101,21 +111,16 @@ onMounted(async () => {
             {{ s.title }}<br /><small>{{ s.prison }}</small>
           </td>
           <td>{{ s.location }}</td>
-          <td>{{ s.assignments.map((a) => a.teacher?.name).join("、") }}</td>
+          <td>
+            {{ assignmentSummary(s) }}<br /><small v-if="s.invitations?.length"
+              >邀請中 {{ s.invitations.length }} 位同工</small
+            >
+          </td>
           <td>
             <span :class="['status', s.status]">{{ s.status }}</span>
           </td>
           <td>
-            <button
-              class="button ghost"
-              @click="
-                edit = s;
-                modal = true;
-              "
-            >
-              編輯
-            </button>
-            <button class="button danger" @click="cancel(s)">取消</button>
+            <SessionActions :session="s" admin @updated="load" />
           </td>
         </tr>
       </tbody>
