@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import type { Session } from "~/types";
-const p = defineProps<{ session?: Session | null; teachers?: any[] }>();
+const p = defineProps<{
+  session?: Session | null;
+  teachers?: any[];
+  prisons?: any[];
+}>();
 const emit = defineEmits(["close", "saved"]);
 const { can } = useAuth();
 const manager = computed(() => can("schedule.update.all"));
 const form = reactive<any>({
   title: p.session?.title || "",
-  prison: p.session?.prison || "",
+  prison_id: p.session?.prison_id || null,
   location: p.session?.location || "",
   participant_count: p.session?.participant_count || 0,
   service_date:
@@ -30,7 +34,7 @@ async function save() {
   if (p.session && !manager.value) {
     for (const key of [
       "title",
-      "prison",
+      "prison_id",
       "participant_count",
       "teacher_ids",
       "repeat_weeks",
@@ -64,10 +68,23 @@ async function save() {
             :disabled="!!session && !manager"
             required /></label
         ><label class="field"
-          >監所／單位<input
-            v-model="form.prison"
+          >監所／單位<select
+            v-model="form.prison_id"
             :disabled="!!session && !manager"
-            required /></label
+            required
+          >
+            <option :value="null">請選擇監所</option>
+            <option
+              v-for="prison in prisons"
+              :key="prison.id"
+              :value="prison.id"
+              :disabled="
+                prison.active === false && prison.id !== form.prison_id
+              "
+            >
+              {{ prison.name }}{{ prison.active === false ? "（已停用）" : "" }}
+            </option>
+          </select></label
         ><label class="field"
           >地點<input v-model="form.location" required /></label
         ><label class="field"

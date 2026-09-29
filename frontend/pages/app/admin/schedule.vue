@@ -3,10 +3,11 @@ definePageMeta({ layout: "app" });
 import type { Session } from "~/types";
 const rows = ref<Session[]>([]),
   teachers = ref<any[]>([]),
+  prisons = ref<any[]>([]),
   modal = ref(false),
   edit = ref<Session | null>(null),
   from = ref(new Date().toISOString().slice(0, 10)),
-  prison = ref(""),
+  prison = ref<number | "">(""),
   teacher = ref(""),
   status = ref(""),
   query = ref(""),
@@ -18,7 +19,7 @@ async function load() {
   rows.value =
     (
       await api<any>(
-        `/sessions?from=${from.value}&to=${end.toISOString().slice(0, 10)}&prison=${encodeURIComponent(prison.value)}&teacher_id=${teacher.value}&status=${status.value}&q=${encodeURIComponent(query.value)}`,
+        `/sessions?from=${from.value}&to=${end.toISOString().slice(0, 10)}&prison_id=${prison.value}&teacher_id=${teacher.value}&status=${status.value}&q=${encodeURIComponent(query.value)}`,
       )
     ).data || [];
 }
@@ -58,6 +59,7 @@ onMounted(async () => {
   await load();
   try {
     teachers.value = (await api<any>("/teachers")).data || [];
+    prisons.value = (await api<any>("/prisons/options")).data || [];
   } catch (e: any) {
     error.value = e.message;
   }
@@ -72,7 +74,12 @@ onMounted(async () => {
     <div class="toolbar">
       <NuxtLink class="button ghost" to="/app/admin/classes">班別管理</NuxtLink>
       <input v-model="from" type="date" @change="load" />
-      <input v-model="prison" placeholder="監所" @change="load" />
+      <select v-model="prison" @change="load">
+        <option value="">全部監所</option>
+        <option v-for="item in prisons" :key="item.id" :value="item.id">
+          {{ item.name }}{{ item.active === false ? "（已停用）" : "" }}
+        </option>
+      </select>
       <select v-model="teacher" @change="load">
         <option value="">全部同工</option>
         <option v-for="t in teachers" :key="t.id" :value="t.id">
@@ -146,6 +153,7 @@ onMounted(async () => {
     v-if="modal"
     :session="edit"
     :teachers="teachers"
+    :prisons="prisons"
     @close="modal = false"
     @saved="load"
   />

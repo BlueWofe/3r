@@ -7,6 +7,7 @@ const p = defineProps<{
     label: string;
     type?: string;
     options?: any[];
+    displayKey?: string;
     optional?: boolean;
     readonly?: boolean;
   }[];
@@ -15,18 +16,21 @@ const p = defineProps<{
   canUpdate?: boolean;
   excludeKinds?: string[];
 }>();
+const emit = defineEmits<{ updated: [rows: any[]] }>();
 const rows = ref<any[]>([]),
   open = ref(false),
   editing = ref<any>(null),
   form = reactive<any>({});
 const files = reactive<Record<string, File | null>>({});
 const { error, run } = useApiError();
+const saved = ref("");
 async function load() {
   try {
     const r: any = await api(p.endpoint);
     rows.value = (r.data || []).filter(
       (row: any) => !p.excludeKinds?.includes(row.kind),
     );
+    emit("updated", rows.value);
     error.value = "";
   } catch (e: any) {
     error.value = e.message;
@@ -71,6 +75,7 @@ async function save() {
   );
   open.value = false;
   await load();
+  saved.value = "已更新";
 }
 onMounted(load);
 </script>
@@ -99,7 +104,7 @@ onMounted(load);
             {{
               Array.isArray(r[f.key])
                 ? r[f.key].map((x: any) => x.name || x).join("、")
-                : r[f.key]
+                : r[f.displayKey || f.key]
             }}
           </td>
           <td data-label="操作">
@@ -118,6 +123,7 @@ onMounted(load);
       </tbody>
     </table>
   </div>
+  <p v-if="saved" class="notice">{{ saved }}</p>
   <div v-if="open" class="modal">
     <form class="dialog form" @submit.prevent="save">
       <div class="workhead">

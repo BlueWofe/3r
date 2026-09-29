@@ -8,6 +8,7 @@ const templates = ref<any[]>([]),
   result = ref<any>(null),
   pending = ref(false),
   error = ref("");
+const { load: loadPrisons, availableFor } = usePrisons();
 const taiwanToday = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Taipei",
   year: "numeric",
@@ -18,7 +19,7 @@ const taiwanToday = new Intl.DateTimeFormat("en-CA", {
   .replaceAll("/", "-");
 const blank = () => ({
   name: "",
-  prison: "",
+  prison_id: null as number | null,
   location: "",
   participant_count: 0,
   teacher_ids: [],
@@ -42,6 +43,7 @@ async function load() {
   try {
     templates.value = (await api<any>("/class-templates")).data || [];
     teachers.value = (await api<any>("/teachers")).data || [];
+    await loadPrisons();
   } catch (e: any) {
     error.value = e.message;
   }
@@ -180,7 +182,19 @@ onMounted(load);
         <label class="field"
           >班別名稱<input v-model="form.name" required /></label
         ><label class="field"
-          >監所<input v-model="form.prison" required /></label
+          >監所<select v-model="form.prison_id" required>
+            <option :value="null">請選擇監所</option>
+            <option
+              v-for="prison in availableFor(form.prison_id)"
+              :key="prison.id"
+              :value="prison.id"
+              :disabled="
+                prison.active === false && prison.id !== form.prison_id
+              "
+            >
+              {{ prison.name }}{{ prison.active === false ? "（已停用）" : "" }}
+            </option>
+          </select></label
         ><label class="field"
           >地點<input v-model="form.location" required /></label
         ><label class="field"
