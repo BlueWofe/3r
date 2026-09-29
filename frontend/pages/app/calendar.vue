@@ -138,6 +138,10 @@ async function sessionUpdated() {
       </button>
     </div>
   </div>
+  <p v-if="view !== 'agenda'" class="calendar-legend">
+    <span class="legend scheduled"></span>已排定
+    <span class="legend cancelled"></span>已取消；點選日期查看場次
+  </p>
   <div v-if="error" class="notice">{{ error }}</div>
   <p v-if="loading" role="status" class="muted">正在載入課程…</p>
   <div v-if="view !== 'agenda'" class="calendar-weekdays" aria-hidden="true">
@@ -186,10 +190,7 @@ async function sessionUpdated() {
       >
     </div>
   </div>
-  <p v-if="view !== 'agenda'" class="calendar-legend">
-    <span class="legend scheduled"></span>已排定
-    <span class="legend cancelled"></span>已取消；點選日期查看場次
-  </p>
+
   <dialog ref="dayDialog" class="day-sheet" aria-labelledby="day-sheet-title" @close="closeDay">
     <div class="workhead">
       <h2 id="day-sheet-title">{{ selectedDay }} 的服務</h2>
