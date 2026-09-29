@@ -9,6 +9,9 @@ const refreshing = ref(false);
 const error = ref("");
 const dayDialog = ref<HTMLDialogElement | null>(null);
 const selectedDay = ref("");
+const today = yyyyToday();
+function yyyyToday() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date()); }
+let previousOverflow = "";
 let request = 0;
 const yyyyMMdd = (d: Date) => {
   const z = (n: number) => String(n).padStart(2, "0");
@@ -81,8 +84,16 @@ const sessionsFor = (date: string) =>
   sessions.value.filter((session) => session.service_date === date);
 function openDay(date: string) {
   selectedDay.value = date;
+  previousOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
   dayDialog.value?.showModal();
 }
+function closeDay() {
+  document.body.style.overflow = previousOverflow;
+}
+onBeforeUnmount(() => {
+  if (dayDialog.value?.open) closeDay();
+});
 function openSession(session: Session) {
   dayDialog.value?.close();
   selected.value = session;
@@ -112,6 +123,7 @@ async function sessionUpdated() {
         v-for="v in ['agenda', 'week', 'month']"
         :key="v"
         :class="['button', view === v ? '' : 'ghost']"
+        :aria-pressed="view === v"
         @click="view = v as any"
       >
         {{ v === "agenda" ? "議程" : v === "week" ? "週" : "月" }}
@@ -119,6 +131,9 @@ async function sessionUpdated() {
     </div>
   </div>
   <div v-if="error" class="notice">{{ error }}</div>
+  <div v-if="view !== 'agenda'" class="calendar-weekdays" aria-hidden="true">
+    <span v-for="weekday in ['日', '一', '二', '三', '四', '五', '六']" :key="weekday">{{ weekday }}</span>
+  </div>
   <div class="calendar iphone-calendar" :class="{ agenda: view === 'agenda' }">
     <div
       v-for="d in days"
@@ -130,16 +145,12 @@ async function sessionUpdated() {
       <button
         v-if="view !== 'agenda'"
         class="calendar-day-tap"
+        :class="{ 'is-today': d === today, 'other-month': view === 'month' && Number(d.slice(5, 7)) !== cursor.getMonth() + 1 }"
+        :aria-current="d === today ? 'date' : undefined"
         :aria-label="`${d}，${sessionsFor(d).length} 場服務`"
         @click="openDay(d)"
       >
-        <b
-          >{{ d.slice(5) }}
-          <small class="muted">{{
-            new Date(d + "T00:00:00").toLocaleDateString("zh-TW", {
-              weekday: "short",
-            })
-          }}</small></b
+        <b>{{ Number(d.slice(8)) }}</b
         ><span class="event-bars" :aria-hidden="true"
           ><i
             v-for="s in sessionsFor(d).slice(0, 3)"
@@ -150,7 +161,7 @@ async function sessionUpdated() {
           >+{{ sessionsFor(d).length - 3 }}</small
         ></button
       ><template v-if="view === 'agenda'"
-        ><button
+        ><b class="agenda-date">{{ d }} {{ new Date(d + 'T00:00:00').toLocaleDateString('zh-TW', { weekday: 'short' }) }}</b><button
           v-for="s in sessions.filter((x) => x.service_date === d)"
           :key="s.id"
           class="event"
@@ -169,9 +180,9 @@ async function sessionUpdated() {
     <span class="legend scheduled"></span>已排定
     <span class="legend cancelled"></span>已取消；點選日期查看場次
   </p>
-  <dialog ref="dayDialog" class="day-sheet" @close="selectedDay = selectedDay">
+  <dialog ref="dayDialog" class="day-sheet" aria-labelledby="day-sheet-title" @close="closeDay">
     <div class="workhead">
-      <h2>{{ selectedDay }}</h2>
+      <h2 id="day-sheet-title">{{ selectedDay }} 的服務</h2>
       <button class="button ghost" @click="dayDialog?.close()">關閉</button>
     </div>
     <p v-if="!sessionsFor(selectedDay).length" class="muted">
@@ -199,25 +210,36 @@ async function sessionUpdated() {
   />
 </template>
 <style scoped>
+.calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; padding: 8px 0; font-size: 13px; color: var(--muted); }
+.iphone-calendar:not(.agenda) { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.iphone-calendar:not(.agenda) .day { height: 106px; min-height: 0; min-width: 0; padding: 4px; overflow: hidden; }
+.calendar-day-tap b { display: inline-grid; place-items: center; width: 26px; height: 26px; }
+.calendar-day-tap.is-today b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: white; background: var(--pine); }
+.calendar-day-tap.other-month { color: #737873; background: #f2f1eb; }
+.calendar-day-tap:focus-visible, .day-session:focus-visible { outline: 2px solid var(--pine); outline-offset: -2px; }
+.agenda-date { display: block; }
 .calendar-day-tap {
   display: block;
   width: 100%;
-  min-height: 82px;
+  height: 100%;
+  min-height: 0;
   border: 0;
   background: transparent;
   color: inherit;
-  text-align: left;
+  text-align: center;
   padding: 4px;
   cursor: pointer;
 }
 .event-bars {
   display: flex;
+  flex-direction: column;
   gap: 2px;
   margin-top: 5px;
+  min-height: 23px;
 }
 .event-bars i {
   display: block;
-  flex: 1;
+  flex: 0 0 5px;
   height: 5px;
   border-radius: 999px;
   background: #3d8768;
@@ -267,6 +289,7 @@ async function sessionUpdated() {
   background: #fff;
   color: inherit;
   cursor: pointer;
+  overflow-wrap: anywhere;
 }
 .day-session small {
   color: var(--muted);
@@ -281,6 +304,7 @@ async function sessionUpdated() {
     min-width: 0;
     padding: 6px 2px;
     font-size: 12px;
+    min-height: 44px;
   }
   .iphone-calendar:not(.agenda) {
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -289,11 +313,12 @@ async function sessionUpdated() {
   }
   .iphone-calendar:not(.agenda) .day {
     min-width: 0;
-    min-height: 88px;
+    height: 88px;
+    min-height: 0;
     padding: 2px;
   }
   .calendar-day-tap {
-    min-height: 82px;
+    min-height: 0;
     font-size: 11px;
     overflow: hidden;
   }
