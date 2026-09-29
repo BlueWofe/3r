@@ -140,10 +140,12 @@ class ModuleController extends ApiController
         $v = $r->validate(['service_date' => 'required|date', 'type' => 'required|string|max:100', 'summary' => 'required|string|max:10000', 'follow_up' => 'nullable|string|max:10000']);
 
         return DB::transaction(function () use ($r, $id, $v) {
+            User::whereKey($r->user()->id)->lockForUpdate()->firstOrFail();
+            $r->user()->refresh()->unsetRelation('roles');
             $e = Entity::where('type', 'cases')->lockForUpdate()->findOrFail($id);
             $this->entity($r, 'cases', $id, 'update');
             $before = $e->data['records'] ?? [];
-            $after = [...$before, $v + ['author_id' => $r->user()->id, 'created_at' => now()->toIso8601String()]];
+            $after = [...$before, $v + ['id' => (string) Str::uuid(), 'author_id' => $r->user()->id, 'created_at' => now()->toIso8601String()]];
             $data = $e->data;
             $data['records'] = $after;
             $e->update(['data' => $data]);

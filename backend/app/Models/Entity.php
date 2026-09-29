@@ -24,6 +24,11 @@ class Entity extends Model
             $data['group_ids'] = $data['group_ids'] ?? [];
             $data['group_names'] = app(GroupAudience::class)->names($data['group_ids']);
         }
+        if ($this->type === 'meetings') {
+            $ids = array_values(array_unique(array_map('intval', $data['role_ids'] ?? [])));
+            $names = Role::whereIn('id', $ids)->pluck('name', 'id');
+            $data['role_names'] = array_values(array_filter(array_map(fn ($id) => $names[$id] ?? null, $ids), fn ($name) => $name !== null));
+        }
         if ($this->type === 'contents') {
             $data['version'] = $data['version'] ?? 1;
             $data['visibility'] = $data['visibility'] ?? 'public';
