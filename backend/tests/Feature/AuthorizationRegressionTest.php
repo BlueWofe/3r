@@ -111,7 +111,7 @@ class AuthorizationRegressionTest extends TestCase
         $body = ['title' => '示範', 'prison' => '示範', 'location' => '示範', 'participant_count' => 1, 'service_date' => '2030-01-01', 'start_time' => '10:00', 'end_time' => '12:00', 'teacher_ids' => [$u->id], 'override_conflict' => true];
         $this->actingAs($admin)->postJson('/api/v1/sessions', $body)->assertUnprocessable();
         $body['reason'] = '明確覆核';
-        $this->postJson('/api/v1/sessions', $body)->assertOk();
+        $this->postJson('/api/v1/sessions', $body)->assertOk()->assertJsonPath('version', 1);
         $creator = $this->user('creator', ['schedule.create.all']);
         $this->actingAs($creator)->postJson('/api/v1/sessions', $body)->assertForbidden();
     }

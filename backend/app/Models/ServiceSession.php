@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class ServiceSession extends Model
 {
+    protected $attributes = ['version' => 1];
+
     protected $guarded = [];
 
     protected function casts(): array
     {
-        return ['data' => 'array'];
+        return ['data' => 'array', 'version' => 'integer'];
     }
 
     public function assignments()
