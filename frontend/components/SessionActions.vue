@@ -11,6 +11,7 @@ const open = ref(!!props.openOnMount),
   editor = ref(false),
   reason = ref(""),
   teacherId = ref<number | undefined>(),
+  assignmentId = ref<number | undefined>(),
   present = ref(true),
   resolution = ref(false),
   override = ref(false),
@@ -34,7 +35,13 @@ async function doAssignment(
   kind: "leave" | "withdraw-leave" | "invite" | "replace" | "attendance",
   assignment?: any,
 ) {
-  const a = assignment || mine.value;
+  const a =
+    assignment ||
+    (admin.value
+      ? props.session.assignments.find(
+          (item: any) => item.id === assignmentId.value,
+        )
+      : mine.value);
   if (!a) return;
   if (!reason.value.trim()) {
     error.value = "請填寫異動原因。";
@@ -117,6 +124,13 @@ onMounted(async () => {
           placeholder="請說明異動原因"
         ></textarea></label
       ><label v-if="admin" class="field"
+        >目前指派<select v-model="assignmentId">
+          <option :value="undefined">請選擇目前同工</option>
+          <option v-for="a in session.assignments" :key="a.id" :value="a.id">
+            {{ a.teacher?.name || "缺額" }} · {{ a.status }}
+          </option>
+        </select></label
+      ><label v-if="admin" class="field"
         >選擇同工／指派對象<select v-model="teacherId">
           <option :value="undefined">請選擇</option>
           <option v-for="t in teachers" :key="t.id" :value="t.id">
@@ -153,13 +167,7 @@ onMounted(async () => {
         ><button
           v-if="admin"
           class="button ghost"
-          @click="
-            doAssignment(
-              'replace',
-              session.assignments.find((a) => a.teacher_id === teacherId) ||
-                session.assignments[0],
-            )
-          "
+          @click="doAssignment('replace')"
         >
           重新指派</button
         ><label
@@ -170,13 +178,7 @@ onMounted(async () => {
         ><button
           v-if="admin"
           class="button gold"
-          @click="
-            doAssignment(
-              'attendance',
-              session.assignments.find((a) => a.teacher_id === teacherId) ||
-                session.assignments[0],
-            )
-          "
+          @click="doAssignment('attendance')"
         >
           補登簽到</button
         ><button
