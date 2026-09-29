@@ -8,6 +8,8 @@ const phone = ref(""),
   otpRequested = ref(false);
 const { login } = useAuth();
 const { error, run } = useApiError();
+const ready = ref(false), pending = ref(false);
+onMounted(() => { ready.value = true; });
 async function requestOtp() {
   await run(() =>
     api("/auth/otp", {
@@ -21,6 +23,9 @@ async function requestOtp() {
   otpRequested.value = true;
 }
 async function submit() {
+  if (!ready.value || pending.value) return;
+  pending.value = true;
+  try {
   if (tab.value === "login") {
     await run(() => login(phone.value, password.value));
     return navigateTo("/app");
@@ -49,6 +54,11 @@ async function submit() {
   );
   tab.value = "login";
   error.value = "";
+  } catch {
+    // API errors remain visible next to the form.
+  } finally {
+    pending.value = false;
+  }
 }
 </script>
 <template>
@@ -71,6 +81,7 @@ async function submit() {
         </button>
       </div>
       <form class="form" @submit.prevent="submit">
+        <fieldset class="form" :disabled="!ready || pending" style="border: 0; padding: 0; margin: 0; min-width: 0">
         <label v-if="tab === 'register'" class="field"
           >姓名<input v-model="name" required /></label
         ><label class="field"
@@ -102,6 +113,7 @@ async function submit() {
           {{ tab === "login" ? "登入" : "確認送出" }}
         </button>
         <p v-if="error" class="error">{{ error }}</p>
+        </fieldset>
       </form>
     </section>
   </main>

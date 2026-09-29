@@ -3,7 +3,7 @@
 ## 本機完成
 
 - Laravel：71 項測試、420 個斷言通過；測試使用隔離的記憶體 SQLite。
-- Playwright：28 項 PostgreSQL API、桌機 Chromium、iPhone WebKit E2E 通過。
+- Playwright：28 項 PostgreSQL API、桌機 Chromium、iPhone WebKit E2E 通過；另新增兩個桌機／手機慢速連線登入案例，連同登入及打卡回歸共 6 項通過。
 - Nuxt 型別檢查與前後端 Docker production build 通過。
 - 班別遷移以 `migrate --force` 套用；未清空原資料。
 - `schedule:list` 確認每日 Asia/Taipei 00:10 執行 `classes:generate`。
@@ -18,6 +18,8 @@
 日期範圍包含今天至第 90 天（起迄兩端皆含），並由班別結束日裁切。月份不存在的日期不產生場次；`skipped` 用於已結束時段、老師無效、衝突等可辨識場次。編輯同一規則保留 ID；刪除後新增視為新規則，不會撤銷舊場次。既有場次需從排課管理異動。
 
 UI 識別碼改用 HTTP UAT 也可用的 `crypto.getRandomValues`；報價在變更規格／數量後失效，忽略較舊回應。產品儲存防重複點擊，圖片集最多 10 張。
+
+外網測試發現登入畫面可能在客戶端程式尚未載入前送出原生表單。登入欄位及送出在掛載完成前保持停用，並在請求中防重複送出；新增測試刻意延遲 JavaScript 下載驗證此行為。
 
 ## 環境隔離
 
