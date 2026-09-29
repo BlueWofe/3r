@@ -456,6 +456,7 @@ a {
 }
 .ministry-caption { position: relative; z-index: 1; }
 .ministry-caption h3 { color: inherit; font-size: 32px; margin: 0 0 8px; letter-spacing: .07em; }
+.ministry-action { display: inline-block; font-size: 17px; font-weight: 500; letter-spacing: .025em; vertical-align: middle; }
 .ministry-caption p { color: inherit; font-size: 15px; margin: 0; line-height: 1.6; }
 .ministry-panel:hover { transform: translateY(-4px); box-shadow: 0 16px 28px #18372d18; }
 .ministry-panel:hover .ministry-illustration { transform: translateY(-5px); }
