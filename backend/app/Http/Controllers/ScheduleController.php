@@ -207,6 +207,30 @@ class ScheduleController extends ApiController
         });
     }
 
+    public function assignVacancy(Request $r, int $id)
+    {
+        $this->permit($r, 'schedule.update.all');
+        $v = $r->validate(['version' => 'required|integer|min:1', 'teacher_id' => 'required|integer|exists:users,id', 'reason' => 'required|string|max:1000', 'override_conflict' => 'sometimes|boolean']);
+
+        return DB::transaction(function () use ($r, $id, $v) {
+            User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
+            $this->permit($r, 'schedule.update.all');
+            $s = ServiceSession::lockForUpdate()->findOrFail($id);
+            abort_unless($s->version === (int) $v['version'], 409, '版本已更新');
+            abort_if($s->assignments()->exists(), 409, '已有教師指派，請使用既有代課流程。');
+            $this->mutable($s);
+            $teacher = $this->teacher((int) $v['teacher_id']);
+            $before = $this->snapshot($s);
+            abort_if($this->conflict($teacher->id, $s->data, $s->id) && ! ($v['override_conflict'] ?? false), 409, '教師時間衝突');
+            $s->assignments()->create(['teacher_id' => $teacher->id]);
+            $s->increment('version');
+            $this->event($r, $s, '補齊教師', $v['reason'], $before);
+
+            return $this->output($s->fresh());
+        });
+    }
+
     private function replace(Request $r, Assignment $a, ServiceSession $s, array $v): void
     {
         $this->teacher($v['teacher_id']);

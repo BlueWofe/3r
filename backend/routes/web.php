@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApiController;
+use App\Http\Controllers\ClassTemplateController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ScheduleController;
@@ -51,6 +52,11 @@ Route::prefix('api/v1')->group(function () {
     Route::get('files/{id}/download', [ModuleController::class, 'files']);
     Route::middleware('auth')->group(function () {
         Route::get('permissions', fn () => ['data' => ApiController::permissionNames()]);
+        Route::post('class-templates/preview', [ClassTemplateController::class, 'preview']);
+        Route::match(['get', 'post'], 'class-templates', [ClassTemplateController::class, 'templates']);
+        Route::match(['get', 'put'], 'class-templates/{id}', [ClassTemplateController::class, 'templates']);
+        Route::post('class-templates/{id}/generate', [ClassTemplateController::class, 'generate']);
+        Route::post('sessions/{id}/assign', [ScheduleController::class, 'assignVacancy']);
         Route::match(['get', 'post'], 'products', [ProductController::class, 'products']);
         Route::match(['get', 'put', 'delete'], 'products/{id}', [ProductController::class, 'products']);
         Route::get('role-options', [ApiController::class, 'roleOptions']);
