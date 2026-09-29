@@ -5275,11 +5275,12 @@
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 200
+            "maxLength": 100
           },
           "description": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "maxLength": 5000
           },
           "active": {
             "type": "boolean"
@@ -5289,7 +5290,8 @@
             "items": {
               "type": "integer"
             },
-            "uniqueItems": true
+            "uniqueItems": true,
+            "maxItems": 500
           },
           "version": {
             "type": "integer",

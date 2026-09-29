@@ -17,9 +17,9 @@ def extend_groups(spec):
     schemas['GroupWrite'] = {
         'type': 'object', 'required': ['name', 'active', 'member_ids'],
         'properties': {
-            'name': {'type': 'string', 'maxLength': 200},
-            'description': {'type': 'string', 'nullable': True},
-            'active': {'type': 'boolean'}, 'member_ids': deepcopy(ids),
+            'name': {'type': 'string', 'maxLength': 100},
+            'description': {'type': 'string', 'nullable': True, 'maxLength': 5000},
+            'active': {'type': 'boolean'}, 'member_ids': {**deepcopy(ids), 'maxItems': 500},
             'version': {'type': 'integer', 'minimum': 1, 'description': 'Required for PUT; mismatch returns 409.'},
         },
     }
