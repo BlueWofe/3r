@@ -7,6 +7,9 @@ const openMenu = ref<"service" | "management" | null>(null);
 const serviceButton = ref<HTMLButtonElement | null>(null);
 const managementButton = ref<HTMLButtonElement | null>(null);
 const route = useRoute();
+const { data: contact } = await useAsyncData("workspace-public-contact", () =>
+  api<any>("/public/contact").catch(() => ({ data: null })),
+);
 const serviceLinks = computed(() =>
   [
     ["/app", "今日行程", "calendar", schedule()],
@@ -61,11 +64,15 @@ function syncManagementGroup() {
     )?.title || "";
 }
 watch(() => route.fullPath, syncManagementGroup);
-watch(managementGroups, (groups) => {
-  // Auth refresh must not close a category the user has just expanded.
-  if (!groups.some((group) => group.title === activeManagementGroup.value))
-    syncManagementGroup();
-}, { immediate: true });
+watch(
+  managementGroups,
+  (groups) => {
+    // Auth refresh must not close a category the user has just expanded.
+    if (!groups.some((group) => group.title === activeManagementGroup.value))
+      syncManagementGroup();
+  },
+  { immediate: true },
+);
 watch(
   () => route.fullPath,
   () => closeMenu(),
@@ -133,7 +140,7 @@ onMounted(async () => {
       @keydown.esc.prevent="closeMenu(true)"
     >
       <NuxtLink class="brand desktop-brand" to="/"
-        ><NavIcon name="home" />復甦更新</NuxtLink
+        ><BrandLogo :logo-url="contact?.data?.logo_url" />復甦更新</NuxtLink
       >
       <NuxtLink class="public-return desktop-return" to="/"
         ><NavIcon name="home" />回到官網</NuxtLink

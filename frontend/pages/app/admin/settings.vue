@@ -8,7 +8,10 @@ const settings = reactive<any>({
   }),
   line = reactive<any>({ bound: false, subscribed: false }),
   folders = ref<any[]>([]),
-  driveName = ref("");
+  driveName = ref(""),
+  logo = ref<File | null>(null),
+  logoPreview = ref(""),
+  logoPending = ref(false);
 const saved = ref("");
 const { error, run } = useApiError();
 onMounted(async () => {
@@ -24,6 +27,36 @@ async function save() {
   await run(() => api("/settings", { method: "PUT", body: settings }));
   Object.assign(settings, await api("/settings"));
   saved.value = "已更新";
+}
+function selectLogo(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0] || null;
+  if (!file) return;
+  if (
+    !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+    file.size > 5 * 1024 * 1024
+  ) {
+    error.value = "Logo 僅接受 JPEG、PNG 或 WebP，大小不得超過 5MB。";
+    return;
+  }
+  logo.value = file;
+  logoPreview.value = URL.createObjectURL(file);
+  error.value = "";
+}
+async function uploadLogo() {
+  if (!logo.value || logoPending.value) return;
+  logoPending.value = true;
+  try {
+    const data = new FormData();
+    data.append("file", logo.value);
+    Object.assign(
+      settings,
+      await run(() => api("/settings/logo", { method: "POST", body: data })),
+    );
+    logoPreview.value = settings.logo_url;
+    saved.value = "Logo 已更新";
+  } finally {
+    logoPending.value = false;
+  }
 }
 async function saveLine() {
   await run(() => api("/integrations/line", { method: "PUT", body: line }));
@@ -59,6 +92,24 @@ async function drive(action: string) {
         >信箱<input v-model="settings.contact_email" /></label
       ><label class="field">地址<input v-model="settings.address" /></label
       ><button class="button">儲存設定</button>
+    </form>
+    <form class="card form" @submit.prevent="uploadLogo">
+      <h3>協會 Logo</h3>
+      <img
+        v-if="logoPreview || settings.logo_url"
+        class="settings-logo-preview"
+        :src="logoPreview || settings.logo_url"
+        alt="協會 Logo 預覽"
+      />
+      <p v-else class="muted">尚未上傳 Logo，將顯示協會識別章。</p>
+      <label class="field"
+        >選擇 Logo（JPEG、PNG、WebP，最多 5MB）<input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          @change="selectLogo" /></label
+      ><button class="button" :disabled="!logo || logoPending">
+        {{ logoPending ? "上傳中…" : "上傳並套用 Logo" }}
+      </button>
     </form>
     <div class="grid">
       <form class="card form" @submit.prevent="saveLine">

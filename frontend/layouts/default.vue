@@ -23,8 +23,7 @@ onMounted(refresh);
   <div class="nav">
     <div class="container navin">
       <NuxtLink class="brand" to="/"
-        ><span class="seal">✦</span
-        ><span>{{
+        ><BrandLogo :logo-url="contact?.data?.logo_url" /><span>{{
           contact?.data?.association_name || "中華復甦更新發展協會"
         }}</span></NuxtLink
       >
@@ -72,8 +71,9 @@ onMounted(refresh);
     <div class="container grid">
       <div>
         <div class="brand">
-          <span class="seal">✦</span
-          >{{ contact?.data?.association_name || "中華復甦更新發展協會" }}
+          <BrandLogo :logo-url="contact?.data?.logo_url" footer />{{
+            contact?.data?.association_name || "中華復甦更新發展協會"
+          }}
         </div>
         <p>
           陪伴生命走過幽谷，在盼望中重新站立。<br /><span class="demo"

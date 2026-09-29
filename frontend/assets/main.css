@@ -64,6 +64,24 @@ a {
   place-items: center;
   color: var(--gold);
 }
+.brand-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+.brand-logo-footer {
+  width: 80px;
+  height: 80px;
+}
+.settings-logo-preview {
+  width: 160px;
+  height: 120px;
+  max-width: 100%;
+  object-fit: contain;
+  background: #eee3cb;
+  border-radius: 6px;
+}
 .links {
   display: flex;
   align-items: center;
