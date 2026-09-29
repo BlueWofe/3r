@@ -2,18 +2,66 @@
 const { user, logout, refresh, can } = useAuth();
 const { schedule, managementLinks } = useWorkspaceNavigation();
 const ready = ref(false);
-const menuOpen = ref(false);
-const menuButton = ref<HTMLButtonElement | null>(null);
+const openMenu = ref<"service" | "management" | null>(null);
+const serviceButton = ref<HTMLButtonElement | null>(null);
+const managementButton = ref<HTMLButtonElement | null>(null);
 const route = useRoute();
+const serviceLinks = computed(() =>
+  [
+    ["/app", "今日行程", "calendar", schedule()],
+    ["/app/calendar", "行事曆", "calendar", schedule()],
+    ["/app/changes", "異動通知", "bell", schedule()],
+    ["/app/invitations", "邀請與通知", "mail", schedule()],
+    [
+      "/app/resources",
+      "資源下載",
+      "download",
+      can("resources.read.own") || can("resources.read.all"),
+    ],
+    [
+      "/app/forms",
+      "我的表單",
+      "form",
+      can("forms.read.own") || can("forms.read.all"),
+    ],
+    ["/app/profile", "個人資料與奉獻", "person", true],
+  ].filter((link) => link[3]),
+);
+const managementIcons: Record<string, string> = {
+  schedule: "calendar",
+  classes: "book",
+  users: "people",
+  roles: "shield",
+  content: "edit",
+  products: "box",
+  cases: "folder",
+  meetings: "people",
+  forms: "form",
+  reports: "chart",
+  settings: "settings",
+};
+const managementIcon = (path: string) =>
+  managementIcons[path.split("/").pop() || ""] || "folder";
 watch(
   () => route.fullPath,
-  () => {
-    menuOpen.value = false;
+  () => closeMenu(),
+);
+watch(
+  () => managementLinks.value.length,
+  (count) => {
+    if (!count && openMenu.value === "management") closeMenu();
   },
 );
 function closeMenu(restoreFocus = false) {
-  menuOpen.value = false;
-  if (restoreFocus) menuButton.value?.focus();
+  const trigger =
+    openMenu.value === "management"
+      ? managementButton.value
+      : serviceButton.value;
+  openMenu.value = null;
+  if (restoreFocus) trigger?.focus();
+}
+function toggleMenu(group: "service" | "management") {
+  openMenu.value = openMenu.value === group ? null : group;
 }
 onMounted(async () => {
   await refresh();
@@ -23,58 +71,104 @@ onMounted(async () => {
 </script>
 <template>
   <div class="app-shell">
-    <header class="workspace-mobile-header">
-      <NuxtLink class="public-return" to="/">← 回到官網</NuxtLink>
-      <button
-        ref="menuButton"
-        class="button ghost"
-        type="button"
-        aria-controls="workspace-navigation"
-        :aria-expanded="menuOpen"
-        :aria-label="menuOpen ? '關閉工作台選單' : '開啟工作台選單'"
-        @click="menuOpen = !menuOpen"
-        @keydown.esc.prevent="closeMenu(true)"
-      >
-        ☰ 工作台選單
-      </button>
-    </header>
-    <aside
-      :class="['side', { 'menu-open': menuOpen }]"
+    <header
+      class="workspace-mobile-header"
       @keydown.esc.prevent="closeMenu(true)"
     >
-      <NuxtLink class="brand" to="/"
-        ><span class="seal">✦</span>復甦更新</NuxtLink
+      <NuxtLink class="public-return" to="/" @click="closeMenu()"
+        ><NavIcon name="home" />回到官網</NuxtLink
+      >
+      <div class="workspace-menu-buttons" aria-label="工作台選單">
+        <button
+          ref="serviceButton"
+          type="button"
+          aria-controls="service-navigation"
+          :aria-expanded="openMenu === 'service'"
+          :class="{ selected: openMenu === 'service' }"
+          @click="toggleMenu('service')"
+        >
+          <NavIcon name="person" />我的服務<NavIcon name="chevron" />
+        </button>
+        <button
+          v-if="managementLinks.length"
+          ref="managementButton"
+          type="button"
+          aria-controls="management-navigation"
+          :aria-expanded="openMenu === 'management'"
+          :class="{ selected: openMenu === 'management' }"
+          @click="toggleMenu('management')"
+        >
+          <NavIcon name="settings" />管理工作台<NavIcon name="chevron" />
+        </button>
+      </div>
+    </header>
+    <aside
+      :class="['side', { 'menu-open': openMenu }]"
+      @keydown.esc.prevent="closeMenu(true)"
+    >
+      <NuxtLink class="brand desktop-brand" to="/"
+        ><NavIcon name="home" />復甦更新</NuxtLink
       >
       <NuxtLink class="public-return desktop-return" to="/"
-        >← 回到官網</NuxtLink
+        ><NavIcon name="home" />回到官網</NuxtLink
       >
-      <nav
-        id="workspace-navigation"
-        aria-label="工作台導覽"
-        @click="closeMenu()"
+      <section
+        :class="[
+          'navigation-group',
+          { 'mobile-active': openMenu === 'service' },
+        ]"
       >
-        <div class="group">我的服務</div>
-        <NuxtLink v-if="schedule()" to="/app">今日行程</NuxtLink
-        ><NuxtLink v-if="schedule()" to="/app/calendar">行事曆</NuxtLink
-        ><NuxtLink v-if="schedule()" to="/app/changes">異動通知</NuxtLink
-        ><NuxtLink v-if="schedule()" to="/app/invitations">邀請與通知</NuxtLink
-        ><NuxtLink
-          v-if="can('resources.read.own') || can('resources.read.all')"
-          to="/app/resources"
-          >資源下載</NuxtLink
-        ><NuxtLink
-          v-if="can('forms.read.own') || can('forms.read.all')"
-          to="/app/forms"
-          >我的表單</NuxtLink
-        ><NuxtLink to="/app/profile">個人資料與奉獻</NuxtLink>
-        <div v-if="managementLinks.length" class="group">管理工作台</div>
-        <NuxtLink v-for="l in managementLinks" :key="l[0]" :to="l[0]">{{
-          l[1]
-        }}</NuxtLink
-        ><button class="button ghost" style="margin: 18px 10px" @click="logout">
-          登出
-        </button>
-      </nav>
+        <h2 class="group"><NavIcon name="person" />我的服務</h2>
+        <nav
+          id="service-navigation"
+          aria-label="我的服務"
+          class="navigation-grid"
+        >
+          <NuxtLink
+            v-for="link in serviceLinks"
+            :key="String(link[0])"
+            :to="String(link[0])"
+            @click="closeMenu()"
+            ><NavIcon :name="String(link[2])" /><span>{{
+              link[1]
+            }}</span></NuxtLink
+          >
+          <button
+            type="button"
+            class="logout-link"
+            @click="
+              closeMenu();
+              logout();
+            "
+          >
+            <NavIcon name="logout" /><span>登出</span>
+          </button>
+        </nav>
+      </section>
+      <section
+        v-if="managementLinks.length"
+        :class="[
+          'navigation-group',
+          { 'mobile-active': openMenu === 'management' },
+        ]"
+      >
+        <h2 class="group"><NavIcon name="settings" />管理工作台</h2>
+        <nav
+          id="management-navigation"
+          aria-label="管理工作台"
+          class="navigation-grid"
+        >
+          <NuxtLink
+            v-for="link in managementLinks"
+            :key="link[0]"
+            :to="link[0]"
+            @click="closeMenu()"
+            ><NavIcon :name="managementIcon(link[0])" /><span>{{
+              link[1]
+            }}</span></NuxtLink
+          >
+        </nav>
+      </section>
     </aside>
     <main v-if="ready" class="workspace">
       <div class="notice">
@@ -85,13 +179,20 @@ onMounted(async () => {
     </main>
   </div>
 </template>
-
 <style scoped>
 .side {
   overflow-y: auto;
 }
 .workspace-mobile-header {
   display: none;
+}
+.side a,
+.logout-link,
+.group,
+.public-return {
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 .public-return {
   font-weight: 700;
@@ -100,6 +201,30 @@ onMounted(async () => {
   margin-top: 12px;
   border: 1px solid #ffffff55;
 }
+.side .group {
+  font-size: 13px;
+  font-weight: 600;
+}
+.navigation-group + .navigation-group {
+  margin-top: 18px;
+  padding-top: 4px;
+  border-top: 1px solid #ffffff26;
+}
+.logout-link {
+  color: inherit;
+  border: 0;
+  background: transparent;
+  padding: 10px 12px;
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 5px;
+  text-align: left;
+}
+.logout-link:hover {
+  background: #ffffff16;
+}
 a:focus-visible,
 button:focus-visible {
   outline: 3px solid var(--gold);
@@ -107,50 +232,105 @@ button:focus-visible {
 }
 @media (max-width: 760px) {
   .workspace-mobile-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 16px;
+    display: grid;
+    gap: 10px;
+    padding: 10px 16px;
     background: var(--pine);
     color: #fff;
     position: sticky;
     top: 0;
     z-index: 40;
   }
-  .workspace-mobile-header .button {
-    color: #fff;
-    border-color: #ffffff66;
-    padding: 8px 12px;
+  .public-return {
+    min-height: 32px;
+    width: fit-content;
+    font-size: 14px;
+  }
+  .workspace-menu-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .workspace-menu-buttons button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    min-height: 44px;
+    border: 1px solid #ffffff66;
+    background: transparent;
+    color: inherit;
+    border-radius: 7px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 6px 8px;
+  }
+  .workspace-menu-buttons button.selected {
+    background: #ffffff20;
+    border-color: var(--gold);
   }
   .side {
     display: none;
-    position: static;
+    position: sticky;
+    top: 108px;
+    z-index: 35;
     height: auto;
-    padding: 12px 16px;
+    padding: 10px 16px 14px;
     overflow: visible;
     white-space: normal;
   }
   .side.menu-open {
     display: block;
   }
-  .side .brand {
-    display: flex;
-  }
-  .side .group {
-    display: block;
-  }
-  .side nav {
-    display: grid;
-    gap: 4px;
-  }
-  .side a {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-  }
+  .side .desktop-brand,
   .side .desktop-return {
     display: none;
+  }
+  .navigation-group {
+    display: none;
+    margin: 0;
+  }
+  .navigation-group.mobile-active {
+    display: block;
+  }
+  .navigation-group + .navigation-group {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .side .group {
+    display: none;
+  }
+  .navigation-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    max-height: min(320px, calc(100dvh - 140px));
+    overflow-y: auto;
+    padding: 3px;
+    overscroll-behavior: contain;
+  }
+  .side .navigation-grid a,
+  .logout-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 54px;
+    padding: 9px;
+    font-size: 13px;
+    background: #ffffff0c;
+    border: 1px solid #ffffff20;
+    border-radius: 7px;
+    white-space: normal;
+  }
+  .navigation-grid span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .side .navigation-grid .router-link-exact-active {
+    background: #ffffff24;
+    border-color: var(--gold);
   }
 }
 </style>
