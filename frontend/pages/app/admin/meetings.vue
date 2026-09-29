@@ -39,7 +39,8 @@ const fields = computed(() => [
 const resources = ref<any[]>([]),
   file = ref<File | null>(null),
   title = ref(""),
-  category = ref("一般資源");
+  category = ref("一般資源"),
+  uploadGroupIds = ref<number[]>([]);
 const { error, run } = useApiError();
 const meetingEndpoint = computed(
   () =>
@@ -66,9 +67,11 @@ async function upload() {
   fd.append("file", file.value);
   fd.append("title", title.value || file.value.name);
   fd.append("category", category.value);
+  uploadGroupIds.value.forEach((id) => fd.append("group_ids[]", String(id)));
   await run(() => api("/resources", { method: "POST", body: fd }));
   file.value = null;
   title.value = "";
+  uploadGroupIds.value = [];
   load();
 }
 async function remove(r: any) {
@@ -106,7 +109,11 @@ onMounted(load);
       <input v-model="title" placeholder="檔案標題" /><input
         v-model="category"
         placeholder="分類"
-      /><input
+      /><select v-model="uploadGroupIds" multiple aria-label="分享小組">
+        <option v-for="group in groups" :key="group.id" :value="group.id">
+          {{ group.name }}
+        </option></select
+      ><input
         type="file"
         required
         @change="file = ($event.target as HTMLInputElement).files?.[0] || null"

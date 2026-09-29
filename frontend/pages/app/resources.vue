@@ -108,7 +108,9 @@ onMounted(load);
     <div>
       <p class="eyebrow">PRIVATE RESOURCES</p>
       <h1>資源中心</h1>
-      <p class="muted">檔案權限依角色判斷；上傳與雲端操作皆為示範模式。</p>
+      <p class="muted">
+        分享角色與小組採聯集；兩者都不設定時，維持原有可讀範圍。上傳與雲端操作皆為示範模式。
+      </p>
     </div>
     <form class="toolbar" @submit.prevent="load">
       <input v-model="q" placeholder="搜尋資源" /><input
@@ -129,6 +131,7 @@ onMounted(load);
     @submit.prevent="upload"
   >
     <h3>上傳資源</h3>
+    <p class="muted">可選擇您所屬的小組；只有完整管理權限可指定分享角色。</p>
     <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
       <label class="field"
         >標題<input v-model="title" placeholder="預設使用檔名" /></label

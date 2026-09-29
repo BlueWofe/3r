@@ -84,7 +84,9 @@ onMounted(load);
     <div>
       <p class="eyebrow">GROUPS</p>
       <h1>小組管理</h1>
-      <p class="muted">成員可加入多個小組；停用會保留歷史連結。</p>
+      <p class="muted">
+        小組可用於消息、會議與資源；加入不會改變角色權限，停用會保留歷史連結。
+      </p>
     </div>
     <button class="button" @click="reset()">新增小組</button>
   </div>
