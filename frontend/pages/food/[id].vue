@@ -45,18 +45,17 @@ watch([selected, quantity], () => {
       class="container grid responsive-two"
       style="grid-template-columns: 1fr 1fr"
     >
-      <img
+      <a
         v-if="data?.data?.image_id"
-        :src="`/api/v1/files/${data.data.image_id}/download`"
-        :alt="data.data.title"
-        style="
-          min-height: 350px;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          border-radius: 8px;
-        "
-      />
+        :href="`/api/v1/files/${data.data.image_id}/download`"
+        target="_blank"
+        rel="noopener"
+        aria-label="檢視完整產品圖片"
+        ><img
+          class="product-detail-image"
+          :src="`/api/v1/files/${data.data.image_id}/download`"
+          :alt="data.data.title"
+      /></a>
       <div
         v-else
         style="
@@ -79,18 +78,18 @@ watch([selected, quantity], () => {
           class="grid"
           style="grid-template-columns: repeat(3, 1fr)"
         >
-          <img
+          <a
             v-for="id in data.data.metadata.gallery_ids"
             :key="id"
-            :src="`/api/v1/files/${id}/download`"
-            :alt="data.data.title"
-            style="
-              width: 100%;
-              height: 90px;
-              object-fit: cover;
-              border-radius: 4px;
-            "
-          />
+            :href="`/api/v1/files/${id}/download`"
+            target="_blank"
+            rel="noopener"
+            aria-label="檢視完整產品圖片"
+            ><img
+              :src="`/api/v1/files/${id}/download`"
+              :alt="data.data.title"
+              class="product-gallery-image"
+          /></a>
         </div>
         <p class="muted">
           成分：{{ data?.data?.metadata?.ingredients || "未提供"

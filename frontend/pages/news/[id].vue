@@ -23,17 +23,17 @@ const taipeiDateTime = (value?: string) =>
       <p class="eyebrow" style="margin-top: 30px">
         {{ data?.data?.category || "最新消息" }}
       </p>
-      <img
+      <a
         v-if="data?.data?.image_id"
-        :src="`/api/v1/files/${data.data.image_id}/download`"
-        :alt="data.data.title"
-        style="
-          width: 100%;
-          max-height: 420px;
-          object-fit: cover;
-          border-radius: 8px;
-        "
-      />
+        :href="`/api/v1/files/${data.data.image_id}/download`"
+        target="_blank"
+        rel="noopener"
+        aria-label="檢視完整文章圖片"
+        ><img
+          class="article-cover-image"
+          :src="`/api/v1/files/${data.data.image_id}/download`"
+          :alt="data.data.title"
+      /></a>
       <h1 class="serif" style="font-size: 42px">
         {{ data?.data?.title || "消息內容" }}
       </h1>

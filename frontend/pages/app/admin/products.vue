@@ -42,6 +42,7 @@ onMounted(load);
     <table class="table">
       <thead>
         <tr>
+          <th>圖片</th>
           <th>名稱</th>
           <th>分類</th>
           <th>規格</th>
@@ -52,6 +53,16 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="p in rows" :key="p.id">
+          <td data-label="圖片">
+            <img
+              v-if="p.image_id"
+              class="admin-thumb"
+              :src="`/api/v1/files/${p.image_id}/download`"
+              :alt="`${p.title} 圖片`"
+            /><span v-else class="admin-thumb placeholder" aria-label="尚無圖片"
+              >—</span
+            >
+          </td>
           <td data-label="名稱">{{ p.title }}</td>
           <td data-label="分類">{{ p.category }}</td>
           <td data-label="規格">{{ p.metadata?.variants?.length || 0 }} 組</td>
@@ -70,7 +81,7 @@ onMounted(load);
           </td>
         </tr>
         <tr v-if="!rows.length && !loading">
-          <td colspan="6" class="empty">尚無食品展示。</td>
+          <td colspan="7" class="empty">尚無食品展示。</td>
         </tr>
       </tbody>
     </table>

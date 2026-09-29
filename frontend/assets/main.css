@@ -279,6 +279,58 @@ a {
 .rich-article--legacy {
   white-space: pre-wrap;
 }
+.product-detail-image {
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #eee3cb;
+}
+.product-gallery-image {
+  width: 100%;
+  height: 110px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #eee3cb;
+}
+.article-cover-image {
+  display: block;
+  width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #eee3cb;
+}
+.product-editor-primary img {
+  width: min(100%, 360px);
+  max-height: 240px;
+  object-fit: contain;
+  background: #eee3cb;
+}
+.admin-thumb {
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 5px;
+  background: #eee3cb;
+}
+.admin-thumb.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.rich-article-media img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  margin: 18px auto;
+}
+.rich-article-media a:has(img) {
+  display: block;
+}
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -608,6 +660,15 @@ a {
   }
   .rich-toolbar {
     gap: 4px;
+  }
+  .product-detail-image {
+    max-height: 280px;
+  }
+  .rich-article-media img {
+    max-height: 320px;
+  }
+  .article-cover-image {
+    max-height: 320px;
   }
   .rich-toolbar button {
     padding: 6px 7px;

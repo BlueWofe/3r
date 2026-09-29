@@ -39,10 +39,13 @@ const form = reactive<any>({
   },
 });
 const image = ref<File | null>(null);
+const imagePreview = ref("");
 const galleryFiles = ref<File[]>([]);
 const galleryPreviews = ref<string[]>([]);
 const saving = ref(false);
-onUnmounted(() => galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url)));
+onUnmounted(() =>
+  galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url)),
+);
 const { error, run } = useApiError();
 function selectGallery(event: Event) {
   galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url));
@@ -52,6 +55,11 @@ function selectGallery(event: Event) {
   galleryPreviews.value = galleryFiles.value.map((file) =>
     URL.createObjectURL(file),
   );
+}
+function selectMainImage(event: Event) {
+  if (imagePreview.value) URL.revokeObjectURL(imagePreview.value);
+  image.value = (event.target as HTMLInputElement).files?.[0] || null;
+  imagePreview.value = image.value ? URL.createObjectURL(image.value) : "";
 }
 function removeSavedGallery(index: string | number) {
   form.metadata.gallery_ids.splice(Number(index), 1);
@@ -82,39 +90,39 @@ async function save() {
   }
   saving.value = true;
   try {
-  const body = copy(form);
-  if (image.value) {
-    const fd = new FormData();
-    fd.append("file", image.value);
-    fd.append("visibility", "public");
-    fd.append("title", image.value.name);
-    body.image_id = (
-      await run(() => api<any>("/files", { method: "POST", body: fd }))
-    ).id;
-  }
-  if (galleryFiles.value.length) {
-    const uploaded = await Promise.all(
-      galleryFiles.value.slice(0, 10).map((file) => {
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("visibility", "public");
-        fd.append("title", file.name);
-        return run(() => api<any>("/files", { method: "POST", body: fd }));
+    const body = copy(form);
+    if (image.value) {
+      const fd = new FormData();
+      fd.append("file", image.value);
+      fd.append("visibility", "public");
+      fd.append("title", image.value.name);
+      body.image_id = (
+        await run(() => api<any>("/files", { method: "POST", body: fd }))
+      ).id;
+    }
+    if (galleryFiles.value.length) {
+      const uploaded = await Promise.all(
+        galleryFiles.value.slice(0, 10).map((file) => {
+          const fd = new FormData();
+          fd.append("file", file);
+          fd.append("visibility", "public");
+          fd.append("title", file.name);
+          return run(() => api<any>("/files", { method: "POST", body: fd }));
+        }),
+      );
+      body.metadata.gallery_ids = [
+        ...(body.metadata.gallery_ids || []),
+        ...uploaded.map((file: any) => file.id),
+      ].slice(0, 10);
+    }
+    await run(() =>
+      api(p ? `/products/${p.id}` : "/products", {
+        method: p ? "PUT" : "POST",
+        body,
       }),
     );
-    body.metadata.gallery_ids = [
-      ...(body.metadata.gallery_ids || []),
-      ...uploaded.map((file: any) => file.id),
-    ].slice(0, 10);
-  }
-  await run(() =>
-    api(p ? `/products/${p.id}` : "/products", {
-      method: p ? "PUT" : "POST",
-      body,
-    }),
-  );
-  emit("saved");
-  emit("close");
+    emit("saved");
+    emit("close");
   } catch {
     // useApiError already exposes the actionable API error in the form.
   } finally {
@@ -144,12 +152,7 @@ async function save() {
             <option>published</option>
           </select></label
         ><label class="field"
-          >主圖片<input
-            type="file"
-            accept="image/*"
-            @change="
-              image = ($event.target as HTMLInputElement).files?.[0] || null
-            "
+          >主圖片<input type="file" accept="image/*" @change="selectMainImage"
         /></label>
         <label class="field"
           >展示單位<input
@@ -164,6 +167,22 @@ async function save() {
             @change="selectGallery"
         /></label>
       </div>
+      <figure
+        v-if="imagePreview || form.image_id"
+        class="card product-editor-primary"
+      >
+        <a
+          :href="imagePreview || `/api/v1/files/${form.image_id}/download`"
+          target="_blank"
+          rel="noopener"
+        >
+          <img
+            :src="imagePreview || `/api/v1/files/${form.image_id}/download`"
+            alt="主圖片預覽"
+          />
+        </a>
+        <figcaption class="muted">主圖片預覽（點擊檢視完整圖片）</figcaption>
+      </figure>
       <div
         v-if="form.metadata.gallery_ids?.length || galleryFiles.length"
         class="muted"
@@ -340,7 +359,9 @@ async function save() {
         </div>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
-      <button class="button" :disabled="saving">{{ saving ? "儲存中…" : "儲存食品" }}</button>
+      <button class="button" :disabled="saving">
+        {{ saving ? "儲存中…" : "儲存食品" }}
+      </button>
     </form>
   </div>
 </template>
