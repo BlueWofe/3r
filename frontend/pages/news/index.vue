@@ -2,6 +2,17 @@
 const { data, pending, error } = await useAsyncData("news", () =>
   api<any>("/public/news"),
 );
+const taipeiDateTime = (value?: string) =>
+  value
+    ? new Intl.DateTimeFormat("zh-TW", {
+        timeZone: "Asia/Taipei",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(value))
+    : "發布時間未提供";
 </script>
 <template>
   <div class="pagehead">
@@ -35,6 +46,10 @@ const { data, pending, error } = await useAsyncData("news", () =>
           /><span class="eyebrow">{{ n.category || "協會消息" }}</span>
           <h3>{{ n.title }}</h3>
           <p class="muted">{{ n.summary }}</p>
+          <small class="muted"
+            >{{ taipeiDateTime(n.published_at) }} ·
+            {{ n.author_name || "協會編輯" }}</small
+          >
           <small>閱讀故事 →</small></NuxtLink
         >
       </div>

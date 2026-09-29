@@ -2,7 +2,23 @@
   "name": "renewal-association-frontend",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "nuxt dev", "build": "nuxt build", "typecheck": "nuxt typecheck" },
-  "dependencies": { "nuxt": "^4.0.0", "vue": "^3.5.0" },
-  "devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.8.0", "vue-tsc": "^3.1.0" }
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@tiptap/extension-image": "^3.31.3",
+    "@tiptap/extension-link": "^3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
+    "@tiptap/vue-3": "^3.31.3",
+    "nuxt": "^4.0.0",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0",
+    "vue-tsc": "^3.1.0"
+  }
 }

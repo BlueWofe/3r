@@ -4,6 +4,17 @@ const { data, error } = await useAsyncData(
   () => `news-${route.params.id}`,
   () => api<any>(`/public/news/${route.params.id}`),
 );
+const taipeiDateTime = (value?: string) =>
+  value
+    ? new Intl.DateTimeFormat("zh-TW", {
+        timeZone: "Asia/Taipei",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(value))
+    : "發布時間未提供";
 </script>
 <template>
   <section class="section">
@@ -26,10 +37,15 @@ const { data, error } = await useAsyncData(
       <h1 class="serif" style="font-size: 42px">
         {{ data?.data?.title || "消息內容" }}
       </h1>
-      <p v-if="error" class="notice">無法取得此篇內容。</p>
-      <p class="muted" style="white-space: pre-wrap">
-        {{ data?.data?.body || data?.data?.summary }}
+      <p class="muted">
+        {{ taipeiDateTime(data?.data?.published_at) }} ·
+        {{ data?.data?.author_name || "協會編輯" }}
       </p>
+      <p v-if="error" class="notice">無法取得此篇內容。</p>
+      <RichArticle
+        :html="data?.data?.body_html"
+        :text="data?.data?.body || data?.data?.summary"
+      />
     </article>
   </section>
 </template>

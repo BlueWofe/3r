@@ -1,3 +1,21 @@
+<script setup lang="ts">
+const {
+  data: latestNews,
+  pending: newsPending,
+  error: newsError,
+} = await useAsyncData("homepage-latest-news", () =>
+  api<any>("/public/news?limit=3"),
+);
+const taipeiDate = (value?: string) =>
+  value
+    ? new Intl.DateTimeFormat("zh-TW", {
+        timeZone: "Asia/Taipei",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(value))
+    : "發布日期未提供";
+</script>
 <template>
   <section class="hero">
     <div class="container">
@@ -18,35 +36,63 @@
       <h2>陪伴旅程</h2>
       <ol class="ministry-grid">
         <li>
-          <NuxtLink to="/about" class="ministry-panel ministry-panel--door" aria-label="走進高牆｜認識協會">
+          <NuxtLink
+            to="/about"
+            class="ministry-panel ministry-panel--door"
+            aria-label="走進高牆｜認識協會"
+          >
             <span class="ministry-number">01 / OUR MINISTRY</span>
             <span class="ministry-arrow" aria-hidden="true">↗</span>
             <MinistryIllustration kind="door" class="ministry-illustration" />
-            <div class="ministry-caption"><h3>走進高牆<span class="ministry-action">｜認識協會</span></h3><p>讓關懷，走進每一個角落。</p></div>
+            <div class="ministry-caption">
+              <h3>走進高牆<span class="ministry-action">｜認識協會</span></h3>
+              <p>讓關懷，走進每一個角落。</p>
+            </div>
           </NuxtLink>
         </li>
         <li>
-          <NuxtLink to="/contact" class="ministry-panel ministry-panel--people" aria-label="建立信任｜聯絡我們">
+          <NuxtLink
+            to="/contact"
+            class="ministry-panel ministry-panel--people"
+            aria-label="建立信任｜聯絡我們"
+          >
             <span class="ministry-number">02 / OUR MINISTRY</span>
             <span class="ministry-arrow" aria-hidden="true">↗</span>
             <MinistryIllustration kind="people" class="ministry-illustration" />
-            <div class="ministry-caption"><h3>建立信任<span class="ministry-action">｜聯絡我們</span></h3><p>用傾聽，陪伴生命的改變。</p></div>
+            <div class="ministry-caption">
+              <h3>建立信任<span class="ministry-action">｜聯絡我們</span></h3>
+              <p>用傾聽，陪伴生命的改變。</p>
+            </div>
           </NuxtLink>
         </li>
         <li>
-          <NuxtLink to="/news" class="ministry-panel ministry-panel--growth" aria-label="預備復歸｜最新消息">
+          <NuxtLink
+            to="/news"
+            class="ministry-panel ministry-panel--growth"
+            aria-label="預備復歸｜最新消息"
+          >
             <span class="ministry-number">03 / OUR MINISTRY</span>
             <span class="ministry-arrow" aria-hidden="true">↗</span>
             <MinistryIllustration kind="growth" class="ministry-illustration" />
-            <div class="ministry-caption"><h3>預備復歸<span class="ministry-action">｜最新消息</span></h3><p>為重新出發，預備一份力量。</p></div>
+            <div class="ministry-caption">
+              <h3>預備復歸<span class="ministry-action">｜最新消息</span></h3>
+              <p>為重新出發，預備一份力量。</p>
+            </div>
           </NuxtLink>
         </li>
         <li>
-          <NuxtLink to="/donate" class="ministry-panel ministry-panel--home" aria-label="社區同行｜支持事工">
+          <NuxtLink
+            to="/donate"
+            class="ministry-panel ministry-panel--home"
+            aria-label="社區同行｜支持事工"
+          >
             <span class="ministry-number">04 / OUR MINISTRY</span>
             <span class="ministry-arrow" aria-hidden="true">↗</span>
             <MinistryIllustration kind="home" class="ministry-illustration" />
-            <div class="ministry-caption"><h3>社區同行<span class="ministry-action">｜支持事工</span></h3><p>回家的路，我們一起走。</p></div>
+            <div class="ministry-caption">
+              <h3>社區同行<span class="ministry-action">｜支持事工</span></h3>
+              <p>回家的路，我們一起走。</p>
+            </div>
           </NuxtLink>
         </li>
       </ol>
@@ -65,15 +111,21 @@
         </p>
         <NuxtLink class="button" to="/news">閱讀最新故事</NuxtLink>
       </div>
-      <ol class="story-timeline">
-        <li>
-          <b>示範故事｜相遇</b><br />在一次關懷活動中，開始願意說出自己的需要。
-        </li>
-        <li>
-          <b>示範故事｜同行</b><br />透過穩定的支持與學習，重新建立生活節奏。
-        </li>
-        <li>
-          <b>示範故事｜連結</b><br />在家庭與社區網絡中，持續練習新的選擇。
+      <div v-if="newsPending" class="empty">載入最新消息中…</div>
+      <p v-else-if="newsError" class="notice">
+        目前無法取得最新消息，請稍後再試。
+      </p>
+      <p v-else-if="!latestNews?.data?.length" class="empty">
+        目前尚無已發布的消息。
+      </p>
+      <ol v-else class="story-timeline">
+        <li v-for="article in latestNews.data" :key="article.id">
+          <NuxtLink :to="`/news/${article.id}`">
+            <span class="eyebrow">{{ article.category || "最新消息" }}</span>
+            <b>{{ article.title }}</b
+            ><br />
+            <small class="muted">{{ taipeiDate(article.published_at) }}</small>
+          </NuxtLink>
         </li>
       </ol>
     </div>

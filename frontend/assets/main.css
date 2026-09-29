@@ -218,6 +218,71 @@ a {
   color: var(--danger);
   font-size: 14px;
 }
+.rich-editor {
+  border: 1px solid #cfc5b2;
+  border-radius: 5px;
+  background: #fff;
+}
+.rich-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.rich-toolbar button {
+  padding: 7px 9px;
+  border: 1px solid #cfc5b2;
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.rich-toolbar button.active {
+  background: #e6ddca;
+}
+.rich-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.rich-editor .tiptap {
+  min-height: 220px;
+  padding: 14px;
+  outline: none;
+  line-height: 1.8;
+}
+.rich-editor .tiptap img,
+.rich-article img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+}
+.rich-article {
+  color: var(--muted);
+  line-height: 1.9;
+}
+.rich-article h2,
+.rich-article h3 {
+  color: var(--ink);
+  font-family: "Noto Serif TC", serif;
+}
+.rich-article blockquote {
+  border-left: 3px solid var(--gold);
+  margin: 18px 0;
+  padding-left: 16px;
+}
+.rich-article--legacy {
+  white-space: pre-wrap;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 .auth {
   min-height: calc(100vh - 70px);
   display: grid;
@@ -408,7 +473,9 @@ a {
   overflow: hidden;
   isolation: isolate;
   text-decoration: none;
-  transition: transform .25s ease, box-shadow .25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 .ministry-panel::before {
   content: "";
@@ -419,19 +486,31 @@ a {
   top: -120px;
   border: 1px solid currentColor;
   border-radius: 50%;
-  opacity: .12;
+  opacity: 0.12;
   pointer-events: none;
 }
-.ministry-panel--door { background: #193e34; color: #f3e6c8; }
-.ministry-panel--people { background: #e8e3d6; color: #344b3d; }
-.ministry-panel--growth { background: #bdc6ae; color: #253c2e; }
-.ministry-panel--home { background: #69554a; color: #fff0d9; }
+.ministry-panel--door {
+  background: #193e34;
+  color: #f3e6c8;
+}
+.ministry-panel--people {
+  background: #e8e3d6;
+  color: #344b3d;
+}
+.ministry-panel--growth {
+  background: #bdc6ae;
+  color: #253c2e;
+}
+.ministry-panel--home {
+  background: #69554a;
+  color: #fff0d9;
+}
 .ministry-number {
   position: absolute;
   left: 36px;
   top: 30px;
   font-size: 11px;
-  letter-spacing: .18em;
+  letter-spacing: 0.18em;
   font-weight: 600;
 }
 .ministry-arrow {
@@ -452,18 +531,51 @@ a {
   height: 205px;
   right: 35px;
   top: 48px;
-  transition: transform .35s ease;
+  transition: transform 0.35s ease;
 }
-.ministry-caption { position: relative; z-index: 1; }
-.ministry-caption h3 { color: inherit; font-size: 32px; margin: 0 0 8px; letter-spacing: .07em; }
-.ministry-action { display: inline-block; font-size: 17px; font-weight: 500; letter-spacing: .025em; vertical-align: middle; }
-.ministry-caption p { color: inherit; font-size: 15px; margin: 0; line-height: 1.6; }
-.ministry-panel:hover { transform: translateY(-4px); box-shadow: 0 16px 28px #18372d18; }
-.ministry-panel:hover .ministry-illustration { transform: translateY(-5px); }
-.ministry-panel:focus-visible { outline: 3px solid var(--gold); outline-offset: 5px; }
+.ministry-caption {
+  position: relative;
+  z-index: 1;
+}
+.ministry-caption h3 {
+  color: inherit;
+  font-size: 32px;
+  margin: 0 0 8px;
+  letter-spacing: 0.07em;
+}
+.ministry-action {
+  display: inline-block;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  vertical-align: middle;
+}
+.ministry-caption p {
+  color: inherit;
+  font-size: 15px;
+  margin: 0;
+  line-height: 1.6;
+}
+.ministry-panel:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 28px #18372d18;
+}
+.ministry-panel:hover .ministry-illustration {
+  transform: translateY(-5px);
+}
+.ministry-panel:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 5px;
+}
 @media (prefers-reduced-motion: reduce) {
-  .ministry-panel, .ministry-illustration { transition: none; }
-  .ministry-panel:hover, .ministry-panel:hover .ministry-illustration { transform: none; }
+  .ministry-panel,
+  .ministry-illustration {
+    transition: none;
+  }
+  .ministry-panel:hover,
+  .ministry-panel:hover .ministry-illustration {
+    transform: none;
+  }
 }
 .story-timeline {
   list-style: none;
@@ -489,6 +601,13 @@ a {
 @media (max-width: 760px) {
   .mobile-menu {
     display: block;
+  }
+  .rich-toolbar {
+    gap: 4px;
+  }
+  .rich-toolbar button {
+    padding: 6px 7px;
+    font-size: 12px;
   }
   .links {
     display: none;
@@ -561,9 +680,26 @@ a {
     grid-template-columns: repeat(7, minmax(88px, 1fr));
     overflow-x: auto;
   }
-  .ministry-grid { grid-template-columns: 1fr; gap: 16px; }
-  .ministry-panel { min-height: 330px; padding: 28px; border-radius: 20px; }
-  .ministry-number { left: 28px; top: 27px; }
-  .ministry-illustration { width: 200px; height: 168px; top: 52px; right: 22px; }
-  .ministry-caption h3 { font-size: 29px; }
+  .ministry-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .ministry-panel {
+    min-height: 330px;
+    padding: 28px;
+    border-radius: 20px;
+  }
+  .ministry-number {
+    left: 28px;
+    top: 27px;
+  }
+  .ministry-illustration {
+    width: 200px;
+    height: 168px;
+    top: 52px;
+    right: 22px;
+  }
+  .ministry-caption h3 {
+    font-size: 29px;
+  }
 }

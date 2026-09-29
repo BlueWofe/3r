@@ -29,9 +29,10 @@ const { data, error } = await useAsyncData("about-pages", async () => {
       <article>
         <p class="eyebrow">協會宗旨</p>
         <h2>{{ data?.about?.title || "中華復甦更新發展協會" }}</h2>
-        <p class="muted" style="white-space: pre-wrap">
-          {{ data?.about?.body || "協會資料載入中。" }}
-        </p>
+        <RichArticle
+          :html="data?.about?.body_html"
+          :text="data?.about?.body || '協會資料載入中。'"
+        />
       </article>
       <aside class="card">
         <h3>我們的價值</h3>
@@ -45,24 +46,26 @@ const { data, error } = await useAsyncData("about-pages", async () => {
     <div class="container">
       <p class="eyebrow">HISTORY</p>
       <h2>{{ data?.history?.title || "沿革" }}</h2>
-      <p class="muted" style="white-space: pre-wrap">
-        {{
-          data?.history?.body || data?.history?.summary || "沿革內容尚待發布。"
-        }}
-      </p>
+      <RichArticle
+        :html="data?.history?.body_html"
+        :text="
+          data?.history?.body || data?.history?.summary || '沿革內容尚待發布。'
+        "
+      />
     </div>
   </section>
   <section class="section">
     <div class="container">
       <p class="eyebrow">ORGANIZATION</p>
       <h2>{{ data?.organization?.title || "組織與同工" }}</h2>
-      <p class="muted" style="white-space: pre-wrap">
-        {{
+      <RichArticle
+        :html="data?.organization?.body_html"
+        :text="
           data?.organization?.body ||
           data?.organization?.summary ||
-          "組織資訊尚待發布。"
-        }}
-      </p>
+          '組織資訊尚待發布。'
+        "
+      />
       <p v-if="error" class="notice">部分協會資訊目前無法取得。</p>
     </div>
   </section>
