@@ -7,6 +7,14 @@ const templates = ref<any[]>([]),
   preview = ref<any>(null),
   result = ref<any>(null),
   error = ref("");
+const taiwanToday = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Taipei",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+})
+  .format(new Date())
+  .replaceAll("/", "-");
 const blank = () => ({
   name: "",
   prison: "",
@@ -14,7 +22,7 @@ const blank = () => ({
   participant_count: 0,
   teacher_ids: [],
   active: true,
-  start_date: new Date().toISOString().slice(0, 10),
+  start_date: taiwanToday,
   end_date: null,
   version: undefined,
   rules: [
@@ -93,7 +101,9 @@ onMounted(load);
       <p class="eyebrow">CLASS TEMPLATES</p>
       <h1>班別管理</h1>
       <p class="muted">
-        設定規律後預覽未來 90 天，確認衝突與略過項目再生成服務場次。
+        設定規律後預覽未來 90
+        天，確認衝突與略過項目再生成服務場次；系統每天台灣時間 00:10
+        自動補齊未來場次，修改只影響尚未生成者，既有手動異動會保留。
       </p>
     </div>
     <button class="button" @click="edit()">新增班別</button>

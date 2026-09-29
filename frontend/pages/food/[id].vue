@@ -7,23 +7,35 @@ const { data } = await useAsyncData(
 const selected = ref<any>(null),
   quantity = ref(1),
   quote = ref<any>(null),
-  quoteError = ref("");
+  quoteError = ref(""),
+  quoting = ref(false);
+let requestId = 0;
 const variants = computed(() => data.value?.data?.metadata?.variants || []);
 onMounted(() => {
   selected.value =
     variants.value.find((v: any) => v.active) || variants.value[0] || null;
 });
 async function getQuote() {
-  if (!selected.value) return;
+  if (!selected.value || quoting.value) return;
+  const id = ++requestId;
+  quoting.value = true;
+  quote.value = null;
+  quoteError.value = "";
   try {
-    quote.value = await api(
+    const result = await api(
       `/public/products/${route.params.id}/quote?variant_id=${encodeURIComponent(selected.value.id)}&quantity=${quantity.value}`,
     );
-    quoteError.value = "";
+    if (id === requestId) quote.value = result;
   } catch (e: any) {
-    quoteError.value = e.message;
+    if (id === requestId) quoteError.value = e.message;
+  } finally {
+    if (id === requestId) quoting.value = false;
   }
 }
+watch([selected, quantity], () => {
+  quote.value = null;
+  quoteError.value = "";
+});
 </script>
 <template>
   <section class="section">
@@ -60,6 +72,24 @@ async function getQuote() {
         <p class="eyebrow">服務成果展示</p>
         <h1 class="serif">{{ data?.data?.title }}</h1>
         <p class="muted">{{ data?.data?.body || data?.data?.summary }}</p>
+        <div
+          v-if="data?.data?.metadata?.gallery_ids?.length"
+          class="grid"
+          style="grid-template-columns: repeat(3, 1fr)"
+        >
+          <img
+            v-for="id in data.data.metadata.gallery_ids"
+            :key="id"
+            :src="`/api/v1/files/${id}/download`"
+            :alt="data.data.title"
+            style="
+              width: 100%;
+              height: 90px;
+              object-fit: cover;
+              border-radius: 4px;
+            "
+          />
+        </div>
         <p class="muted">
           成分：{{ data?.data?.metadata?.ingredients || "未提供"
           }}<br />過敏原：{{ data?.data?.metadata?.allergens || "未提供"
@@ -84,7 +114,9 @@ async function getQuote() {
               type="number"
               min="1"
               :max="selected?.stock || 1" /></label
-          ><button class="button" @click="getQuote">查詢示範報價</button>
+          ><button class="button" :disabled="quoting" @click="getQuote">
+            {{ quoting ? "計算中…" : "查詢報價" }}
+          </button>
           <p v-if="quote" class="notice">
             單價 {{ quote.unit_price }} {{ quote.currency }} · 合計
             {{ quote.total }} {{ quote.currency

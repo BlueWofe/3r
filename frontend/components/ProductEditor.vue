@@ -38,6 +38,7 @@ const form = reactive<any>({
   },
 });
 const image = ref<File | null>(null);
+const galleryFiles = ref<File[]>([]);
 const { error, run } = useApiError();
 function axis() {
   if (form.metadata.spec_axes.length < 2)
@@ -67,6 +68,21 @@ async function save() {
     body.image_id = (
       await run(() => api<any>("/files", { method: "POST", body: fd }))
     ).id;
+  }
+  if (galleryFiles.value.length) {
+    const uploaded = await Promise.all(
+      galleryFiles.value.slice(0, 10).map((file) => {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("visibility", "public");
+        fd.append("title", file.name);
+        return run(() => api<any>("/files", { method: "POST", body: fd }));
+      }),
+    );
+    body.metadata.gallery_ids = [
+      ...(body.metadata.gallery_ids || []),
+      ...uploaded.map((file: any) => file.id),
+    ].slice(0, 10);
   }
   await run(() =>
     api(p ? `/products/${p.id}` : "/products", {
@@ -107,6 +123,29 @@ async function save() {
               image = ($event.target as HTMLInputElement).files?.[0] || null
             "
         /></label>
+        <label class="field"
+          >展示單位<input
+            v-model="form.metadata.unit"
+            placeholder="例如：份、盒、包"
+        /></label>
+        <label class="field"
+          >圖片集（最多 10 張）<input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            @change="
+              galleryFiles = Array.from(
+                ($event.target as HTMLInputElement).files || [],
+              ).slice(0, 10)
+            "
+        /></label>
+      </div>
+      <div
+        v-if="form.metadata.gallery_ids?.length || galleryFiles.length"
+        class="muted"
+      >
+        已儲存圖片 {{ form.metadata.gallery_ids?.length || 0 }} 張；本次準備上傳
+        {{ galleryFiles.length }} 張。
       </div>
       <label class="field"
         >摘要<textarea v-model="form.summary"></textarea></label
