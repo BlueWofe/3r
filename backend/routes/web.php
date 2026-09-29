@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ClassTemplateController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\GroupNewsController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\PrisonController;
 use App\Http\Controllers\ProductController;
@@ -53,6 +55,14 @@ Route::prefix('api/v1')->group(function () {
     }
     Route::get('files/{id}/download', [ModuleController::class, 'files']);
     Route::middleware('auth')->group(function () {
+        Route::get('groups/options', [GroupController::class, 'options']);
+        Route::get('groups/member-options', [GroupController::class, 'memberOptions']);
+        Route::match(['get', 'post'], 'groups', [GroupController::class, 'groups']);
+        Route::match(['get', 'put'], 'groups/{id}', [GroupController::class, 'groups']);
+        Route::get('group-news', [GroupNewsController::class, 'news']);
+        Route::get('group-news/{id}', [GroupNewsController::class, 'news']);
+        Route::get('contents/{id}/broadcasts', [GroupNewsController::class, 'broadcasts']);
+        Route::post('contents/{id}/broadcast', [GroupNewsController::class, 'broadcasts']);
         Route::get('prisons/options', [PrisonController::class, 'options']);
         Route::match(['get', 'post'], 'prisons', [PrisonController::class, 'prisons']);
         Route::put('prisons/{id}', [PrisonController::class, 'prisons']);
@@ -90,6 +100,7 @@ Route::prefix('api/v1')->group(function () {
         Route::post('files', [ModuleController::class, 'files']);
         Route::match(['get', 'post'], 'resources', [ModuleController::class, 'resources']);
         Route::delete('resources/{id}', [ModuleController::class, 'resources']);
+        Route::put('resources/{id}', [ModuleController::class, 'resources']);
         Route::match(['get', 'post'], 'donations', [ModuleController::class, 'donations']);
         Route::post('donations/{id}/simulate', [ModuleController::class, 'donations']);
         foreach (['changes', 'notifications'] as $m) {

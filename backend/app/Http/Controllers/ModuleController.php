@@ -6,6 +6,7 @@ use App\Models\Assignment;
 use App\Models\Entity;
 use App\Models\ServiceSession;
 use App\Models\User;
+use App\Services\GroupAudience;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class ModuleController extends ApiController
                 // Read-all grants access through a linked resource, never to every private file.
                 $allowed = $e->owner_id === $r->user()->id;
                 if (isset($d['resource_id'])) {
+                    $allowed = false;
                     try {
                         $this->entity($r, 'resources', $d['resource_id']);
                         $allowed = true;
@@ -42,7 +44,7 @@ class ModuleController extends ApiController
                     } catch (\Throwable) {
                     }
                 }
-                foreach (Entity::where('type', 'meetings')->get() as $m) {
+                foreach (isset($d['resource_id']) ? [] : Entity::where('type', 'meetings')->get() as $m) {
                     if (in_array($id, $m->data['file_ids'] ?? [])) {
                         try {
                             $this->entity($r, 'meetings', $m->id);
@@ -102,8 +104,27 @@ class ModuleController extends ApiController
         if ($r->isMethod('delete')) {
             return $this->generic($r, 'resources', $id);
         }
+        if ($r->isMethod('put')) {
+            return DB::transaction(function () use ($r, $id) {
+                $this->permit($r, 'resources.update.all');
+                $e = Entity::where('type', 'resources')->lockForUpdate()->findOrFail($id);
+                $v = $r->validate(['title' => 'sometimes|string|max:200', 'category' => 'sometimes|string|max:100', 'role_ids' => 'sometimes|array|max:100', 'role_ids.*' => 'exists:roles,id', 'group_ids' => 'sometimes|array|max:100', 'group_ids.*' => 'integer']);
+                if (array_key_exists('group_ids', $v)) {
+                    $v['group_ids'] = app(GroupAudience::class)->validate($v['group_ids']);
+                }
+                $before = $e->data;
+                $e->update(['data' => array_merge($before, $v)]);
+                Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'resources', 'subject_id' => $id, 'action' => 'update', 'before' => $before, 'after' => $e->data]]);
+
+                return $e->publicData();
+            });
+        }
         abort_unless($r->user()->canDo('resources.create.own') || $r->user()->canDo('resources.create.all'), 403);
-        $v = $r->validate(['file' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,webp,txt,csv', 'title' => 'required|string|max:200', 'category' => 'required|string|max:100', 'role_ids' => 'nullable|array', 'role_ids.*' => 'exists:roles,id']);
+        $v = $r->validate(['file' => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,webp,txt,csv', 'title' => 'required|string|max:200', 'category' => 'required|string|max:100', 'role_ids' => 'nullable|array', 'role_ids.*' => 'exists:roles,id', 'group_ids' => 'sometimes|array|max:100', 'group_ids.*' => 'integer']);
+        $v['group_ids'] = app(GroupAudience::class)->validate($v['group_ids'] ?? []);
+        if (! $r->user()->canDo('resources.create.all')) {
+            abort_if(count(array_diff($v['group_ids'], app(GroupAudience::class)->membershipIds($r->user()))) > 0, 403);
+        }
         if (! empty($v['role_ids'])) {
             $this->permit($r, 'resources.create.all');
         }

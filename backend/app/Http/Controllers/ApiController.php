@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\ArticleContent;
 use App\Services\AssociationLogo;
+use App\Services\GroupAudience;
 use App\Services\PrisonDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,7 @@ class ApiController extends Controller
 {
     public static function permissionNames(): array
     {
-        $modules = ['schedule' => ['read.own', 'read.all', 'update.own', 'update.all', 'create.all'], 'attendance' => ['create.own', 'update.all'], 'content' => ['read.all', 'create.all', 'update.all', 'delete.all', 'publish.all'], 'users' => ['read.all', 'update.all', 'create.all'], 'roles' => ['manage.all'], 'cases' => ['read.assigned', 'read.all', 'create.all', 'update.assigned', 'update.all', 'export.all'], 'resources' => ['read.own', 'read.all', 'create.own', 'create.all', 'update.all', 'delete.all'], 'meetings' => ['read.own', 'read.all', 'create.all', 'update.all'], 'forms' => ['read.own', 'read.all', 'create.all', 'update.all', 'export.all'], 'donations' => ['read.own', 'read.all'], 'reports' => ['read.own', 'read.all'], 'settings' => ['manage.all'], 'prisons' => ['manage.all']];
+        $modules = ['schedule' => ['read.own', 'read.all', 'update.own', 'update.all', 'create.all'], 'attendance' => ['create.own', 'update.all'], 'content' => ['read.all', 'create.all', 'update.all', 'delete.all', 'publish.all'], 'users' => ['read.all', 'update.all', 'create.all'], 'roles' => ['manage.all'], 'cases' => ['read.assigned', 'read.all', 'create.all', 'update.assigned', 'update.all', 'export.all'], 'resources' => ['read.own', 'read.all', 'create.own', 'create.all', 'update.all', 'delete.all'], 'meetings' => ['read.own', 'read.all', 'create.all', 'update.all'], 'forms' => ['read.own', 'read.all', 'create.all', 'update.all', 'export.all'], 'donations' => ['read.own', 'read.all'], 'reports' => ['read.own', 'read.all'], 'settings' => ['manage.all'], 'prisons' => ['manage.all'], 'groups' => ['manage.all', 'broadcast.all']];
         $out = [];
         foreach ($modules as $m => $actions) {
             foreach ($actions as $a) {
@@ -235,7 +236,8 @@ class ApiController extends Controller
         $own = $type === 'cases' ? ($e->data['assigned_user_id'] ?? null) == $r->user()->id : $e->owner_id === $r->user()->id;
         $roles = $e->data['role_ids'] ?? [];
         if (in_array($type, ['resources', 'meetings', 'forms'])) {
-            $own = $own || (! $roles && $action === 'read') || $r->user()->roles->where('active', true)->pluck('id')->intersect($roles)->isNotEmpty();
+            $groups = in_array($type, ['resources', 'meetings']) ? ($e->data['group_ids'] ?? []) : [];
+            $own = $own || (! $roles && ! $groups && $action === 'read') || $r->user()->roles->where('active', true)->pluck('id')->intersect($roles)->isNotEmpty() || ($action === 'read' && app(GroupAudience::class)->matches($r->user(), $groups));
         }
         if ($type === 'forms' && $action === 'read' && ($e->data['status'] ?? 'draft') !== 'published') {
             $own = false;
@@ -306,7 +308,7 @@ class ApiController extends Controller
                 } catch (\Throwable) {
                     return false;
                 }
-            })->map->publicData()->values()];
+            })->filter(fn ($e) => ! in_array($type, ['meetings', 'resources']) || ! $r->group_id || in_array((int) $r->group_id, $e->data['group_ids'] ?? []))->map->publicData()->values()];
         }
         if ($id) {
             $e = $this->entity($r, $type, $id, $r->isMethod('delete') ? 'delete' : 'update');
@@ -315,14 +317,17 @@ class ApiController extends Controller
             $e = new Entity(['type' => $type, 'owner_id' => $r->user()->id, 'data' => []]);
         }
         if ($r->isMethod('delete')) {
+            if ($type === 'contents') {
+                Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'contents', 'subject_id' => $e->id, 'action' => 'delete', 'version' => $e->data['version'] ?? 1]]);
+            }
             $e->delete();
 
             return response()->json(['message' => '已刪除']);
         }
         $rules = match ($type) {
-            'contents' => ['kind' => 'required|in:page,news,product', 'title' => 'required|string|max:200', 'slug' => 'required|string|max:200', 'body' => 'required|string|max:100000', 'summary' => 'nullable|string|max:2000', 'category' => 'nullable|string|max:100', 'status' => 'required|in:draft,published', 'sort_order' => 'nullable|integer', 'metadata' => 'nullable|array', 'image_id' => 'nullable|integer', 'author_name' => 'nullable|string|max:100', 'published_at' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?$/'], 'body_format' => 'sometimes|in:text,html'],
+            'contents' => ['kind' => 'required|in:page,news,product', 'title' => 'required|string|max:200', 'slug' => 'required|string|max:200', 'body' => 'required|string|max:100000', 'summary' => 'nullable|string|max:2000', 'category' => 'nullable|string|max:100', 'status' => 'required|in:draft,published', 'sort_order' => 'nullable|integer', 'metadata' => 'nullable|array', 'image_id' => 'nullable|integer', 'author_name' => 'nullable|string|max:100', 'published_at' => ['nullable', 'date', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?$/'], 'body_format' => 'sometimes|in:text,html', 'article_type' => 'sometimes|in:news,sharing,testimony', 'visibility' => 'sometimes|in:public,groups', 'group_ids' => 'sometimes|array|max:100', 'group_ids.*' => 'integer', 'version' => 'sometimes|integer|min:1'],
             'cases' => ['code' => 'required|string|max:100', 'name' => 'required|string|max:100', 'status' => 'required|string|max:100', 'prison' => 'nullable|string|max:100', 'prison_id' => 'nullable|integer|exists:prisons,id', 'contact' => 'nullable|string|max:500', 'assigned_user_id' => 'nullable|exists:users,id'],
-            'meetings' => ['title' => 'required|string|max:200', 'meeting_date' => 'required|date', 'agenda' => 'nullable|string', 'minutes' => 'nullable|string', 'decisions' => 'nullable|string', 'role_ids' => 'array', 'role_ids.*' => 'exists:roles,id', 'file_ids' => 'array', 'file_ids.*' => 'integer'],
+            'meetings' => ['title' => 'required|string|max:200', 'meeting_date' => 'required|date', 'agenda' => 'nullable|string', 'minutes' => 'nullable|string', 'decisions' => 'nullable|string', 'role_ids' => 'array', 'role_ids.*' => 'exists:roles,id', 'file_ids' => 'array', 'file_ids.*' => 'integer', 'group_ids' => 'sometimes|array|max:100', 'group_ids.*' => 'integer'],
             'forms' => ['title' => 'required|string|max:200', 'description' => 'nullable|string', 'status' => 'required|in:draft,published', 'deadline' => 'nullable|date', 'role_ids' => 'array', 'role_ids.*' => 'exists:roles,id', 'fields' => 'required|array|max:100', 'fields.*.key' => 'required|alpha_dash|distinct', 'fields.*.label' => 'required|string', 'fields.*.type' => 'required|in:text,textarea,number,date,select,multiselect,file', 'fields.*.required' => 'required|boolean', 'fields.*.options' => 'nullable|array'],
             default => []
         };
@@ -349,9 +354,21 @@ class ApiController extends Controller
             Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'cases', 'subject_id' => $id, 'action' => $id ? 'update' : 'create', 'before' => $before, 'after' => $v]]);
         }
         if ($type === 'meetings') {
+            $v['group_ids'] = array_key_exists('group_ids', $v) ? app(GroupAudience::class)->validate($v['group_ids']) : ($before['group_ids'] ?? []);
+            if ($id && ! array_key_exists('role_ids', $v)) {
+                $v['role_ids'] = $before['role_ids'] ?? [];
+            }
             foreach ($v['file_ids'] ?? [] as $fileId) {
                 $file = Entity::where('type', 'files')->findOrFail($fileId);
-                abort_unless($file->owner_id === $r->user()->id || ($file->data['visibility'] ?? 'private') === 'public', 403, '不可分享他人的私人檔案');
+                $allowed = $file->owner_id === $r->user()->id || ($file->data['visibility'] ?? 'private') === 'public';
+                if (! $allowed && isset($file->data['resource_id'])) {
+                    try {
+                        $this->entity($r, 'resources', (int) $file->data['resource_id']);
+                        $allowed = true;
+                    } catch (\Throwable) {
+                    }
+                }
+                abort_unless($allowed, 403, '不可分享他人的私人檔案');
             }
         }
         if ($type === 'contents') {
@@ -377,7 +394,11 @@ class ApiController extends Controller
 
     public function publicContent(Request $r, string $kind, ?string $id = null)
     {
-        $items = Entity::where('type', 'contents')->get()->filter(fn ($e) => app(ArticleContent::class)->visible($e) && ($kind === 'search' || ($e->data['kind'] ?? '') === ['pages' => 'page', 'news' => 'news', 'products' => 'product'][$kind]));
+        $items = Entity::where('type', 'contents')->get()->filter(fn ($e) => app(ArticleContent::class)->visible($e) && ($e->data['visibility'] ?? 'public') === 'public' && ($kind === 'search' || ($e->data['kind'] ?? '') === ['pages' => 'page', 'news' => 'news', 'products' => 'product'][$kind]));
+        if ($kind === 'news') {
+            $filters = $r->validate(['article_type' => 'nullable|in:news,sharing,testimony', 'category' => 'nullable|string|max:100']);
+            $items = $items->filter(fn ($e) => (empty($filters['article_type']) || (app(ArticleContent::class)->payload($e)['article_type'] === $filters['article_type'])) && (empty($filters['category']) || ($e->data['category'] ?? '') === $filters['category']));
+        }
         if ($kind === 'search') {
             $items = $items->filter(fn ($e) => str_contains(mb_strtolower(implode(' ', [$e->data['title'], app(ArticleContent::class)->searchText($e)])), mb_strtolower((string) $r->query('q'))));
         }

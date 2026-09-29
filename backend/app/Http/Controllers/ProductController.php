@@ -19,7 +19,7 @@ class ProductController extends ApiController
                 return $this->product($id)->publicData();
             }
 
-return ['data' => Entity::where('type', 'contents')->get()->filter(fn ($e) => ($e->data['kind'] ?? '') === 'product')->map->publicData()->values()];
+            return ['data' => Entity::where('type', 'contents')->get()->filter(fn ($e) => ($e->data['kind'] ?? '') === 'product')->map->publicData()->values()];
         }
 
         return DB::transaction(function () use ($r, $id, $action) {
@@ -36,6 +36,12 @@ return ['data' => Entity::where('type', 'contents')->get()->filter(fn ($e) => ($
                 return ['message' => '已刪除'];
             }
             $v = app(ProductCatalog::class)->validate($r->all(), $id);
+            $version = $r->validate(['version' => 'sometimes|integer|min:1', 'visibility' => 'sometimes|in:public']);
+            if ($id && isset($version['version'])) {
+                abort_unless((int) $version['version'] === (int) ($before['version'] ?? 1), 409, '文章版本已更新。');
+            }
+            $v['version'] = $id ? (int) ($before['version'] ?? 1) + 1 : 1;
+            $v['visibility'] = 'public';
             if ($v['status'] === 'published') {
                 $this->permit($r, 'content.publish.all');
             }
