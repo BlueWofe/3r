@@ -1,5 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
+const { can } = useAuth();
+const canUpdate = computed(() => can("contacts.update.all"));
 const categories = [
     "監所探訪與代禱",
     "更生安置與職訓",
@@ -47,7 +49,7 @@ function view(row: any) {
   error.value = "";
 }
 async function save() {
-  if (!selected.value || pending.value) return;
+  if (!selected.value || pending.value || !canUpdate.value) return;
   pending.value = true;
   error.value = "";
   try {
@@ -85,7 +87,7 @@ onMounted(load);
         <option v-for="item in categories" :key="item">{{ item }}</option>
       </select></label
     ><label
-      >狀態<select v-model="status">
+      >狀態<select v-model="status" aria-label="狀態">
         <option value="">全部狀態</option>
         <option v-for="item in statuses" :key="item" :value="item">
           {{ labels[item] }}
@@ -119,7 +121,7 @@ onMounted(load);
         <tr v-for="row in rows" :key="row.id">
           <td data-label="姓名">{{ row.name }}</td>
           <td data-label="分類">{{ row.category }}</td>
-          <td data-label="訊息摘要">{{ row.message }}</td>
+          <td data-label="訊息摘要"><span class="inquiry-preview">{{ row.message }}</span></td>
           <td data-label="狀態">{{ labels[row.status] }}</td>
           <td data-label="建立時間">
             {{
@@ -131,7 +133,7 @@ onMounted(load);
             }}
           </td>
           <td data-label="操作">
-            <button class="button ghost" @click="view(row)">查看與處理</button>
+            <button class="button ghost" @click="view(row)">{{ canUpdate ? "查看與處理" : "查看" }}</button>
           </td>
         </tr>
       </tbody>
@@ -164,15 +166,16 @@ onMounted(load);
         <dt>處理人</dt>
         <dd>{{ selected.handled_by_name || "尚未指派" }}</dd>
       </dl>
-      <label class="field"
+      <label v-if="canUpdate" class="field"
         >處理狀態<select v-model="nextStatus">
           <option v-for="item in statuses" :key="item" :value="item">
             {{ labels[item] }}
           </option>
         </select></label
-      ><label class="field">同工備註<textarea v-model="note" /></label>
+      ><label v-if="canUpdate" class="field">同工備註<textarea v-model="note" maxlength="10000" /></label>
+      <p v-if="!canUpdate" class="preserve">同工備註：{{ selected.staff_note || "—" }}</p>
       <p v-if="error" class="error">{{ error }}</p>
-      <button class="button" :disabled="pending">
+      <button v-if="canUpdate" class="button" :disabled="pending">
         {{ pending ? "儲存中…" : "儲存處理狀態" }}
       </button>
     </form>
@@ -194,6 +197,14 @@ onMounted(load);
 }
 .preserve {
   white-space: pre-wrap;
+}
+.inquiry-preview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  max-width: 420px;
 }
 @media (max-width: 760px) {
   .inquiry {

@@ -37,7 +37,7 @@ async function load() {
         (!q.value || `${r.title} ${r.category}`.includes(q.value)) &&
         (!category.value || r.category === category.value),
     );
-    if (can("resources.create.all"))
+    if (can("resources.create.all") || can("resources.update.all"))
       roles.value = (await api<any>("/role-options")).data || [];
     if (canCreate() || can("resources.read.own") || can("resources.read.all"))
       groups.value = (await api<any>("/groups/options")).data || [];

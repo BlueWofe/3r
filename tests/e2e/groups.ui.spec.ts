@@ -18,6 +18,8 @@ test('admin publishes and broadcasts a group article; a member can read it on de
     await signIn(page, '0900000001');
     await page.goto('/app/admin/groups');
     await expect(page.getByRole('heading', { name: '小組管理' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+    await expect(page.getByRole('link', { name: '協會 Logo，回到官網' })).toBeVisible();
     await page.getByRole('button', { name: '新增小組' }).click();
     await page.getByLabel('小組名稱').fill(groupName);
     await page.getByLabel('說明').fill('群組文章與權限 UI 驗收');
@@ -36,7 +38,7 @@ test('admin publishes and broadcasts a group article; a member can read it on de
     await page.goto('/app/admin/content?section=news');
     await expect(page.getByRole('heading', { name: '內容管理' })).toBeVisible();
     await page.getByRole('button', { name: '新增', exact: true }).click();
-    await page.getByLabel('類型').selectOption('news');
+    await page.getByLabel('類型', { exact: true }).selectOption('news');
     await page.getByLabel('文章類型').selectOption('sharing');
     await page.getByLabel('標題', { exact: true }).fill(title);
     await page.getByLabel('網址代稱').fill(slug);
@@ -64,7 +66,7 @@ test('admin publishes and broadcasts a group article; a member can read it on de
     await page.getByRole('button', { name: '發送小組通知' }).click();
     await expect(page.getByText(/已發送給 1 位小組成員/)).toBeVisible();
 
-    const memberContext = await browser.newContext();
+    const memberContext = await browser.newContext({ baseURL: process.env.BASE_URL ?? 'http://localhost:3180', viewport: page.viewportSize() ?? undefined });
     const memberPage = await memberContext.newPage();
     try {
       await signIn(memberPage, '0900000003');
@@ -79,9 +81,11 @@ test('admin publishes and broadcasts a group article; a member can read it on de
       await memberContext.close();
     }
 
-    await page.goto('/');
+    await page.goto('/app/admin/groups');
     await expect(page.getByRole('link', { name: '協會 Logo，回到官網' })).toHaveAttribute('href', '/');
     await expect(page.getByRole('link', { name: '回到官網', exact: true })).toHaveCount(0);
+    await page.getByRole('link', { name: '協會 Logo，回到官網' }).click();
+    await expect(page).toHaveURL(/\/$/);
     await page.goto(`/news/${contentId}`);
     await expect(page.getByRole('heading', { name: title })).toHaveCount(0);
   } finally {

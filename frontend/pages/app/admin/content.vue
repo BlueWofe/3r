@@ -13,6 +13,10 @@ const allRows = ref<Content[]>([]),
   broadcastPending = ref(false),
   success = ref("");
 const form = reactive<Content>({});
+const { can } = useAuth();
+const savedForm = ref("");
+const hasChanges = computed(() => JSON.stringify(form) !== savedForm.value);
+const canBroadcast = computed(() => can("content.publish.all") && can("groups.broadcast.all"));
 const route = useRoute();
 const router = useRouter();
 const sections = [
@@ -44,11 +48,7 @@ const sections = [
 const sectionOf = (record: Content) =>
   record.kind === "page"
     ? "pages"
-    : record.article_type === "sharing"
-      ? "sharing"
-      : record.article_type === "testimony" || record.category === "見證分享"
-        ? "testimony"
-        : "news";
+    : record.article_type || (record.category === "見證分享" ? "testimony" : "news");
 const section = computed(() =>
   sections.some((item) => item.id === route.query.section)
     ? String(route.query.section)
@@ -118,16 +118,10 @@ function reset(record?: Content) {
     summary: record?.summary || "",
     category:
       record?.category ||
-      (section.value === "testimony"
-        ? "見證分享"
-        : section.value === "news"
-          ? "最新消息"
-          : section.value === "sharing"
-            ? "監獄事工"
-            : ""),
+      (section.value === "news" ? "協會公告" : section.value === "pages" ? "" : "監獄事工"),
     article_type:
       record?.article_type ||
-      (record?.category === "見證分享"
+      (record?.category === "見證分享" || section.value === "testimony"
         ? "testimony"
         : section.value === "sharing"
           ? "sharing"
@@ -151,6 +145,7 @@ function reset(record?: Content) {
   error.value = "";
   success.value = "";
   broadcasts.value = [];
+  savedForm.value = JSON.stringify(form);
   open.value = true;
   if (record?.id && record.visibility === "groups") loadBroadcasts(record.id);
 }
@@ -198,7 +193,7 @@ async function loadBroadcasts(id: number) {
   }
 }
 async function broadcast() {
-  if (!editing.value || broadcastPending.value) return;
+  if (!editing.value || broadcastPending.value || hasChanges.value || !canBroadcast.value) return;
   broadcastPending.value = true;
   error.value = "";
   try {
@@ -306,12 +301,12 @@ onMounted(load);
       </div>
       <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
         <label class="field"
-          >類型<select v-model="form.kind">
+          >類型<select v-model="form.kind" aria-label="類型">
             <option value="news">消息</option>
             <option value="page">頁面</option>
           </select></label
         ><label v-if="form.kind === 'news'" class="field"
-          >文章類型<select v-model="form.article_type">
+          >文章類型<select v-model="form.article_type" aria-label="文章類型">
             <option value="news">最新消息</option>
             <option value="sharing">事工分享</option>
             <option value="testimony">生命見證</option>
@@ -397,7 +392,7 @@ onMounted(load);
       </details>
       <section
         v-if="
-          editing &&
+          editing && canBroadcast &&
           form.kind === 'news' &&
           form.visibility === 'groups' &&
           form.status === 'published'
@@ -411,14 +406,19 @@ onMounted(load);
         <button
           type="button"
           class="button"
-          :disabled="broadcastPending"
+          :disabled="broadcastPending || hasChanges || pending"
           @click="broadcast"
         >
           {{ broadcastPending ? "發送中…" : "發送小組通知" }}
         </button>
-        <p v-if="broadcasts.length" class="muted">
-          最近發送：{{ broadcasts[0].recipient_count }} 位收件人
-        </p>
+        <p v-if="hasChanges" class="muted">請先儲存變更，再發送小組通知。</p>
+        <ul v-if="broadcasts.length" class="broadcast-history">
+          <li v-for="record in broadcasts" :key="record.id">
+            <strong>{{ formatLocalTaipei(record.sent_at).replace('T', ' ') }}</strong>
+            <span>第 {{ record.version }} 版 · {{ record.recipient_count }} 位收件人</span>
+            <small class="muted">站內通知已建立 · LINE 模擬紀錄</small>
+          </li>
+        </ul>
       </section>
       <p v-if="success" class="notice">{{ success }}</p>
       <p v-if="error" class="error">{{ error }}</p>
@@ -472,6 +472,8 @@ onMounted(load);
 .content-list-title {
   font-size: 21px;
 }
+.broadcast-history { list-style: none; padding: 0; }
+.broadcast-history li { display: grid; gap: 5px; padding: 12px 0; border-top: 1px solid var(--line); }
 @media (max-width: 760px) {
   .content-sections {
     grid-template-columns: 1fr;

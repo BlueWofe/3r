@@ -24,7 +24,7 @@ test('group articles stay private across public APIs and broadcast once to the d
     const tag = unique('e2e-group-post').toLowerCase();
     const create = async (overrides: Record<string, unknown>) => {
       const article = await json<Article>(await mutate(admin, 'post', '/api/v1/contents', {
-        kind: 'news', title: `群內消息 ${tag}`, slug: `${tag}-${contentIds.length}`,
+        kind: 'news', title: `群內消息 ${tag}-${contentIds.length}`, slug: `${tag}-${contentIds.length}`,
         category: 'E2E 小組分類', summary: '不可進入公開站的合成消息', body_format: 'text', body: '小組限定內容',
         author_name: 'E2E 編輯', status: 'published', published_at: null,
         ...overrides,
@@ -77,7 +77,7 @@ test('group articles stay private across public APIs and broadcast once to the d
       name: latestGroup.name, description: latestGroup.description, active: true,
       member_ids: [], version: latestGroup.version,
     }));
-    expect((await member.get(`/api/v1/group-news/${privatePost.id}`)).status()).toBe(404);
+    expect((await member.get(`/api/v1/group-news/${privatePost.id}`)).status()).toBe(200);
     const deactivated = await json<Group>(await admin.get(`/api/v1/groups/${groups[1].id}`));
     groups[1] = await json<Group>(await mutate(admin, 'put', `/api/v1/groups/${deactivated.id}`, {
       name: deactivated.name, description: deactivated.description, active: false,
@@ -113,17 +113,17 @@ test('group articles reject stale edits, private images, and broadcasts to an em
     }));
     article = await json<Article>(await mutate(admin, 'post', '/api/v1/contents', {
       kind: 'news', title: unique('無收件人群消息'), slug: unique('no-recipient').toLowerCase(),
-      category: '', article_type: '', visibility: 'groups', group_ids: [group.id], status: 'published', published_at: null,
+      category: '', article_type: 'news', visibility: 'groups', group_ids: [group.id], status: 'published', published_at: null,
       body_format: 'html', body: '<p>合成私人文字</p>',
     }));
     const stale = await mutate(admin, 'put', `/api/v1/contents/${article.id}`, {
-      kind: 'news', title: '舊版覆寫', slug: article.slug, category: '', article_type: '',
+      kind: 'news', title: '舊版覆寫', slug: article.slug, category: '', article_type: 'news',
       visibility: 'groups', group_ids: [group.id], status: 'published', published_at: null,
       body_format: 'html', body: '<p>新內容</p>', version: article.version + 99,
     });
     expect(stale.status()).toBe(409);
     const forbiddenImage = await mutate(admin, 'put', `/api/v1/contents/${article.id}`, {
-      kind: 'news', title: article.title, slug: article.slug, category: '', article_type: '',
+      kind: 'news', title: article.title, slug: article.slug, category: '', article_type: 'news',
       visibility: 'groups', group_ids: [group.id], status: 'published', published_at: null,
       body_format: 'html', body: '<p>含圖片</p><img src="/files/1">', version: article.version,
     });

@@ -20,6 +20,7 @@ const form = reactive({
   submission_token: "",
 });
 const pending = ref(false),
+  ready = ref(false),
   success = ref(""),
   error = ref("");
 function token() {
@@ -42,7 +43,7 @@ function reset() {
   });
 }
 async function submit() {
-  if (pending.value) return;
+  if (pending.value || !ready.value) return;
   pending.value = true;
   error.value = "";
   success.value = "";
@@ -59,7 +60,7 @@ async function submit() {
     pending.value = false;
   }
 }
-reset();
+onMounted(() => { reset(); ready.value = true; });
 </script>
 <template>
   <div class="pagehead">
@@ -86,6 +87,7 @@ reset();
       </div>
       <form class="card form" @submit.prevent="submit">
         <h3>留下訊息</h3>
+        <fieldset class="form" :disabled="pending || !ready" style="border:0;padding:0;margin:0">
         <label class="field"
           >姓名<input
             v-model.trim="form.name"
@@ -116,9 +118,10 @@ reset();
             v-model="form.website"
             tabindex="-1"
             autocomplete="off" /></label
-        ><button class="button" :disabled="pending">
+        ><button class="button" :disabled="pending || !ready">
           {{ pending ? "送出中…" : "送出訊息" }}
         </button>
+        </fieldset>
         <p v-if="success" class="notice">{{ success }}</p>
         <p v-if="error" class="error">{{ error }}</p>
       </form>

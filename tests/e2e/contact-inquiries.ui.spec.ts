@@ -32,10 +32,13 @@ test('visitor submits a categorized contact message and an authorized admin find
   await expect(row).toBeVisible();
   await expect(row).toContainText('新訊息');
   await row.getByRole('button', { name: '查看與處理' }).click();
-  await expect(page.getByText(message, { exact: true })).toBeVisible();
+  await expect(page.locator('.dialog').getByText(message, { exact: true })).toBeVisible();
   await page.getByLabel('處理狀態').selectOption('closed');
   await page.getByLabel('同工備註').fill(`已確認合成內容 ${marker}`);
   await page.getByRole('button', { name: '儲存處理狀態' }).click();
   await expect(page.getByText('已更新', { exact: true })).toBeVisible();
+  await expect(row).toHaveCount(0);
+  await page.getByLabel('狀態', { exact: true }).selectOption('closed');
+  await page.getByRole('button', { name: '篩選' }).click();
   await expect(row).toContainText('已結案');
 });

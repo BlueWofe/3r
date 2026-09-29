@@ -22,4 +22,6 @@ Use the active compose files and env with explicit `-p r3-uat`. Backup PostgreSQ
 
 For application rollback, select /opt/3r/previous, export BACKEND_IMAGE=r3-backend:PREVIOUS_SHA and FRONTEND_IMAGE=r3-frontend:PREVIOUS_SHA, then compose up -d using that release. Confirm database migration compatibility before rollback. Incompatible migrations require an explicit maintenance outage and restoration of the matching DB+storage backup, then repeat health and core-flow checks. A failed deploy does not auto-restore a database or delete new data.
 
+Once group-only articles are stored, the backend must retain group-aware public visibility checks. Do not roll it back to a pre-group release: that older code may expose restricted articles through public listings or search. A frontend rollback may keep the newer backend. Database restoration requires a separately authorized maintenance operation and matching private-storage backup.
+
 Daily off-VM backup storage and HTTPS production domain are prerequisites for actual personal data; the initial UAT is for synthetic acceptance tests.

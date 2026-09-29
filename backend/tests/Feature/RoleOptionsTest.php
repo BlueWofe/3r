@@ -23,7 +23,7 @@ class RoleOptionsTest extends TestCase
     public function test_only_authorized_managers_can_list_minimal_active_role_options(): void
     {
         Role::create(['name' => '停用角色', 'slug' => 'inactive', 'active' => false, 'permissions' => ['settings.manage.all']]);
-        foreach (['roles.manage.all', 'forms.create.all', 'forms.update.all', 'meetings.create.all', 'meetings.update.all', 'resources.create.all'] as $permission) {
+        foreach (['roles.manage.all', 'forms.create.all', 'forms.update.all', 'meetings.create.all', 'meetings.update.all', 'resources.create.all', 'resources.update.all'] as $permission) {
             $user = $this->user([$permission]);
             $response = $this->actingAs($user)->getJson('/api/v1/role-options')->assertOk();
             $options = $response->json('data');

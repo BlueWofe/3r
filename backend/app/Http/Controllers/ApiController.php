@@ -208,7 +208,7 @@ class ApiController extends Controller
 
     public function roleOptions(Request $r): array
     {
-        $allowed = collect(['roles.manage.all', 'forms.create.all', 'forms.update.all', 'meetings.create.all', 'meetings.update.all', 'resources.create.all'])
+        $allowed = collect(['roles.manage.all', 'forms.create.all', 'forms.update.all', 'meetings.create.all', 'meetings.update.all', 'resources.create.all', 'resources.update.all'])
             ->contains(fn ($permission) => $r->user()->canDo($permission));
         abort_unless($allowed, 403);
 

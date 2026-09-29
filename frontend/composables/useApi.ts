@@ -21,7 +21,7 @@ export async function api<T>(
   const notice = useState("save-notice", () => ({ serial: 0, message: "" }));
   const isDataChange =
     mutate &&
-    /^(\/(cases|groups|prisons|class-templates|sessions|assignments|contents|products|users|roles|forms|meetings|resources|settings|integrations)(\/|$)|\/auth\/(profile|change-phone)$)/.test(
+    /^(\/(cases|groups|contact-inquiries|prisons|class-templates|sessions|assignments|contents|products|users|roles|forms|meetings|resources|settings|integrations)(\/|$)|\/auth\/(profile|change-phone)$)/.test(
       path,
     ) &&
     !/\/(preview|quote|export)$/.test(path);
