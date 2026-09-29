@@ -14,5 +14,5 @@ const fields = [
     endpoint="/cases"
     :fields="fields"
     description="個案資料依權限顯示；請避免在摘要中放入敏感資訊。"
-  />
+  /><CaseRecordEntry />
 </template>
