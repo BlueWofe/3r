@@ -73,13 +73,16 @@ test('new contact inquiries generate generic unread alerts only for authorized i
     expect(response.reference).toBeTruthy();
 
     const after = await json<{ data: Notification[]; unread_count: number }>(await admin.get('/api/v1/notifications'));
-    const alert = after.data.find(notification => notification.title === '新的聯絡訊息' && notification.url?.includes('/app/admin/contact-inquiries?id='));
+    const inquiryRows = await json<{ data: { id: number }[] }>(await admin.get(`/api/v1/contact-inquiries?q=${encodeURIComponent(marker)}`));
+    inquiryId = inquiryRows.data[0].id;
+    const alert = after.data.find(notification => notification.contact_inquiry_id === inquiryId);
     expect(alert, 'authorized inbox reader receives a contact alert').toBeTruthy();
     inquiryId = alert!.contact_inquiry_id;
     expect(inquiryId).toBeTruthy();
     expect(alert).toMatchObject({ title: '新的聯絡訊息', message: '收到新的聯絡表單，請查看並處理。', read: false });
     expect(alert!.url).toBe(`/app/admin/contact-inquiries?id=${inquiryId}`);
-    expect(after.unread_count).toBeGreaterThan(before.unread_count);
+    expect(after.unread_count).toBe(after.data.filter(item => !item.read).length);
+    expect(before.data.some(item => item.id === alert!.id)).toBeFalsy();
     expect(JSON.stringify(alert)).not.toContain(marker);
     expect(JSON.stringify(alert)).not.toContain('0912345678');
 

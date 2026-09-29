@@ -28,6 +28,11 @@ test('published product category filtering and contact CTAs preserve their exact
     await expect(firstCard).toBeVisible();
     await expect(secondCard).toHaveCount(0);
     await expect(firstCard).toContainText(categoryA);
+    await expect(page).toHaveURL(new RegExp('category='));
+    await page.reload();
+    await expect(page.getByLabel('產品分類')).toHaveValue(categoryA);
+    await expect(firstCard).toBeVisible();
+    await expect(secondCard).toHaveCount(0);
 
     const bulkLink = page.getByRole('link', { name: '登記大宗洽詢', exact: true });
     await expect(bulkLink).toHaveAttribute('href', '/contact?category=大宗認購專案');
@@ -49,7 +54,7 @@ test('published product category filtering and contact CTAs preserve their exact
   }
 });
 
-test('contact notification bell shows a generic unread alert and opens the authorized inquiry', async ({ page }) => {
+test('contact notification bell shows a generic unread alert and opens the authorized inquiry', async ({ page }, testInfo) => {
   const visitor = await apiContext();
   let inquiryId: number | undefined;
   const marker = unique('contact-bell-ui-private');
@@ -57,6 +62,9 @@ test('contact notification bell shows a generic unread alert and opens the autho
   const phone = '0922223333';
   const privateMessage = `不可放進通知內容的聯絡訊息 ${marker}`;
   try {
+    if (testInfo.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 800 });
+    await signInAsAdmin(page);
+    await page.goto('/app');
     const token = await json<{ csrf_token: string }>(await visitor.get('/api/v1/auth/csrf'));
     const created = await json<{ reference: string }>(await visitor.post('/api/v1/public/contact', {
       data: {
@@ -67,8 +75,10 @@ test('contact notification bell shows a generic unread alert and opens the autho
     }));
     expect(created.reference).toBeTruthy();
 
-    await signInAsAdmin(page);
-    await page.goto('/app');
+    const inquiryRows = await json<{ data: { id: number }[] }>(await page.request.get(`/api/v1/contact-inquiries?q=${encodeURIComponent(marker)}`));
+    inquiryId = inquiryRows.data[0].id;
+    const notifications = await json<{ data: { id: number; contact_inquiry_id?: number }[] }>(await page.request.get('/api/v1/notifications'));
+    const notice = notifications.data.find(item => item.contact_inquiry_id === inquiryId)!;
     const bell = page.getByRole('button', { name: '通知收件匣', exact: true });
     await expect(bell).toBeVisible();
     await bell.click();
@@ -79,17 +89,21 @@ test('contact notification bell shows a generic unread alert and opens the autho
     await expect(popover).not.toContainText(name);
     await expect(popover).not.toContainText(phone);
     await expect(popover).not.toContainText(privateMessage);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+    const bounds = await popover.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
+    await page.screenshot({ path: testInfo.outputPath('notification-bell.png'), fullPage: true });
 
-    const notificationButton = popover.getByRole('button', { name: /新的聯絡訊息/ }).first();
+    const notificationButton = popover.locator(`[data-notification-id="${notice.id}"]`);
     await notificationButton.click();
     await expect(page).toHaveURL(/\/app\/admin\/contact-inquiries\?id=\d+/);
     await expect(page.getByRole('heading', { name: '聯絡表單', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: '聯絡訊息', exact: true })).toBeVisible();
-    await expect(page.getByText(name, { exact: true })).toBeVisible();
-    await expect(page.getByText(privateMessage, { exact: true }).first()).toBeVisible();
+    await expect(page.locator('.dialog').getByText(name, { exact: true })).toBeVisible();
+    await expect(page.locator('.dialog').getByText(privateMessage, { exact: true })).toBeVisible();
     const id = Number(new URL(page.url()).searchParams.get('id'));
-    expect(id).toBeGreaterThan(0);
-    inquiryId = id;
+    expect(id).toBe(inquiryId);
   } finally {
     // Contact inquiries and their private notification history are retained as UAT records.
     await visitor.dispose();

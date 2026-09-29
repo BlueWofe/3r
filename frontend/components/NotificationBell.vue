@@ -74,6 +74,7 @@ watch(() => route.fullPath, () => { open.value = false; void load(); });
       <button
         v-for="item in items.slice(0, 8)"
         :key="item.id"
+        :data-notification-id="item.id"
         class="notification-item"
         type="button"
         :disabled="following"
