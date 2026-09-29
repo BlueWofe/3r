@@ -31,7 +31,20 @@ async function simulate(v: string) {
     </div>
   </div>
   <section class="section">
-    <div class="container" style="max-width: 650px">
+    <div class="container donate-layout">
+      <aside class="purpose-panel">
+        <p class="eyebrow">WHY WE SERVE</p>
+        <h2>把支持，化成陪伴</h2>
+        <p class="muted">
+          協助監獄更生人，也發展監獄事工。每一份心意，都成為收容人關懷、更生陪伴與家庭支持的力量。
+        </p>
+        <ul>
+          <li>收容人關懷</li>
+          <li>更生陪伴</li>
+          <li>家庭支持</li>
+        </ul>
+      </aside>
+      <div>
       <div class="notice">
         這是安全的金流模擬頁面。未串接真實付款，不會收款或保存卡號。
       </div>
@@ -71,6 +84,7 @@ async function simulate(v: string) {
         </p>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
+      </div>
     </div>
   </section>
 </template>

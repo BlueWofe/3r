@@ -72,6 +72,7 @@ async function submit() {
         ><span class="seal">✦</span>中華復甦更新發展協會</NuxtLink
       >
       <h1 class="serif">會員入口</h1>
+      <p class="muted auth-lead">同工、志工與會員的服務入口。</p>
       <div class="tabs">
         <button :class="{ selected: tab === 'login' }" @click="tab = 'login'">
           登入</button

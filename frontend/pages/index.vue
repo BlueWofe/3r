@@ -34,6 +34,9 @@ const taipeiDate = (value?: string) =>
     <div class="container">
       <div class="eyebrow">OUR MINISTRY</div>
       <h2>陪伴旅程</h2>
+      <p class="muted section-lead">
+        從走進高牆到社區同行，用關係陪伴每一步更新。
+      </p>
       <ol class="ministry-grid">
         <li>
           <NuxtLink

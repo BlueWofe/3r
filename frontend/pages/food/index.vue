@@ -17,32 +17,15 @@ const { data } = await useAsyncData("products", () =>
         <NuxtLink
           v-for="p in data?.data"
           :key="p.id"
-          class="card"
+          class="card media-card"
           :to="`/food/${p.id}`"
           ><img
             v-if="p.image_id"
+            class="cover-thumb"
             :src="`/api/v1/files/${p.image_id}/download`"
             :alt="p.title"
-            style="
-              height: 150px;
-              width: 100%;
-              object-fit: cover;
-              border-radius: 5px;
-            "
           />
-          <div
-            v-else
-            style="
-              height: 150px;
-              background: #eee3cb;
-              border-radius: 5px;
-              display: grid;
-              place-items: center;
-              font-size: 44px;
-            "
-          >
-            🍞
-          </div>
+          <div v-else class="media-placeholder" aria-hidden="true">🍞</div>
           <h3>{{ p.title }}</h3>
           <p class="muted">{{ p.summary }}</p>
           <small>認識這份心意 →</small></NuxtLink

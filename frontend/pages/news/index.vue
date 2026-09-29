@@ -30,20 +30,15 @@ const taipeiDateTime = (value?: string) =>
         <NuxtLink
           v-for="n in data?.data"
           :key="n.id"
-          class="card"
+          class="card media-card"
           :to="`/news/${n.id}`"
           ><img
             v-if="n.image_id"
+            class="cover-thumb"
             :src="`/api/v1/files/${n.image_id}/download`"
             :alt="n.title"
-            style="
-              height: 150px;
-              width: 100%;
-              object-fit: cover;
-              border-radius: 5px;
-              margin-bottom: 14px;
-            "
-          /><span class="eyebrow">{{ n.category || "協會消息" }}</span>
+          /><span v-else class="media-placeholder" aria-hidden="true">✦</span
+          ><span class="eyebrow">{{ n.category || "協會消息" }}</span>
           <h3>{{ n.title }}</h3>
           <p class="muted">{{ n.summary }}</p>
           <small class="muted"

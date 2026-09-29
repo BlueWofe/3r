@@ -261,21 +261,24 @@ onMounted(async () => {
   transform: translateX(-50%);
   overflow-y: auto;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--pine);
   color: #fff;
-  box-shadow: 0 12px 30px #0004;
+  border: 1px solid rgba(198, 157, 77, 0.4);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
 }
 .workspace-mobile-header {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px clamp(16px, 4vw, 56px);
-  background: var(--pine);
+  background: linear-gradient(180deg, #164538, #0e3026);
   color: #fff;
   position: sticky;
   top: 0;
   z-index: 40;
+  border-bottom: 3px solid var(--gold);
+  box-shadow: 0 10px 24px rgba(14, 48, 38, 0.16);
 }
 .workspace-brand {
   margin-right: auto;
@@ -330,9 +333,9 @@ onMounted(async () => {
   flex: 1;
   min-height: 44px;
   border: 1px solid #ffffff66;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
   color: inherit;
-  border-radius: 7px;
+  border-radius: 999px;
   font: inherit;
   cursor: pointer;
   padding: 6px 10px;
@@ -464,11 +467,12 @@ button:focus-visible {
     display: grid;
     gap: 10px;
     padding: 10px 16px;
-    background: var(--pine);
+    background: linear-gradient(180deg, #164538, #0e3026);
     color: #fff;
     position: sticky;
     top: 0;
     z-index: 40;
+    border-bottom: 3px solid var(--gold);
   }
   .public-return {
     min-height: 32px;
@@ -487,9 +491,9 @@ button:focus-visible {
     flex: 1;
     min-height: 44px;
     border: 1px solid #ffffff66;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.06);
     color: inherit;
-    border-radius: 7px;
+    border-radius: 999px;
     font: inherit;
     font-size: 14px;
     cursor: pointer;

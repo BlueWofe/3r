@@ -22,10 +22,7 @@ const { data, error } = await useAsyncData("about-pages", async () => {
     </div>
   </div>
   <section class="section">
-    <div
-      class="container grid responsive-two"
-      style="grid-template-columns: 1.2fr 0.8fr"
-    >
+    <div class="container grid responsive-two about-layout">
       <article>
         <p class="eyebrow">協會宗旨</p>
         <h2>{{ data?.about?.title || "中華復甦更新發展協會" }}</h2>
@@ -34,7 +31,7 @@ const { data, error } = await useAsyncData("about-pages", async () => {
           :text="data?.about?.body || '協會資料載入中。'"
         />
       </article>
-      <aside class="card">
+      <aside class="card value-card">
         <h3>我們的價值</h3>
         <p class="muted">
           {{ data?.about?.summary || "尊重每一個人，以長期陪伴支持生命更新。" }}

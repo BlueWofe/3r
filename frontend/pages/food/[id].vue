@@ -41,30 +41,17 @@ watch([selected, quantity], () => {
 </script>
 <template>
   <section class="section">
-    <div
-      class="container grid responsive-two"
-      style="grid-template-columns: 1fr 1fr"
-    >
-      <div
-        v-if="data?.data?.image_id"
+    <div class="container">
+      <NuxtLink class="back-link" to="/food">← 回到愛心好食</NuxtLink>
+    </div>
+    <div class="container grid responsive-two product-layout">
+      <div v-if="data?.data?.image_id"
         ><img
           class="product-detail-image"
           :src="`/api/v1/files/${data.data.image_id}/download`"
           :alt="data.data.title"
       /></div>
-      <div
-        v-else
-        style="
-          min-height: 350px;
-          background: #eee3cb;
-          border-radius: 8px;
-          display: grid;
-          place-items: center;
-          font-size: 100px;
-        "
-      >
-        🍞
-      </div>
+      <div v-else class="product-fallback" aria-hidden="true">🍞</div>
       <article>
         <p class="eyebrow">服務成果展示</p>
         <h1 class="serif">{{ data?.data?.title }}</h1>
@@ -83,7 +70,7 @@ watch([selected, quantity], () => {
               class="product-gallery-image"
           /></div>
         </div>
-        <p class="muted">
+        <p class="muted spec-list">
           成分：{{ data?.data?.metadata?.ingredients || "未提供"
           }}<br />過敏原：{{ data?.data?.metadata?.allergens || "未提供"
           }}<br />淨重：{{ data?.data?.metadata?.net_weight || "未提供"

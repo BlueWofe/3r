@@ -14,20 +14,21 @@ async function search() {
 }
 </script>
 <template>
-  <section class="section">
+  <div class="pagehead">
     <div class="container">
       <div class="eyebrow">SEARCH</div>
-      <h1 class="serif">搜尋內容</h1>
-      <form class="toolbar" @submit.prevent="search">
+      <h1>搜尋內容</h1>
+    </div>
+  </div>
+  <section class="section">
+    <div class="container">
+      <form class="search-panel" @submit.prevent="search">
+        <label class="visually-hidden" for="site-search">關鍵字</label>
         <input
+          id="site-search"
           v-model="q"
-          placeholder="輸入關鍵字"
-          style="
-            flex: 1;
-            padding: 11px;
-            border: 1px solid var(--line);
-            border-radius: 5px;
-          "
+          class="search-field"
+          placeholder="輸入關鍵字，例如消息、產品或事工"
         /><button class="button">搜尋</button>
       </form>
       <div v-if="loading" class="empty">搜尋中…</div>
