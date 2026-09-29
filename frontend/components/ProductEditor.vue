@@ -172,17 +172,11 @@ async function save() {
         v-if="imagePreview || form.image_id"
         class="card product-editor-primary"
       >
-        <a
-          :href="imagePreview || `/api/v1/files/${form.image_id}/download`"
-          target="_blank"
-          rel="noopener"
-        >
           <img
             :src="imagePreview || `/api/v1/files/${form.image_id}/download`"
             alt="主圖片預覽"
           />
-        </a>
-        <figcaption class="muted">主圖片預覽（點擊檢視完整圖片）</figcaption>
+        <figcaption class="muted">主圖片預覽</figcaption>
       </figure>
       <div
         v-if="form.metadata.gallery_ids?.length || galleryFiles.length"

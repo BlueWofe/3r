@@ -45,17 +45,13 @@ watch([selected, quantity], () => {
       class="container grid responsive-two"
       style="grid-template-columns: 1fr 1fr"
     >
-      <a
+      <div
         v-if="data?.data?.image_id"
-        :href="`/api/v1/files/${data.data.image_id}/download`"
-        target="_blank"
-        rel="noopener"
-        aria-label="檢視完整產品圖片"
         ><img
           class="product-detail-image"
           :src="`/api/v1/files/${data.data.image_id}/download`"
           :alt="data.data.title"
-      /></a>
+      /></div>
       <div
         v-else
         style="
@@ -78,18 +74,14 @@ watch([selected, quantity], () => {
           class="grid"
           style="grid-template-columns: repeat(3, 1fr)"
         >
-          <a
+          <div
             v-for="id in data.data.metadata.gallery_ids"
             :key="id"
-            :href="`/api/v1/files/${id}/download`"
-            target="_blank"
-            rel="noopener"
-            aria-label="檢視完整產品圖片"
             ><img
               :src="`/api/v1/files/${id}/download`"
               :alt="data.data.title"
               class="product-gallery-image"
-          /></a>
+          /></div>
         </div>
         <p class="muted">
           成分：{{ data?.data?.metadata?.ingredients || "未提供"

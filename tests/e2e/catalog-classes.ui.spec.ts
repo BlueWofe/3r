@@ -124,6 +124,7 @@ test('admin saves, reselects and previews bounded main and gallery product image
   const savedMainPreview = page.locator('.product-editor-primary img');
   await expect(savedMainPreview).toHaveAttribute('src', new RegExp(`/api/v1/files/${created.image_id}/download`));
   await expectTallImageWithin(savedMainPreview, 240);
+  await expect(page.locator('.product-editor-primary a')).toHaveCount(0);
   await expectTallImageWithin(page.getByAltText('已儲存的商品圖片'), 110);
   await page.screenshot({ path: testInfo.outputPath('product-main-preview-after-reedit.png') });
 
@@ -160,6 +161,9 @@ test('admin saves, reselects and previews bounded main and gallery product image
   await expect(publicMainImage).toHaveAttribute('src', new RegExp(`/api/v1/files/${updated.image_id}/download`));
   await expectTallImageWithin(publicMainImage, await page.evaluate(() => window.innerWidth <= 760 ? 280 : 420));
   await expectTallImageWithin(page.locator('.product-gallery-image').first(), 110);
+  await expect(page.locator('a[href*="/files/"]')).toHaveCount(0);
+  await publicMainImage.click();
+  await expect(page).toHaveURL(new RegExp(`/food/${created.id}$`));
   await page.screenshot({ path: testInfo.outputPath('product-public-detail-images.png'), fullPage: true });
 });
 
