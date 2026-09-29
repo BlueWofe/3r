@@ -143,6 +143,25 @@ async function setStatus(status: "cancelled" | "scheduled") {
   emit("updated");
   open.value = false;
 }
+async function assignTeacher() {
+  if (!teacherId.value || !reason.value.trim()) {
+    error.value = "請選擇老師並填寫指派原因。";
+    return;
+  }
+  await run(() =>
+    api(`/sessions/${props.session.id}/assign`, {
+      method: "POST",
+      body: {
+        version: props.session.version,
+        teacher_id: teacherId.value,
+        reason: reason.value,
+        override_conflict: override.value,
+      },
+    }),
+  );
+  emit("updated");
+  open.value = false;
+}
 watch(
   open,
   async (value) => {
@@ -186,7 +205,9 @@ watch(
           v-model="reason"
           placeholder="請說明異動原因"
         ></textarea></label
-      ><label v-if="admin || attendanceAdmin" class="field"
+      ><label
+        v-if="(admin || attendanceAdmin) && session.assignments.length"
+        class="field"
         >目前指派<select v-model="assignmentId">
           <option :value="undefined">請選擇目前同工</option>
           <option v-for="a in session.assignments" :key="a.id" :value="a.id">
@@ -240,18 +261,24 @@ watch(
         >
           完整編輯場次</button
         ><button
+          v-if="admin && !session.assignments.length"
+          class="button"
+          @click="assignTeacher"
+        >
+          指派老師</button
+        ><button
           v-if="admin"
           class="button ghost"
           @click="doAssignment('replace')"
         >
           重新指派</button
         ><label
-          v-if="attendanceAdmin"
+          v-if="attendanceAdmin && session.assignments.length"
           class="field"
           style="display: flex; gap: 7px; align-items: center"
           ><input v-model="present" type="checkbox" /> 補登為出席</label
         ><button
-          v-if="attendanceAdmin"
+          v-if="attendanceAdmin && session.assignments.length"
           class="button gold"
           @click="doAssignment('attendance')"
         >

@@ -70,6 +70,7 @@ onMounted(async () => {
       <h1>排程管理</h1>
     </div>
     <div class="toolbar">
+      <NuxtLink class="button ghost" to="/app/admin/classes">班別管理</NuxtLink>
       <input v-model="from" type="date" @change="load" />
       <input v-model="prison" placeholder="監所" @change="load" />
       <select v-model="teacher" @change="load">
