@@ -2,6 +2,7 @@
 const props = defineProps<{ product?: any | null }>();
 const emit = defineEmits(["close", "saved"]);
 const p = props.product;
+const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 const form = reactive<any>({
   title: p?.title || "",
   slug: p?.slug || "",
@@ -14,9 +15,9 @@ const form = reactive<any>({
   metadata: {
     unit: p?.metadata?.unit || "份",
     currency: "TWD",
-    gallery_ids: p?.metadata?.gallery_ids || [],
-    spec_axes: p?.metadata?.spec_axes || [],
-    variants: structuredClone(
+    gallery_ids: copy(p?.metadata?.gallery_ids || []),
+    spec_axes: copy(p?.metadata?.spec_axes || []),
+    variants: copy(
       p?.metadata?.variants || [
         {
           id: crypto.randomUUID(),
@@ -59,7 +60,7 @@ function tier(v: any) {
   v.wholesale.push({ min_quantity: 2, unit_price: v.price });
 }
 async function save() {
-  const body = structuredClone(form);
+  const body = copy(form);
   if (image.value) {
     const fd = new FormData();
     fd.append("file", image.value);
@@ -165,15 +166,18 @@ async function save() {
           class="grid responsive-two"
           style="grid-template-columns: 1fr 2fr"
         >
-          <input v-model="a.name" placeholder="例如：口味" /><input
-            :value="a.options.join(',')"
-            placeholder="選項，以逗號分隔"
-            @input="
-              a.options = ($event.target as HTMLInputElement).value
-                .split(',')
-                .filter(Boolean)
-            "
-          /><button
+          <label class="field"
+            >規格名稱<input v-model="a.name" placeholder="例如：口味" /></label
+          ><label class="field"
+            >選項（逗號分隔）<input
+              :value="a.options.join(',')"
+              placeholder="選項，以逗號分隔"
+              @input="
+                a.options = ($event.target as HTMLInputElement).value
+                  .split(',')
+                  .filter(Boolean)
+              " /></label
+          ><button
             type="button"
             class="button danger"
             @click="form.metadata.spec_axes.splice(i, 1)"
@@ -224,18 +228,20 @@ async function save() {
           </div>
           <label><input v-model="v.active" type="checkbox" /> 啟用此規格</label>
           <div v-for="(t, j) in v.wholesale" :key="j" class="toolbar">
-            <input
-              v-model.number="t.min_quantity"
-              type="number"
-              min="2"
-              placeholder="數量門檻"
-            /><input
-              v-model.number="t.unit_price"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="優惠單價"
-            /><button
+            <label class="field"
+              >數量門檻<input
+                v-model.number="t.min_quantity"
+                type="number"
+                min="2"
+                placeholder="數量門檻" /></label
+            ><label class="field"
+              >優惠單價<input
+                v-model.number="t.unit_price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="優惠單價" /></label
+            ><button
               type="button"
               class="button danger"
               @click="v.wholesale.splice(j, 1)"

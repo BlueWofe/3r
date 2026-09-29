@@ -22,7 +22,7 @@ onMounted(load);
   <div class="workhead">
     <div>
       <p class="eyebrow">PRODUCT CATALOG</p>
-      <h1>食品展示管理</h1>
+      <h1>產品管理</h1>
       <p class="muted">
         管理展示資料、規格 SKU、庫存與大量優惠；本系統沒有訂單或結帳。
       </p>

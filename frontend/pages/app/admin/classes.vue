@@ -6,6 +6,7 @@ const templates = ref<any[]>([]),
   editing = ref<any>(null),
   preview = ref<any>(null),
   result = ref<any>(null),
+  pending = ref(false),
   error = ref("");
 const taiwanToday = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Taipei",
@@ -36,6 +37,7 @@ const blank = () => ({
   ],
 });
 const form = reactive<any>(blank());
+const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 async function load() {
   try {
     templates.value = (await api<any>("/class-templates")).data || [];
@@ -46,7 +48,9 @@ async function load() {
 }
 function edit(t?: any) {
   editing.value = t || null;
-  Object.assign(form, structuredClone(t || blank()));
+  Object.assign(form, copy(t || blank()));
+  preview.value = null;
+  error.value = "";
   open.value = true;
 }
 function rule() {
@@ -59,6 +63,8 @@ function rule() {
   });
 }
 async function save() {
+  if (pending.value) return;
+  pending.value = true;
   try {
     await api(
       editing.value
@@ -70,9 +76,14 @@ async function save() {
     load();
   } catch (e: any) {
     error.value = e.message;
+  } finally {
+    pending.value = false;
   }
 }
 async function seePreview() {
+  if (pending.value) return;
+  pending.value = true;
+  preview.value = null;
   try {
     preview.value = await api<any>("/class-templates/preview", {
       method: "POST",
@@ -80,9 +91,13 @@ async function seePreview() {
     });
   } catch (e: any) {
     error.value = e.message;
+  } finally {
+    pending.value = false;
   }
 }
 async function generate(t: any) {
+  if (pending.value) return;
+  pending.value = true;
   try {
     result.value = await api(`/class-templates/${t.id}/generate`, {
       method: "POST",
@@ -91,6 +106,8 @@ async function generate(t: any) {
     load();
   } catch (e: any) {
     error.value = e.message;
+  } finally {
+    pending.value = false;
   }
 }
 onMounted(load);
@@ -130,7 +147,9 @@ onMounted(load);
           <td>{{ t.active ? "啟用" : "停用" }}</td>
           <td>
             <button class="button ghost" @click="edit(t)">編輯／預覽</button>
-            <button class="button" @click="generate(t)">生成場次</button>
+            <button class="button" :disabled="pending" @click="generate(t)">
+              生成場次
+            </button>
           </td>
         </tr>
       </tbody>
@@ -230,15 +249,48 @@ onMounted(load);
         </article>
       </div>
       <div class="actions">
-        <button type="button" class="button ghost" @click="seePreview">
+        <button
+          type="button"
+          class="button ghost"
+          :disabled="pending"
+          @click="seePreview"
+        >
           預覽 90 天</button
-        ><button class="button">儲存班別</button>
+        ><button class="button" :disabled="pending">
+          {{ pending ? "處理中…" : "儲存班別" }}
+        </button>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
       <div v-if="preview" class="notice">
         預覽 {{ preview.data?.length || 0 }} 場，略過
         {{ preview.skipped?.length || 0 }} 項，至 {{ preview.through }}。
       </div>
+      <div v-if="preview?.data?.length" class="tablewrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>時間</th>
+              <th>規則</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in preview.data"
+              :key="`${row.rule_id}-${row.service_date}-${row.start_time}`"
+            >
+              <td>{{ row.service_date }}</td>
+              <td>{{ row.start_time }}–{{ row.end_time }}</td>
+              <td>{{ row.rule_id }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul v-if="preview?.skipped?.length" class="notice">
+        <li v-for="(item, i) in preview.skipped" :key="i">
+          {{ item.service_date || "—" }}：{{ item.reason || item }}
+        </li>
+      </ul>
     </form>
   </div>
   <div v-if="result" class="modal">
@@ -248,7 +300,12 @@ onMounted(load);
         新增 {{ result.created }} 場、既有 {{ result.existing }} 場、略過
         {{ result.skipped?.length || 0 }} 場，至 {{ result.through }}。
       </p>
-      <pre>{{ JSON.stringify(result.skipped, null, 2) }}</pre>
+      <ul v-if="result.skipped?.length" class="notice">
+        <li v-for="(item, i) in result.skipped" :key="i">
+          {{ item.service_date || "—" }}：{{ item.reason || "略過" }}
+        </li>
+      </ul>
+      <p v-else class="muted">沒有略過的場次。</p>
       <button class="button" @click="result = null">關閉</button>
     </div>
   </div>
