@@ -276,6 +276,20 @@ async function sessionUpdated() {
 .day-sheet::backdrop {
   background: #0008;
 }
+.day-sheet .workhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: -18px;
+  background: var(--paper);
+  padding: 12px 0;
+  margin: 0;
+  z-index: 1;
+}
+.day-sheet h2 { font-size: 18px; margin: 0; }
+.day-sheet .workhead .button { flex: 0 0 auto; width: auto; min-height: 44px; padding: 6px 10px; }
 .day-session {
   display: grid;
   gap: 6px;
@@ -331,6 +345,7 @@ async function sessionUpdated() {
   }
   .day-sheet {
     width: 100%;
+    max-width: 100%;
     max-height: 80dvh;
   }
   .agenda .event {
