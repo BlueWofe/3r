@@ -16,6 +16,7 @@ test('group managers can maintain unique groups while members receive only safe 
   const admin = await apiContext();
   const member = await apiContext();
   let group: Group | undefined;
+  let unjoinedGroup: Group | undefined;
   let inactiveUserId: number | undefined;
   try {
     await login(admin, '0900000001');
@@ -75,23 +76,29 @@ test('group managers can maintain unique groups while members receive only safe 
     });
     expect(invalidMembership.status()).toBe(422);
 
+    unjoinedGroup = await json<Group>(await mutate(admin, 'post', '/api/v1/groups', {
+      name: unique('未加入小組'), active: true, member_ids: [],
+    }));
+
     await login(member, '0900000003');
     const ownOptions = await json<{ data: { id: number; name: string; [key: string]: unknown }[] }>(
       await member.get('/api/v1/groups/options'),
     );
-    expect(ownOptions.data).toEqual([{ id: group.id, name: group.name }]);
-    expect(ownOptions.data[0]).not.toHaveProperty('members');
+    expect(ownOptions.data.find(option => option.id === group!.id)).toEqual({ id: group.id, name: group.name });
+    expect(ownOptions.data.some(option => option.id === unjoinedGroup!.id)).toBeFalsy();
+    for (const option of ownOptions.data) expect(Object.keys(option).sort()).toEqual(['id', 'name']);
     expect((await member.get('/api/v1/groups')).status()).toBe(403);
     expect((await member.get('/api/v1/groups/member-options')).status()).toBe(403);
     expect((await mutate(member, 'post', '/api/v1/groups', {
       name: unique('不可管理小組'), active: true, member_ids: [],
     })).status()).toBe(403);
   } finally {
-    if (group) {
-      const fresh = await admin.get(`/api/v1/groups/${group.id}`);
+    for (const cleanupGroup of [group, unjoinedGroup]) {
+      if (!cleanupGroup) continue;
+      const fresh = await admin.get(`/api/v1/groups/${cleanupGroup.id}`);
       if (fresh.ok()) {
         const latest = await fresh.json() as Group;
-        await mutate(admin, 'put', `/api/v1/groups/${group.id}`, {
+        await mutate(admin, 'put', `/api/v1/groups/${cleanupGroup.id}`, {
           name: latest.name,
           description: latest.description,
           active: false,
