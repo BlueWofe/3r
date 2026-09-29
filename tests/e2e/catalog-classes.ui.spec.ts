@@ -11,8 +11,19 @@ test('homepage shows the ministry and hope timelines without mobile horizontal o
   await expect(ministryTimeline).toContainText('建立信任');
   await expect(ministryTimeline).toContainText('預備復歸');
   await expect(ministryTimeline).toContainText('社區同行');
-  await expect(page.locator('body')).toContainText(/示範故事/);
   await expect(page.locator('body')).not.toContainText('示範統計資料');
+
+  const storySection = page.locator('section').filter({ has: page.getByRole('heading', { name: '更新的足跡' }) }).first();
+  const storyLinks = storySection.locator('a[href^="/news/"]');
+  const storyCount = await storyLinks.count();
+  expect(storyCount).toBeGreaterThanOrEqual(1);
+  expect(storyCount).toBeLessThanOrEqual(3);
+  for (let index = 0; index < storyCount; index++) {
+    const link = storyLinks.nth(index);
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', /^\/news\/\d+$/);
+    await expect(link).toContainText(/\d{4}年\d{1,2}月\d{1,2}日/);
+  }
 
   const widths = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
