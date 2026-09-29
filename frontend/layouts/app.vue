@@ -1,8 +1,10 @@
 <script setup lang="ts">
 const { user, logout, refresh, can } = useAuth();
+const ready = ref(false);
 onMounted(async () => {
   await refresh();
   if (!user.value) await navigateTo("/login");
+  else ready.value = true;
 });
 const schedule = () => can("schedule.read.own") || can("schedule.read.all");
 const adminLinks = [
@@ -57,6 +59,7 @@ const adminLinks = [
       ><NuxtLink v-if="schedule()" to="/app/changes">異動通知</NuxtLink
       ><NuxtLink to="/app/invitations">邀請與通知</NuxtLink
       ><NuxtLink to="/app/resources">資源下載</NuxtLink
+      ><NuxtLink to="/app/forms">我的表單</NuxtLink
       ><NuxtLink to="/app/profile">個人資料與奉獻</NuxtLink>
       <div v-if="adminLinks.some((x) => x[2]())" class="group">管理工作台</div>
       <NuxtLink
@@ -68,7 +71,7 @@ const adminLinks = [
         登出
       </button>
     </aside>
-    <main class="workspace">
+    <main v-if="ready" class="workspace">
       <div class="notice">
         <span class="demo">示範模式</span>
         所有通知、金流及雲端操作皆為測試模擬，資料以權限及版本控制保護。

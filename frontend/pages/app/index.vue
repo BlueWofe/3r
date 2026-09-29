@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
 import type { Session } from "~/types";
-const { user, can } = useAuth();
+const { user, can, refresh } = useAuth();
 const today = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Taipei",
   year: "numeric",
@@ -17,7 +17,8 @@ const sessions = ref<Session[]>([]),
   photo = ref<File | null>(null),
   teachers = ref<any[]>([]),
   teacherId = ref<number | undefined>(),
-  editTitle = ref("");
+  editTitle = ref(""),
+  sessionEdit = ref<Session | null>(null);
 const { error, run } = useApiError();
 const mine = (s: any) =>
   s.assignments?.find((a: any) => a.teacher_id === user.value?.id);
@@ -69,8 +70,13 @@ async function updateSession(status?: string) {
   await load();
 }
 onMounted(async () => {
+  await refresh();
+  if (!can("schedule.read.own") && !can("schedule.read.all")) {
+    loading.value = false;
+    return;
+  }
   await load();
-  if (can("schedule.update.all")) {
+  if (can("schedule.update.own") || can("schedule.update.all")) {
     try {
       teachers.value = (await api<any>("/teachers")).data || [];
     } catch (e: any) {
@@ -83,13 +89,25 @@ onMounted(async () => {
   <div class="workhead">
     <div>
       <p class="eyebrow">MY SERVICE</p>
-      <h1>今天的行程</h1>
+      <h1>
+        {{
+          can("schedule.read.own") || can("schedule.read.all")
+            ? "今天的行程"
+            : "我的服務入口"
+        }}
+      </h1>
       <p class="muted">{{ today }} · {{ user?.name }}，願你平安服事。</p>
     </div>
     <NuxtLink class="button" to="/app/calendar">查看行事曆</NuxtLink>
   </div>
   <div v-if="loading" class="empty">載入行程中…</div>
   <div v-else-if="error" class="notice">{{ error }}</div>
+  <div
+    v-else-if="!can('schedule.read.own') && !can('schedule.read.all')"
+    class="card empty"
+  >
+    目前沒有排定的教學服務。您可以查看通知、填寫表單、下載授權資源，或管理個人資料與奉獻紀錄。
+  </div>
   <div v-else-if="!sessions.length" class="card empty">
     今天沒有排定服務。請留意異動通知。
   </div>
@@ -141,9 +159,9 @@ onMounted(async () => {
           required
           placeholder="請填寫原因"
         ></textarea></label
-      ><label class="field"
-        >修改場次主題（限具權限者）<input v-model="editTitle" /></label
-      ><label class="field"
+      ><label
+        v-if="can('schedule.update.own') || can('schedule.update.all')"
+        class="field"
         >受邀／替代同工<select v-model="teacherId">
           <option :value="undefined">請選擇</option>
           <option v-for="t in teachers" :key="t.id" :value="t.id">
@@ -183,14 +201,34 @@ onMounted(async () => {
           @click="assignmentAction(mine(action), 'replace')"
         >
           重新指派</button
-        ><button class="button ghost" @click="updateSession()">更新場次</button
-        ><button class="button danger" @click="updateSession('cancelled')">
+        ><button
+          v-if="can('schedule.update.own') || can('schedule.update.all')"
+          class="button ghost"
+          @click="sessionEdit = action"
+        >
+          編輯場次</button
+        ><button
+          v-if="can('schedule.update.own') || can('schedule.update.all')"
+          class="button danger"
+          @click="updateSession('cancelled')"
+        >
           取消場次</button
-        ><button class="button gold" @click="attendance(mine(action))">
+        ><button
+          v-if="mine(action)?.status === 'assigned'"
+          class="button gold"
+          @click="attendance(mine(action))"
+        >
           完成簽到
         </button>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
     </div>
   </div>
+  <SessionEditor
+    v-if="sessionEdit"
+    :session="sessionEdit"
+    :teachers="teachers"
+    @close="sessionEdit = null"
+    @saved="load"
+  />
 </template>

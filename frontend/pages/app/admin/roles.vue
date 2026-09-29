@@ -65,6 +65,10 @@ onMounted(load);
       ><label><input v-model="form.active" type="checkbox" /> 啟用角色</label>
       <div class="card">
         <b>權限</b>
+        <p class="muted">
+          預覽：已選 {{ form.permissions.length }} 項 —
+          {{ form.permissions.join("、") || "尚未選擇權限" }}
+        </p>
         <div
           class="grid"
           style="grid-template-columns: repeat(2, 1fr); margin-top: 12px"
