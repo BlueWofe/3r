@@ -81,7 +81,8 @@ function shift(n: number) {
   cursor.value = d;
 }
 const sessionsFor = (date: string) =>
-  sessions.value.filter((session) => session.service_date === date);
+  sessions.value.filter((session) => session.service_date === date)
+    .sort((a, b) => a.start_time.localeCompare(b.start_time) || a.id - b.id);
 function openDay(date: string) {
   selectedDay.value = date;
   previousOverflow = document.body.style.overflow;
@@ -162,7 +163,7 @@ async function sessionUpdated() {
         ></button
       ><template v-if="view === 'agenda'"
         ><b class="agenda-date">{{ d }} {{ new Date(d + 'T00:00:00').toLocaleDateString('zh-TW', { weekday: 'short' }) }}</b><button
-          v-for="s in sessions.filter((x) => x.service_date === d)"
+          v-for="s in sessionsFor(d)"
           :key="s.id"
           class="event"
           :disabled="refreshing"

@@ -66,7 +66,7 @@ test('dense calendar days stay compact and expose every session in a keyboard-ac
       const sheet = page.locator('dialog.day-sheet');
       await expect(sheet).toBeVisible();
       await expect(sheet.locator('.day-session')).toHaveCount(8);
-      for (const title of titles) await expect(sheet.locator('.day-session').filter({ hasText: title })).toHaveCount(1);
+      for (const [index, title] of titles.entries()) await expect(sheet.locator('.day-session').nth(index)).toContainText(title);
       await page.screenshot({ path: testInfo.outputPath(`calendar-day-sheet-${width}.png`) });
 
       await page.keyboard.press('Escape');
