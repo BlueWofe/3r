@@ -48,10 +48,23 @@ async function load() {
 }
 function edit(t?: any) {
   editing.value = t || null;
+  Object.keys(form).forEach((key) => delete form[key]);
   Object.assign(form, copy(t || blank()));
   preview.value = null;
   error.value = "";
   open.value = true;
+}
+const weekdayNames = ["一", "二", "三", "四", "五", "六", "日"];
+function ruleDescription(ruleId: string) {
+  const rule = form.rules?.find((item: any) => item.id === ruleId);
+  if (!rule) return "已移除的規則";
+  if (rule.frequency === "weekly") {
+    return `每週${(rule.weekdays || []).map((day: number) => weekdayNames[day - 1]).join("、")}`;
+  }
+  if (rule.frequency === "monthly_date") return `每月 ${rule.month_day} 日`;
+  const week =
+    rule.week_of_month === -1 ? "最後一" : `第 ${rule.week_of_month}`;
+  return `每月${week}週${weekdayNames[rule.weekday - 1]}`;
 }
 function rule() {
   form.rules.push({
@@ -281,7 +294,7 @@ onMounted(load);
             >
               <td>{{ row.service_date }}</td>
               <td>{{ row.start_time }}–{{ row.end_time }}</td>
-              <td>{{ row.rule_id }}</td>
+              <td>{{ ruleDescription(row.rule_id) }}</td>
             </tr>
           </tbody>
         </table>
