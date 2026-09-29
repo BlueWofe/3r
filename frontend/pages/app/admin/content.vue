@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
 type Content = Record<string, any>;
-const rows = ref<Content[]>([]),
+const allRows = ref<Content[]>([]),
   open = ref(false),
   editing = ref<Content | null>(null),
   pending = ref(false),
@@ -9,6 +9,47 @@ const rows = ref<Content[]>([]),
   error = ref(""),
   image = ref<File | null>(null);
 const form = reactive<Content>({});
+const route = useRoute();
+const router = useRouter();
+const sections = [
+  {
+    id: "news",
+    title: "最新消息",
+    description: "協會公告與事工近況",
+    icon: "bell",
+  },
+  {
+    id: "testimony",
+    title: "見證分享",
+    description: "陪伴與生命更新的故事",
+    icon: "people",
+  },
+  {
+    id: "pages",
+    title: "協會頁面",
+    description: "協會介紹、沿革與組織",
+    icon: "book",
+  },
+];
+const sectionOf = (record: Content) =>
+  record.kind === "page"
+    ? "pages"
+    : record.category === "見證分享"
+      ? "testimony"
+      : "news";
+const section = computed(() =>
+  sections.some((item) => item.id === route.query.section)
+    ? String(route.query.section)
+    : "news",
+);
+const rows = computed(() =>
+  allRows.value.filter((record) => sectionOf(record) === section.value),
+);
+const sectionTitle = computed(
+  () => sections.find((item) => item.id === section.value)?.title || "最新消息",
+);
+const switchSection = (id: string) =>
+  router.replace({ query: { ...route.query, section: id } });
 const escapeHtml = (value: string) =>
   value
     .replaceAll("&", "&amp;")
@@ -42,7 +83,7 @@ const statusLabel = (record: Content) => {
 };
 async function load() {
   try {
-    rows.value = (
+    allRows.value = (
       (await api<{ data: Content[] }>("/contents")).data || []
     ).filter((row) => row.kind !== "product");
     error.value = "";
@@ -54,11 +95,17 @@ function reset(record?: Content) {
   editing.value = record || null;
   Object.keys(form).forEach((key) => delete form[key]);
   Object.assign(form, {
-    kind: record?.kind || "news",
+    kind: record?.kind || (section.value === "pages" ? "page" : "news"),
     title: record?.title || "",
     slug: record?.slug || "",
     summary: record?.summary || "",
-    category: record?.category || "",
+    category:
+      record?.category ||
+      (section.value === "testimony"
+        ? "見證分享"
+        : section.value === "news"
+          ? "最新消息"
+          : ""),
     status: record?.status || "draft",
     sort_order: record?.sort_order ?? 0,
     image_id: record?.image_id || null,
@@ -102,6 +149,7 @@ async function save() {
     });
     open.value = false;
     await load();
+    await switchSection(sectionOf(body));
   } catch (caught: any) {
     error.value = caught.message;
   } finally {
@@ -121,6 +169,24 @@ onMounted(load);
     </div>
     <button class="button" @click="reset()">新增</button>
   </div>
+  <nav class="content-sections" aria-label="內容分類">
+    <button
+      v-for="item in sections"
+      :key="item.id"
+      type="button"
+      :class="['content-section', { selected: section === item.id }]"
+      :aria-pressed="section === item.id"
+      @click="switchSection(item.id)"
+    >
+      <NavIcon :name="item.icon" /><span
+        ><strong>{{ item.title }}</strong
+        ><small>{{ item.description }}</small></span
+      ><b>{{
+        allRows.filter((record) => sectionOf(record) === item.id).length
+      }}</b>
+    </button>
+  </nav>
+  <h2 class="content-list-title">{{ sectionTitle }}</h2>
   <p v-if="error && !open" class="notice">{{ error }}</p>
   <div class="tablewrap">
     <table class="table">
@@ -150,7 +216,7 @@ onMounted(load);
           </td>
         </tr>
         <tr v-if="!rows.length">
-          <td colspan="7" class="empty">尚無內容</td>
+          <td colspan="7" class="empty">尚無{{ sectionTitle }}</td>
         </tr>
       </tbody>
     </table>
@@ -229,3 +295,58 @@ onMounted(load);
     </form>
   </div>
 </template>
+<style scoped>
+.content-sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.content-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+}
+.content-section.selected {
+  border-color: var(--pine);
+  background: #e8eee8;
+  box-shadow: inset 0 0 0 1px var(--pine);
+}
+.content-section span {
+  flex: 1;
+  min-width: 0;
+}
+.content-section strong,
+.content-section small {
+  display: block;
+}
+.content-section small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.content-section b {
+  font-size: 22px;
+}
+.content-list-title {
+  font-size: 21px;
+}
+@media (max-width: 760px) {
+  .content-sections {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .content-section {
+    padding: 12px 16px;
+    min-height: 64px;
+  }
+}
+</style>

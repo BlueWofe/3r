@@ -22,10 +22,12 @@ onMounted(async () => {
 });
 async function save() {
   await run(() => api("/settings", { method: "PUT", body: settings }));
-  saved.value = "設定已儲存";
+  Object.assign(settings, await api("/settings"));
+  saved.value = "已更新";
 }
 async function saveLine() {
   await run(() => api("/integrations/line", { method: "PUT", body: line }));
+  Object.assign(line, await api("/integrations/line"));
   saved.value = "LINE 模擬設定已更新";
 }
 async function drive(action: string) {
@@ -36,6 +38,7 @@ async function drive(action: string) {
     }),
   );
   saved.value = `已模擬雲端 ${action}`;
+  folders.value = (await api<any>("/integrations/drive")).data || [];
 }
 </script>
 <template>

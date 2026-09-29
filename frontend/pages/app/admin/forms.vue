@@ -67,12 +67,13 @@ async function save() {
     }),
   );
   open.value = false;
-  load();
+  await load();
 }
 async function seeResponses(f: any) {
   responses.value = (await api<any>(`/forms/${f.id}/responses`)).data || [];
   editing.value = f;
 }
+onMounted(load);
 </script>
 <template>
   <div class="workhead">

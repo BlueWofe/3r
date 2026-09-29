@@ -17,6 +17,14 @@ export async function api<T>(
   const endpoint = path;
   const method = String(options.method || "GET").toUpperCase();
   const mutate = !["GET", "HEAD"].includes(method);
+  const nuxt = useNuxtApp();
+  const notice = useState("save-notice", () => ({ serial: 0, message: "" }));
+  const isDataChange =
+    mutate &&
+    /^(\/(cases|prisons|class-templates|sessions|assignments|contents|products|users|roles|forms|meetings|resources|settings|integrations)(\/|$)|\/auth\/(profile|change-phone)$)/.test(
+      path,
+    ) &&
+    !/\/(preview|quote|export)$/.test(path);
   try {
     const request = async () => {
       const csrf =
@@ -32,6 +40,7 @@ export async function api<T>(
         ...options,
         baseURL,
         credentials: "include",
+        cache: "no-store",
         headers: {
           Accept: "application/json",
           ...(csrf ? { "X-CSRF-TOKEN": csrf } : {}),
@@ -39,13 +48,20 @@ export async function api<T>(
         },
       } as any);
     };
+    let result: T;
     try {
-      return await request();
+      result = await request();
     } catch (e: any) {
       if ((e?.statusCode || e?.response?.status) === 419 && mutate)
-        return await request();
-      throw e;
+        result = await request();
+      else throw e;
     }
+    if (!server && isDataChange) {
+      notice.value = { serial: notice.value.serial + 1, message: "已更新" };
+      // Refresh cached public content as well as each editor's own list reload.
+      void nuxt.runWithContext(() => refreshNuxtData()).catch(() => {});
+    }
+    return result;
   } catch (error: any) {
     const code = error?.statusCode || error?.response?.status;
     const msg =

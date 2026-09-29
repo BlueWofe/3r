@@ -8,6 +8,11 @@ const roles = ref<any[]>([]),
 const { error, run } = useApiError();
 const permissionMenus = [
   {
+    module: "prisons",
+    title: "監所管理",
+    labels: { "manage.all": "新增、編輯及停用監所" },
+  },
+  {
     module: "schedule",
     title: "行事曆・排程管理・班別管理",
     note: "課程與班別共用排課權限。",
@@ -169,7 +174,7 @@ async function save() {
     }),
   );
   open.value = false;
-  load();
+  await load();
 }
 onMounted(load);
 </script>

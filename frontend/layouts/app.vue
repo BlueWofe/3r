@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { user, logout, refresh, can } = useAuth();
-const { schedule, managementLinks } = useWorkspaceNavigation();
+const { schedule, managementLinks, managementGroups } =
+  useWorkspaceNavigation();
 const ready = ref(false);
 const openMenu = ref<"service" | "management" | null>(null);
 const serviceButton = ref<HTMLButtonElement | null>(null);
@@ -39,9 +40,28 @@ const managementIcons: Record<string, string> = {
   forms: "form",
   reports: "chart",
   settings: "settings",
+  prisons: "home",
 };
 const managementIcon = (path: string) =>
-  managementIcons[path.split("/").pop() || ""] || "folder";
+  managementIcons[path.split("?")[0]!.split("/").pop() || ""] || "folder";
+const activeManagementGroup = ref("");
+const activeLink = (path: string) => {
+  const [pathname, query] = path.split("?");
+  return (
+    route.path === pathname &&
+    (!query ||
+      route.query.section === new URLSearchParams(query).get("section") ||
+      (!route.query.section && query === "section=news"))
+  );
+};
+function syncManagementGroup() {
+  activeManagementGroup.value =
+    managementGroups.value.find((group) =>
+      group.links.some((link) => activeLink(link[0])),
+    )?.title || "";
+}
+watch(() => route.fullPath, syncManagementGroup);
+watch(managementGroups, syncManagementGroup, { immediate: true });
 watch(
   () => route.fullPath,
   () => closeMenu(),
@@ -156,17 +176,38 @@ onMounted(async () => {
         <nav
           id="management-navigation"
           aria-label="管理工作台"
-          class="navigation-grid"
+          class="navigation-grid management-groups"
         >
-          <NuxtLink
-            v-for="link in managementLinks"
-            :key="link[0]"
-            :to="link[0]"
-            @click="closeMenu()"
-            ><NavIcon :name="managementIcon(link[0])" /><span>{{
-              link[1]
-            }}</span></NuxtLink
+          <details
+            v-for="group in managementGroups"
+            :key="group.title"
+            :open="activeManagementGroup === group.title"
+            class="management-category"
           >
+            <summary
+              @click.prevent="
+                activeManagementGroup =
+                  activeManagementGroup === group.title ? '' : group.title
+              "
+            >
+              <NavIcon :name="group.icon" /><span>{{ group.title }}</span
+              ><NavIcon name="chevron" />
+            </summary>
+            <div class="management-submenu">
+              <NuxtLink
+                v-for="link in group.links"
+                :key="link[0]"
+                :to="link[0]"
+                active-class=""
+                exact-active-class=""
+                :class="{ 'selected-management-link': activeLink(link[0]) }"
+                @click="closeMenu()"
+                ><NavIcon :name="managementIcon(link[0])" /><span>{{
+                  link[1]
+                }}</span></NuxtLink
+              >
+            </div>
+          </details>
         </nav>
       </section>
     </aside>
@@ -224,6 +265,43 @@ onMounted(async () => {
 }
 .logout-link:hover {
   background: #ffffff16;
+}
+.management-category summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+  border-radius: 7px;
+}
+.management-category summary::-webkit-details-marker {
+  display: none;
+}
+.management-category summary span {
+  flex: 1;
+}
+.management-category[open] > summary {
+  background: #ffffff16;
+}
+.management-category[open] > summary :last-child {
+  transform: rotate(180deg);
+}
+.management-submenu {
+  margin: 5px 0 12px 10px;
+  border-left: 1px solid #ffffff30;
+  padding-left: 5px;
+}
+.side .selected-management-link {
+  background: #ffffff24;
+  border-color: var(--gold);
+}
+summary:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
 }
 a:focus-visible,
 button:focus-visible {
@@ -327,6 +405,22 @@ button:focus-visible {
   .navigation-grid span {
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+  .navigation-grid.management-groups {
+    display: block;
+  }
+  .management-category {
+    margin-bottom: 6px;
+    border: 1px solid #ffffff20;
+    border-radius: 7px;
+  }
+  .management-submenu {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+    border: 0;
+    margin: 0;
   }
   .side .navigation-grid .router-link-exact-active {
     background: #ffffff24;

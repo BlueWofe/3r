@@ -48,7 +48,7 @@ async function save() {
     }),
   );
   open.value = false;
-  load();
+  await load();
 }
 onMounted(load);
 </script>
