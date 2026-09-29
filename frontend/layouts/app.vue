@@ -107,6 +107,11 @@ onMounted(async () => {
       class="workspace-mobile-header"
       @keydown.esc.prevent="closeMenu(true)"
     >
+      <NuxtLink class="brand workspace-brand" to="/" @click="closeMenu()"
+        ><BrandLogo :logo-url="contact?.data?.logo_url" /><span
+          >復甦更新</span
+        ></NuxtLink
+      >
       <NuxtLink class="public-return" to="/" @click="closeMenu()"
         ><NavIcon name="home" />回到官網</NuxtLink
       >
@@ -234,11 +239,119 @@ onMounted(async () => {
   </div>
 </template>
 <style scoped>
+.app-shell {
+  display: block !important;
+}
+.workspace {
+  min-width: 0;
+  padding: 28px clamp(16px, 4vw, 56px);
+}
 .side {
+  display: none;
+  position: absolute;
+  top: 66px;
+  left: 50%;
+  z-index: 35;
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(320px, calc(100dvh - 100px));
+  transform: translateX(-50%);
   overflow-y: auto;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--pine);
+  color: #fff;
+  box-shadow: 0 12px 30px #0004;
 }
 .workspace-mobile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px clamp(16px, 4vw, 56px);
+  background: var(--pine);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.workspace-brand {
+  margin-right: auto;
+  color: #fff;
+}
+.workspace-brand :deep(.brand-logo) {
+  width: 46px;
+  height: 46px;
+}
+.side.menu-open {
+  display: block;
+}
+.side .desktop-brand,
+.side .desktop-return {
   display: none;
+}
+.navigation-group {
+  display: none;
+  margin: 0;
+}
+.navigation-group.mobile-active {
+  display: block;
+}
+.side .group {
+  display: none;
+}
+.workspace-menu-buttons {
+  display: flex;
+  gap: 8px;
+  width: min(480px, 100%);
+}
+.workspace-menu-buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid #ffffff66;
+  background: transparent;
+  color: inherit;
+  border-radius: 7px;
+  font: inherit;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+.workspace-menu-buttons button.selected {
+  background: #ffffff20;
+  border-color: var(--gold);
+}
+.navigation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 3px;
+}
+.side .navigation-grid a,
+.logout-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 9px;
+  font-size: 13px;
+  background: #ffffff0c;
+  border: 1px solid #ffffff20;
+  border-radius: 7px;
+  white-space: normal;
+  color: inherit;
+}
+.navigation-grid.management-groups {
+  display: block;
+}
+.management-submenu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  border: 0;
+  margin: 0;
 }
 .side a,
 .logout-link,
