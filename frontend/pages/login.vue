@@ -8,6 +8,7 @@ const phone = ref(""),
   otpRequested = ref(false);
 const { login } = useAuth();
 const { workspacePath } = useWorkspaceNavigation();
+const route = useRoute();
 const { error, run } = useApiError();
 const ready = ref(false),
   pending = ref(false);
@@ -32,7 +33,9 @@ async function submit() {
   try {
     if (tab.value === "login") {
       await run(() => login(phone.value, password.value));
-      return navigateTo(workspacePath.value);
+      return navigateTo(
+        route.query.returnTo === "/donate" ? "/donate" : workspacePath.value,
+      );
     }
     const path =
       tab.value === "register" ? "/auth/register" : "/auth/reset-password";
