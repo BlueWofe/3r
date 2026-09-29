@@ -1,6 +1,19 @@
 <script setup lang="ts">
-const { loggedIn, user, refresh, logout } = useAuth();
+const { loggedIn, refresh, logout } = useAuth();
 const navOpen = ref(false);
+const navButton = ref<HTMLButtonElement | null>(null);
+const { servicePath, managementPath } = useWorkspaceNavigation();
+const route = useRoute();
+watch(
+  () => route.fullPath,
+  () => {
+    navOpen.value = false;
+  },
+);
+function closeNavigation() {
+  navOpen.value = false;
+  navButton.value?.focus();
+}
 const { data: contact } = await useAsyncData("public-contact", () =>
   api<any>("/public/contact").catch(() => ({ data: null })),
 );
@@ -16,14 +29,23 @@ onMounted(refresh);
         }}</span></NuxtLink
       >
       <button
+        ref="navButton"
         class="mobile-menu button ghost"
         :aria-expanded="navOpen"
-        aria-label="開啟導覽選單"
+        aria-controls="public-navigation"
+        :aria-label="navOpen ? '關閉導覽選單' : '開啟導覽選單'"
         @click="navOpen = !navOpen"
+        @keydown.esc.prevent="closeNavigation"
       >
         ☰
       </button>
-      <nav :class="['links', { open: navOpen }]" @click="navOpen = false">
+      <nav
+        id="public-navigation"
+        aria-label="官網導覽"
+        :class="['links', { open: navOpen }]"
+        @click="navOpen = false"
+        @keydown.esc.prevent="closeNavigation"
+      >
         <NuxtLink to="/about">關於我們</NuxtLink
         ><NuxtLink to="/news">最新消息</NuxtLink
         ><NuxtLink to="/food">愛心好食</NuxtLink
@@ -32,8 +54,12 @@ onMounted(refresh);
         ><NuxtLink class="button gold" to="/donate">支持事工</NuxtLink
         ><NuxtLink v-if="!loggedIn" class="button" to="/login"
           >會員登入</NuxtLink
-        ><NuxtLink v-else class="button" to="/app"
-          >{{ user?.name }} 的工作台</NuxtLink
+        ><NuxtLink v-else class="button" :to="servicePath">志工工作台</NuxtLink
+        ><NuxtLink
+          v-if="loggedIn && managementPath"
+          class="button ghost"
+          :to="managementPath"
+          >管理工作台</NuxtLink
         ><button v-if="loggedIn" class="button ghost" @click="logout">
           登出
         </button>
@@ -69,3 +95,23 @@ onMounted(refresh);
     </div>
   </footer>
 </template>
+<style scoped>
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.links {
+  flex-wrap: wrap;
+}
+@media (max-width: 760px) {
+  .links.open {
+    max-height: calc(100dvh - 80px);
+    overflow-y: auto;
+  }
+  .links.open a,
+  .links.open button {
+    min-height: 44px;
+  }
+}
+</style>
