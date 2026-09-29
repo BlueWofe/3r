@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { apiContext, demoPassword, json, login, mutate, unique } from './helpers';
+import { createTallPng, expectTallImageWithin } from './image-fixtures';
 
 test.use({ timezoneId: 'Asia/Taipei' });
 
@@ -56,10 +57,12 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     await page.locator('.rich-toolbar input[type="file"]').setInputFiles({
       name: `${slug}.png`,
       mimeType: 'image/png',
-      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', 'base64'),
+      buffer: await createTallPng(page, '#365f4d'),
     });
     const editorImage = editor.locator('img').first();
     await expect(editorImage).toBeVisible();
+    const richArticleMaxHeight = await page.evaluate(() => window.innerWidth <= 760 ? 320 : 480);
+    await expectTallImageWithin(editorImage, richArticleMaxHeight);
     await expect(editorImage).toHaveAttribute('src', /\/api\/v1\/files\/\d+\/download/);
     const editorImageSrc = await editorImage.getAttribute('src');
     const fileId = editorImageSrc?.match(/\/files\/(\d+)\/download/)?.[1];
@@ -67,6 +70,7 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     const preview = page.locator('details').filter({ hasText: '文章預覽' });
     await preview.locator('summary').click();
     await expect(preview.locator('img').first()).toBeVisible();
+    await expectTallImageWithin(preview.locator('.rich-article img').first(), richArticleMaxHeight);
 
     const createResponsePromise = page.waitForResponse(response =>
       response.request().method() === 'POST' && /\/api\/v1\/contents$/.test(new URL(response.url()).pathname),
@@ -111,7 +115,7 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     const publicImage = page.locator('.rich-article img').first();
     await expect(publicImage).toBeVisible();
     await expect(publicImage).toHaveAttribute('src', new RegExp(`/api/v1/files/${fileId}/download`));
-    await expect.poll(() => publicImage.evaluate(image => ({ complete: (image as HTMLImageElement).complete, width: (image as HTMLImageElement).naturalWidth }))).toMatchObject({ complete: true, width: 1 });
+    await expectTallImageWithin(publicImage, richArticleMaxHeight);
     await expect(page.locator('article p.muted').filter({ hasText: 'E2E 見證作者' })).toContainText(/\d{4}年.+\d{1,2}:\d{2}/);
 
     await page.goto('/news');

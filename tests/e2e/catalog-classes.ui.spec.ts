@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { apiContext, demoPassword, json, login, mutate, unique } from './helpers';
+import { createTallPng, expectTallImageWithin } from './image-fixtures';
 
 test.use({ timezoneId: 'Asia/Taipei' });
 
@@ -60,7 +61,7 @@ test('產品與班別有各自的管理導覽入口', async ({ page, isMobile })
   await expect(page.getByRole('heading', { name: /班別/ })).toBeVisible();
 });
 
-test('admin can create and edit a product with multiple axes and a quantity tier', async ({ page }) => {
+test('admin saves, reselects and previews bounded main and gallery product images', async ({ page }, testInfo) => {
   await loginAsAdmin(page);
   await page.goto('/app/admin/products');
   await expect(page.getByRole('heading', { name: '產品管理' })).toBeVisible();
@@ -76,6 +77,22 @@ test('admin can create and edit a product with multiple axes and a quantity tier
   await page.getByLabel('介紹').fill('E2E 測試用資料');
   await page.getByLabel('狀態').selectOption('published');
 
+  const mainImageInput = page.getByLabel('主圖片', { exact: true });
+  const firstMainImage = await createTallPng(page, '#365f4d');
+  await mainImageInput.setInputFiles({ name: 'tall-main-first.png', mimeType: 'image/png', buffer: firstMainImage });
+  const mainPreview = page.locator('.product-editor-primary img');
+  await expect(mainPreview).toBeVisible();
+  await expectTallImageWithin(mainPreview, 240);
+  const firstPreviewUrl = await mainPreview.getAttribute('src');
+  const selectedMainImage = await createTallPng(page, '#a34b35');
+  await mainImageInput.setInputFiles({ name: 'tall-main-selected.png', mimeType: 'image/png', buffer: selectedMainImage });
+  await expect(mainPreview).not.toHaveAttribute('src', firstPreviewUrl!);
+  await expectTallImageWithin(mainPreview, 240);
+
+  const galleryImage = await createTallPng(page, '#315b94');
+  await page.getByLabel('圖片集（最多 10 張）').setInputFiles({ name: 'tall-gallery.png', mimeType: 'image/png', buffer: galleryImage });
+  await expectTallImageWithin(page.getByAltText('準備上傳的商品圖片 1'), 110);
+
   await page.getByRole('button', { name: '新增規格軸' }).click();
   await page.getByRole('button', { name: '新增規格軸' }).click();
   await page.getByLabel('規格名稱').nth(0).fill('口味');
@@ -90,19 +107,60 @@ test('admin can create and edit a product with multiple axes and a quantity tier
   await page.getByRole('button', { name: '新增大量優惠' }).click();
   await page.getByLabel('數量門檻').fill('5');
   await page.getByLabel('優惠單價').fill('110');
+  const createResponsePromise = page.waitForResponse(response =>
+    response.request().method() === 'POST' && new URL(response.url()).pathname.endsWith('/api/v1/products'),
+  );
   await page.getByRole('button', { name: /儲存產品|儲存食品/ }).click();
+  const createResponse = await createResponsePromise;
+  expect(createResponse.ok()).toBeTruthy();
+  const created = await createResponse.json() as { id: number; image_id: number; metadata: { gallery_ids: number[] } };
+  expect(created.image_id).toBeTruthy();
+  expect(created.metadata.gallery_ids).toHaveLength(1);
 
   const productRow = page.getByRole('row').filter({ hasText: productName });
   await expect(productRow).toBeVisible();
   await productRow.getByRole('button', { name: '編輯' }).click();
   await expect(page.getByRole('heading', { name: /編輯/ })).toBeVisible();
+  const savedMainPreview = page.locator('.product-editor-primary img');
+  await expect(savedMainPreview).toHaveAttribute('src', new RegExp(`/api/v1/files/${created.image_id}/download`));
+  await expectTallImageWithin(savedMainPreview, 240);
+  await expectTallImageWithin(page.getByAltText('已儲存的商品圖片'), 110);
+  await page.screenshot({ path: testInfo.outputPath('product-main-preview-after-reedit.png'), fullPage: true });
+
+  const oldImageId = created.image_id;
+  const replacementImage = await createTallPng(page, '#6b327d');
+  await mainImageInput.setInputFiles({ name: 'tall-main-replacement.png', mimeType: 'image/png', buffer: replacementImage });
+  await expect(savedMainPreview).not.toHaveAttribute('src', new RegExp(`/api/v1/files/${oldImageId}/download`));
+  await expectTallImageWithin(savedMainPreview, 240);
   await expect(page.getByLabel('規格名稱').nth(0)).toHaveValue('口味');
   await expect(page.getByLabel('數量門檻')).toHaveValue('5');
   await page.getByLabel('名稱', { exact: true }).fill(editedName);
   await page.getByLabel('單價').nth(0).fill('125');
   await page.getByLabel('優惠單價').fill('115');
+  const updateResponsePromise = page.waitForResponse(response =>
+    response.request().method() === 'PUT' && new URL(response.url()).pathname.endsWith(`/api/v1/products/${created.id}`),
+  );
   await page.getByRole('button', { name: /儲存產品|儲存食品/ }).click();
+  const updateResponse = await updateResponsePromise;
+  expect(updateResponse.ok()).toBeTruthy();
+  const updated = await updateResponse.json() as { image_id: number };
+  expect(updated.image_id).not.toBe(oldImageId);
   await expect(page.getByRole('row').filter({ hasText: editedName })).toBeVisible();
+
+  const editedRow = page.getByRole('row').filter({ hasText: editedName });
+  await editedRow.getByRole('button', { name: '編輯' }).click();
+  const finalMainPreview = page.locator('.product-editor-primary img');
+  await expect(finalMainPreview).toHaveAttribute('src', new RegExp(`/api/v1/files/${updated.image_id}/download`));
+  await expectTallImageWithin(finalMainPreview, 240);
+  await page.screenshot({ path: testInfo.outputPath('product-main-preview-after-image-change.png'), fullPage: true });
+
+  await page.goto(`/food/${created.id}`);
+  const publicMainImage = page.locator('.product-detail-image');
+  await expect(publicMainImage).toBeVisible();
+  await expect(publicMainImage).toHaveAttribute('src', new RegExp(`/api/v1/files/${updated.image_id}/download`));
+  await expectTallImageWithin(publicMainImage, await page.evaluate(() => window.innerWidth <= 760 ? 280 : 420));
+  await expectTallImageWithin(page.locator('.product-gallery-image').first(), 110);
+  await page.screenshot({ path: testInfo.outputPath('product-public-detail-images.png'), fullPage: true });
 });
 
 test('admin can create, preview and edit a recurring class template', async ({ page }) => {
