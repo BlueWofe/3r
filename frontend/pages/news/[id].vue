@@ -21,7 +21,7 @@ const taipeiDateTime = (value?: string) =>
     <article class="container" style="max-width: 780px">
       <NuxtLink class="muted" to="/news">← 回到消息列表</NuxtLink>
       <p class="eyebrow" style="margin-top: 30px">
-        {{ data?.data?.category || "示範消息" }}
+        {{ data?.data?.category || "最新消息" }}
       </p>
       <img
         v-if="data?.data?.image_id"

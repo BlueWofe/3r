@@ -106,10 +106,8 @@ const taipeiDate = (value?: string) =>
       <div>
         <div class="eyebrow">A STORY OF HOPE</div>
         <h2>更新的足跡</h2>
-        <p class="muted">
-          以下為明確標示的示範故事，呈現陪伴關係中可能發生的改變，並非真實個案。
-        </p>
-        <NuxtLink class="button" to="/news">閱讀最新故事</NuxtLink>
+        <p class="muted">記錄事工近況，分享陪伴與生命更新的故事。</p>
+        <NuxtLink class="button" to="/news">閱讀更多消息與見證</NuxtLink>
       </div>
       <div v-if="newsPending" class="empty">載入最新消息中…</div>
       <p v-else-if="newsError" class="notice">

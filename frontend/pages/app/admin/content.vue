@@ -116,7 +116,7 @@ onMounted(load);
       <p class="eyebrow">CMS</p>
       <h1>內容管理</h1>
       <p class="muted">
-        建立並發布協會頁面與消息；公開文章可使用公開圖片與安全本文。
+        建立協會頁面、最新消息與見證分享，自由編排文字與圖片。
       </p>
     </div>
     <button class="button" @click="reset()">新增</button>
