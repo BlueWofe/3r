@@ -230,7 +230,7 @@ class ScheduleController extends ApiController
                 abort_if($v['teacher_id'] === $a->teacher_id || $s->assignments()->where('teacher_id', $v['teacher_id'])->exists() || $this->conflict($v['teacher_id'], $s->data, $s->id), 409, '教師不可代課');
                 abort_if(DB::table('invitations')->where('assignment_id', $id)->where('status', 'pending')->exists(), 409, '已有待回覆邀請');
                 DB::table('invitations')->insert(['assignment_id' => $id, 'teacher_id' => $v['teacher_id'], 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()]);
-                Entity::create(['type' => 'notifications', 'owner_id' => $v['teacher_id'], 'data' => ['title' => '代課邀請', 'message' => $s->data['title'], 'read' => false]]);
+                Entity::create(['type' => 'notifications', 'owner_id' => $v['teacher_id'], 'data' => ['title' => '代課邀請', 'message' => $s->data['title'], 'session_id' => $s->id, 'invitation' => true, 'read' => false]]);
             }
             if ($action === 'replace') {
                 $this->permit($r, 'schedule.update.all');

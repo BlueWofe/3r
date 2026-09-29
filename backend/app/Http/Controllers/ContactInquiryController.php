@@ -5,15 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\ContactInquiry;
 use App\Models\Entity;
 use App\Models\User;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ContactInquiryController extends ApiController
 {
-    public const CATEGORIES = ['監所探訪與代禱', '更生安置與職訓', '食品採購與禮盒', '志工加入', '奉獻與收據諮詢', '其他諮詢'];
+    public const CATEGORIES = ['監所探訪與代禱', '更生安置與職訓', '食品採購與禮盒', '志工加入', '奉獻與收據諮詢', '其他諮詢', '大宗認購專案', '試吃'];
 
     public function submit(Request $r)
     {
@@ -26,20 +28,40 @@ class ContactInquiryController extends ApiController
         }
         $hash = hash('sha256', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         try {
-            $item = DB::transaction(function () use ($v, $data, $hash) {
-                $old = ContactInquiry::where('submission_token', $v['submission_token'])->first();
+            $item = Cache::lock('contact-payload:'.$hash, 15)->block(3, fn () => DB::transaction(function () use ($v, $data, $hash) {
+                $old = $this->forToken($v['submission_token']);
                 if ($old) {
                     return $old;
                 }
+                $item = ContactInquiry::where('payload_hash', $hash)->where('created_at', '>=', now()->subMinutes(10))->orderByDesc('id')->first();
+                if (! $item) {
+                    $item = ContactInquiry::create($data + ['submission_token' => $v['submission_token'], 'reference' => (string) Str::uuid(), 'payload_hash' => $hash]);
+                    foreach (User::where('active', true)->with('roles')->get() as $user) {
+                        if ($user->canDo('contacts.read.all')) {
+                            Entity::create(['type' => 'notifications', 'owner_id' => $user->id, 'data' => ['title' => '新的聯絡訊息', 'message' => '收到新的聯絡表單，請查看並處理。', 'contact_inquiry_id' => $item->id, 'url' => '/app/admin/contact-inquiries?id='.$item->id, 'read' => false]]);
+                        }
+                    }
+                }
+                DB::table('contact_submission_tokens')->insert(['token' => $v['submission_token'], 'contact_inquiry_id' => $item->id, 'created_at' => now()]);
 
-                return ContactInquiry::create($data + ['submission_token' => $v['submission_token'], 'reference' => (string) Str::uuid(), 'payload_hash' => $hash]);
-            });
+                return $item;
+            }));
         } catch (UniqueConstraintViolationException) {
-            $item = ContactInquiry::where('submission_token', $v['submission_token'])->firstOrFail();
+            $item = $this->forToken($v['submission_token']);
+            abort_unless($item, 409, '此送出代碼已使用。');
+        } catch (LockTimeoutException) {
+            abort(429, '請稍候再試。');
         }
         abort_unless(hash_equals($item->payload_hash, $hash), 409, '此送出代碼已用於其他訊息。');
 
         return ['message' => '已收到您的訊息', 'reference' => $item->reference];
+    }
+
+    private function forToken(string $token): ?ContactInquiry
+    {
+        $id = DB::table('contact_submission_tokens')->where('token', $token)->value('contact_inquiry_id');
+
+        return $id ? ContactInquiry::find($id) : ContactInquiry::where('submission_token', $token)->first();
     }
 
     public function inquiries(Request $r, ?int $id = null)

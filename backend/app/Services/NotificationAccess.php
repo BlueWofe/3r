@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\ContactInquiry;
+use App\Models\Entity;
+use App\Models\ServiceSession;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
+class NotificationAccess
+{
+    public function payload(Entity $notification, User $user): ?array
+    {
+        if (! $user->active || $notification->owner_id !== $user->id) {
+            return null;
+        }
+        $d = $notification->data;
+        if (isset($d['contact_inquiry_id'])) {
+            if (! $user->canDo('contacts.read.all') || ! ContactInquiry::whereKey($d['contact_inquiry_id'])->exists()) {
+                return null;
+            }
+            $d['title'] = '新的聯絡訊息';
+            $d['message'] = '收到新的聯絡表單，請查看並處理。';
+            $d['url'] = '/app/admin/contact-inquiries?id='.(int) $d['contact_inquiry_id'];
+        } elseif (isset($d['content_id'])) {
+            $article = Entity::where('type', 'contents')->find($d['content_id']);
+            if (! $article || ($article->data['kind'] ?? '') !== 'news' || ($article->data['visibility'] ?? 'public') !== 'groups' || ! app(ArticleContent::class)->visible($article) || (! $user->canDo('content.read.all') && ! app(GroupAudience::class)->matches($user, $article->data['group_ids'] ?? []))) {
+                return null;
+            }
+            $d['title'] = '新的小組消息';
+            $d['message'] = '您有新的小組消息。';
+            $d['url'] = '/app/group-news/'.$article->id;
+        } elseif (isset($d['session_id'])) {
+            $session = ServiceSession::find($d['session_id']);
+            if (! $session) {
+                return null;
+            }
+            $all = $user->canDo('schedule.read.all');
+            $own = $user->canDo('schedule.read.own');
+            $invitation = ! empty($d['invitation']);
+            if ($invitation && (! $user->canDo('schedule.update.own') || ($session->data['status'] ?? '') !== 'scheduled' || now('Asia/Taipei')->gte(Carbon::parse($session->data['service_date'].' '.$session->data['end_time'], 'Asia/Taipei')) || $session->assignments()->whereNotNull('attendance')->exists())) {
+                return null;
+            }
+            $pending = $invitation && DB::table('invitations')->join('assignments', 'assignments.id', '=', 'invitations.assignment_id')->where('assignments.session_id', $session->id)->where('invitations.teacher_id', $user->id)->where('invitations.status', 'pending')->exists();
+            if ($invitation ? ! ($own && $pending) : ! ($all || ($own && $session->assignments()->where('teacher_id', $user->id)->exists()))) {
+                return null;
+            }
+            $d['url'] = $invitation ? '/app/invitations' : ($all ? '/app/admin/schedule' : '/app/calendar');
+        } else {
+            if (! $user->canDo('schedule.read.all') && ! $user->canDo('schedule.read.own')) {
+                return null;
+            }
+            if (($d['title'] ?? '') === '代課邀請' && ! $user->canDo('schedule.update.own')) {
+                return null;
+            }
+            $d['url'] = ($d['title'] ?? '') === '代課邀請' ? '/app/invitations' : ($user->canDo('schedule.read.all') ? '/app/admin/schedule' : '/app/calendar');
+        }
+        $d['read'] = (bool) ($d['read'] ?? false);
+
+        return array_merge($d, ['id' => $notification->id, 'owner_id' => $notification->owner_id, 'created_at' => $notification->created_at]);
+    }
+}

@@ -395,6 +395,12 @@ class ApiController extends Controller
     public function publicContent(Request $r, string $kind, ?string $id = null)
     {
         $items = Entity::where('type', 'contents')->get()->filter(fn ($e) => app(ArticleContent::class)->visible($e) && ($e->data['visibility'] ?? 'public') === 'public' && ($kind === 'search' || ($e->data['kind'] ?? '') === ['pages' => 'page', 'news' => 'news', 'products' => 'product'][$kind]));
+        $categories = [];
+        if ($kind === 'products' && ! $id) {
+            $filters = $r->validate(['category' => 'nullable|string|max:100', 'limit' => 'sometimes|integer|min:1|max:100']);
+            $categories = $items->map(fn ($e) => trim((string) ($e->data['category'] ?? '')))->filter()->unique()->sort()->values()->all();
+            $items = $items->filter(fn ($e) => empty($filters['category']) || ($e->data['category'] ?? '') === $filters['category']);
+        }
         if ($kind === 'news') {
             $filters = $r->validate(['article_type' => 'nullable|in:news,sharing,testimony', 'category' => 'nullable|string|max:100']);
             $items = $items->filter(fn ($e) => (empty($filters['article_type']) || (app(ArticleContent::class)->payload($e)['article_type'] === $filters['article_type'])) && (empty($filters['category']) || ($e->data['category'] ?? '') === $filters['category']));
@@ -426,8 +432,13 @@ class ApiController extends Controller
             }
         } else {
             $items = $items->sortBy(fn ($e) => $e->data['sort_order'] ?? 0);
+            if ($kind === 'products' && ! $id && $r->has('limit')) {
+                $items = $items->take((int) $r->query('limit'));
+            }
         }
 
-        return ['data' => $items->map(fn ($e) => app(ArticleContent::class)->payload($e))->values()];
+        $response = ['data' => $items->map(fn ($e) => app(ArticleContent::class)->payload($e))->values()];
+
+        return $kind === 'products' ? $response + ['categories' => $categories] : $response;
     }
 }

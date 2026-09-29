@@ -7,6 +7,7 @@ use App\Models\Entity;
 use App\Models\ServiceSession;
 use App\Models\User;
 use App\Services\GroupAudience;
+use App\Services\NotificationAccess;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -245,6 +246,21 @@ class ModuleController extends ApiController
 
     public function inbox(Request $r, string $type, ?int $id = null)
     {
+        if ($type === 'notifications') {
+            $access = app(NotificationAccess::class);
+            if ($id) {
+                return DB::transaction(function () use ($r, $id, $access) {
+                    $e = Entity::where('type', 'notifications')->lockForUpdate()->findOrFail($id);
+                    abort_unless($access->payload($e, $r->user()), 403);
+                    $e->update(['data' => array_merge($e->data, ['read' => true])]);
+
+                    return $access->payload($e, $r->user());
+                });
+            }
+            $rows = Entity::where('type', 'notifications')->where('owner_id', $r->user()->id)->orderByDesc('id')->get()->map(fn ($e) => $access->payload($e, $r->user()))->filter()->values();
+
+            return ['data' => $rows, 'unread_count' => $rows->filter(fn ($e) => ! $e['read'])->count()];
+        }
         if ($id) {
             $e = Entity::where('type', $type)->findOrFail($id);
             $d = $e->data;

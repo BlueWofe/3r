@@ -46,7 +46,7 @@ Route::prefix('api/v1')->group(function () {
         }
     }
     Route::put('auth/profile', fn (Request $r) => (new ApiController)->auth($r, 'profile'));
-    Route::post('public/contact', [ContactInquiryController::class, 'submit'])->middleware('throttle:20,1,contact-inquiry');
+    Route::post('public/contact', [ContactInquiryController::class, 'submit'])->middleware(['throttle:20,1,contact-inquiry', 'throttle:100,60,contact-inquiry-hour']);
     Route::get('public/contact', [ApiController::class, 'publicContact']);
     Route::get('public/products/{id}/quote', [ProductController::class, 'quote']);
     foreach (['pages', 'news', 'products', 'search'] as $kind) {
