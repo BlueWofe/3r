@@ -73,12 +73,14 @@ def main():
         release = '/opt/3r/releases/' + revision
         with tempfile.TemporaryDirectory(prefix='r3-release-') as folder:
             archive=Path(folder)/'source.tar.gz'
+            normalized_env = Path(folder)/'uat.env'
+            normalized_env.write_text(env, encoding='utf-8', newline='\n')
             subprocess.run(['git','archive','--format=tar.gz','-o',str(archive),revision],cwd=ROOT,check=True)
             stage='/tmp/r3-'+revision
             run(transport, 'umask 077; mkdir -p '+shlex.quote(stage))
             sftp=paramiko.SFTPClient.from_transport(transport)
             sftp.put(str(archive),stage+'/source.tar.gz')
-            sftp.put(str(args.env_file),stage+'/uat.env')
+            sftp.put(str(normalized_env),stage+'/uat.env')
             sftp.chmod(stage+'/uat.env',0o600)
             if args.image_bundle:
                 sftp.put(str(args.image_bundle), stage+'/images.tar')
