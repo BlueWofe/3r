@@ -32,13 +32,15 @@ test('homepage shows the ministry and hope timelines without mobile horizontal o
   expect(widths.scroll).toBeLessThanOrEqual(widths.client + 2);
 });
 
-test('商品與班別有各自的管理導覽入口', async ({ page }) => {
+test('產品與班別有各自的管理導覽入口', async ({ page, isMobile }) => {
   await page.goto('/login');
   await page.locator('input').nth(0).fill('0900000001');
   await page.locator('input[type="password"]').fill(demoPassword!);
   await page.locator('form').getByRole('button', { name: '登入' }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
   await page.goto('/app');
+  if (isMobile)
+    await page.getByRole('button', { name: '管理工作台', exact: true }).click();
 
   const productsLink = page.getByRole('link', { name: '產品管理' });
   const classesLink = page.getByRole('link', { name: '班別管理' });
@@ -49,6 +51,8 @@ test('商品與班別有各自的管理導覽入口', async ({ page }) => {
   await expect(page).toHaveURL(/\/app\/admin\/products$/);
   await expect(page.getByRole('heading', { name: '產品管理' })).toBeVisible();
   await page.goto('/app');
+  if (isMobile)
+    await page.getByRole('button', { name: '管理工作台', exact: true }).click();
   await classesLink.click();
   await expect(page).toHaveURL(/\/app\/admin\/classes$/);
   await expect(page.getByRole('heading', { name: /班別/ })).toBeVisible();

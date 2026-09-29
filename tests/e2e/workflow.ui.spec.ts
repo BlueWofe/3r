@@ -50,7 +50,7 @@ test("teacher can leave a future calendar session and invite a substitute from m
       .locator("form")
       .getByRole("button", { name: "登入", exact: true })
       .click();
-    await expect(page).toHaveURL(/\/app$/);
+    await expect(page).toHaveURL(/\/app(?:\/[^/]+)?$/);
     await page.goto("/app/calendar");
     await page.getByRole("button", { name: new RegExp(title) }).click();
     await page.getByPlaceholder("請說明異動原因").fill("臨時有事，請假測試");
@@ -95,7 +95,26 @@ test("member workspace has no scheduling controls and public mobile navigation i
     .locator("form")
     .getByRole("button", { name: "登入", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/app\/(?:forms|profile)$/);
+  await page.getByRole("link", { name: /回到官網/ }).click();
+  await expect(page).toHaveURL(/\/$/);
+  if (isMobile)
+    await page.getByRole("button", { name: "開啟導覽選單" }).click();
+  await expect(page.getByRole("link", { name: /的工作台$/ })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "管理工作台", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: /的工作台$/ }).click();
+  await expect(page).toHaveURL(/\/app\/(?:forms|profile)$/);
+  if (isMobile) {
+    await expect(
+      page.getByRole("button", { name: "我的服務", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "管理工作台", exact: true }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "我的服務", exact: true }).click();
+  }
   await expect(
     page.getByRole("link", { name: "排程管理", exact: true }),
   ).toHaveCount(0);
