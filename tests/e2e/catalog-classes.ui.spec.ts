@@ -25,7 +25,7 @@ test('商品與班別有各自的管理導覽入口', async ({ page }) => {
   await page.goto('/login');
   await page.locator('input').nth(0).fill('0900000001');
   await page.locator('input[type="password"]').fill(demoPassword!);
-  await page.getByRole('button', { name: '登入' }).click();
+  await page.locator('form').getByRole('button', { name: '登入' }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
   await page.goto('/app');
 
@@ -106,7 +106,7 @@ test('admin can create, preview and edit a recurring class template', async ({ p
   await expect(page.getByText(/預覽 \d+ 場，略過/)).toBeVisible();
   await expect(page.locator('table tbody tr').first()).toBeVisible();
   await page.getByLabel('頻率').selectOption('monthly_date');
-  await page.getByLabel('每月日期').fill('31');
+  await page.getByLabel('每月日期', { exact: true }).fill('31');
   await page.getByRole('button', { name: '預覽 90 天' }).click();
   await expect(page.getByText(/預覽 \d+ 場，略過/)).toBeVisible();
   await page.getByRole('button', { name: '儲存班別' }).click();
@@ -115,7 +115,7 @@ test('admin can create, preview and edit a recurring class template', async ({ p
   await expect(classRow).toBeVisible();
   await classRow.getByRole('button', { name: '編輯／預覽' }).click();
   await expect(page.getByRole('heading', { name: '編輯班別' })).toBeVisible();
-  await expect(page.getByLabel('每月日期')).toHaveValue('31');
+  await expect(page.getByLabel('每月日期', { exact: true })).toHaveValue('31');
   await page.getByLabel('班別名稱').fill(editedName);
   await page.getByLabel('地點').fill('已更新教室');
   await page.getByRole('button', { name: '預覽 90 天' }).click();
@@ -128,7 +128,7 @@ async function loginAsAdmin(page: import('@playwright/test').Page) {
   await page.goto('/login');
   await page.locator('input').nth(0).fill('0900000001');
   await page.locator('input[type="password"]').fill(demoPassword!);
-  await page.getByRole('button', { name: '登入' }).click();
+  await page.locator('form').getByRole('button', { name: '登入' }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
 }
 

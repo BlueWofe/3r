@@ -50,10 +50,18 @@ export interface TestAssignment { id: number; teacher_id: number; status: 'assig
 export interface TestSession { id: number; version: number; assignments: TestAssignment[]; status: 'scheduled' | 'cancelled' }
 
 export async function createSession(api: APIRequestContext, teacherId: number, title = unique('E2E'), teacherIds: number[] = [teacherId]) {
+  // Persistent dev/UAT datasets retain earlier test sessions. Choose a date
+  // with no existing classes so later substitute teachers are also available.
+  let serviceDate = futureDate();
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const existing = await json<{ data: unknown[] }>(await api.get(`/api/v1/sessions?from=${serviceDate}&to=${serviceDate}`));
+    if (!existing.data.length) break;
+    serviceDate = futureDate();
+  }
   return json<TestSession>(
     await mutate(api, 'post', '/api/v1/sessions', {
       title, prison: '示範場域', location: 'E2E 驗收用', participant_count: 0,
-      service_date: futureDate(), start_time: '10:00', end_time: '11:00', teacher_ids: teacherIds, repeat_weeks: 1,
+      service_date: serviceDate, start_time: '10:00', end_time: '11:00', teacher_ids: teacherIds, repeat_weeks: 1,
     }),
   );
 }
