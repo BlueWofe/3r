@@ -43,9 +43,10 @@ const imagePreview = ref("");
 const galleryFiles = ref<File[]>([]);
 const galleryPreviews = ref<string[]>([]);
 const saving = ref(false);
-onUnmounted(() =>
-  galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url)),
-);
+onUnmounted(() => {
+  galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url));
+  if (imagePreview.value) URL.revokeObjectURL(imagePreview.value);
+});
 const { error, run } = useApiError();
 function selectGallery(event: Event) {
   galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url));
