@@ -3,6 +3,7 @@ import json
 import re
 from pathlib import Path
 from openapi_groups import extend_groups
+from openapi_contacts import extend_contacts
 
 catalog = '''
 GET /health
@@ -130,5 +131,6 @@ paths['/public/news']['get']['description'] = 'Published articles whose publicat
 paths['/public/news']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Article'}}}}}}
 paths['/public/news/{id}']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'$ref': '#/components/schemas/Article'}}}}}
 extend_groups(spec)
+extend_contacts(spec)
 target.write_text(json.dumps(spec, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
 print(f'Generated {len(paths)} API paths')
