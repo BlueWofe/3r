@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
 const forms = ref<any[]>([]),
+  roles = ref<any[]>([]),
   open = ref(false),
   editing = ref<any>(null),
   responses = ref<any[]>([]),
@@ -9,6 +10,7 @@ const forms = ref<any[]>([]),
     description: "",
     status: "draft",
     deadline: "",
+    role_ids: [] as number[],
     fields: [] as any[],
   });
 const fieldTypes = [
@@ -22,7 +24,13 @@ const fieldTypes = [
 ];
 const { error, run } = useApiError();
 async function load() {
-  forms.value = (await api<any>("/forms")).data || [];
+  try {
+    forms.value = (await api<any>("/forms")).data || [];
+    roles.value = (await api<any>("/role-options")).data || [];
+    error.value = "";
+  } catch (e: any) {
+    error.value = e.message;
+  }
 }
 function edit(f?: any) {
   editing.value = f || null;
@@ -31,6 +39,7 @@ function edit(f?: any) {
     description: f?.description || "",
     status: f?.status || "draft",
     deadline: f?.deadline || "",
+    role_ids: f?.role_ids || f?.roles?.map((r: any) => r.id) || [],
     fields: structuredClone(f?.fields || []),
   });
   open.value = true;
@@ -43,6 +52,12 @@ function add() {
     required: false,
     options: [],
   });
+}
+function move(index: number, direction: number) {
+  const next = index + direction;
+  if (next < 0 || next >= form.fields.length) return;
+  const item = form.fields.splice(index, 1)[0];
+  form.fields.splice(next, 0, item);
 }
 async function save() {
   await run(() =>
@@ -105,6 +120,13 @@ async function seeResponses(f: any) {
       ><label class="field"
         >截止日<input v-model="form.deadline" type="date"
       /></label>
+      <label class="field"
+        >填寫角色（可複選）<select v-model="form.role_ids" multiple>
+          <option v-for="r in roles" :key="r.id" :value="r.id">
+            {{ r.name }}
+          </option>
+        </select></label
+      >
       <div class="card">
         <div class="workhead">
           <b>欄位</b
@@ -139,6 +161,20 @@ async function seeResponses(f: any) {
                   .filter(Boolean)
               " /></label
           ><label><input v-model="f.required" type="checkbox" /> 必填</label
+          ><button
+            type="button"
+            class="button ghost"
+            :disabled="i === 0"
+            @click="move(i, -1)"
+          >
+            上移</button
+          ><button
+            type="button"
+            class="button ghost"
+            :disabled="i === form.fields.length - 1"
+            @click="move(i, 1)"
+          >
+            下移</button
           ><button
             type="button"
             class="button danger"
