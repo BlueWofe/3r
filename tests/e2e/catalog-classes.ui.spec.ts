@@ -125,7 +125,7 @@ test('admin saves, reselects and previews bounded main and gallery product image
   await expect(savedMainPreview).toHaveAttribute('src', new RegExp(`/api/v1/files/${created.image_id}/download`));
   await expectTallImageWithin(savedMainPreview, 240);
   await expectTallImageWithin(page.getByAltText('已儲存的商品圖片'), 110);
-  await page.screenshot({ path: testInfo.outputPath('product-main-preview-after-reedit.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('product-main-preview-after-reedit.png') });
 
   const oldImageId = created.image_id;
   const replacementImage = await createTallPng(page, '#6b327d');
@@ -152,7 +152,7 @@ test('admin saves, reselects and previews bounded main and gallery product image
   const finalMainPreview = page.locator('.product-editor-primary img');
   await expect(finalMainPreview).toHaveAttribute('src', new RegExp(`/api/v1/files/${updated.image_id}/download`));
   await expectTallImageWithin(finalMainPreview, 240);
-  await page.screenshot({ path: testInfo.outputPath('product-main-preview-after-image-change.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('product-main-preview-after-image-change.png') });
 
   await page.goto(`/food/${created.id}`);
   const publicMainImage = page.locator('.product-detail-image');
