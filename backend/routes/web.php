@@ -3,11 +3,15 @@
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Middleware\ActiveUser;
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 Route::prefix('api/v1')->group(function () {
     Route::get('health', function () {
@@ -19,12 +23,20 @@ Route::prefix('api/v1')->group(function () {
         } catch (Throwable) {
             return response()->json(['status' => 'unavailable'], 503);
         }
-    });
+    })->withoutMiddleware([
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        PreventRequestForgery::class,
+        ActiveUser::class,
+    ]);
     foreach (['csrf', 'me'] as $a) {
         Route::get('auth/'.$a, fn (Request $r) => (new ApiController)->auth($r, $a));
     }
     foreach (['login', 'logout', 'otp', 'register', 'reset-password', 'change-phone'] as $a) {
-        Route::post('auth/'.$a, fn (Request $r) => (new ApiController)->auth($r, $a))->middleware('throttle:10,1');
+        $route = Route::post('auth/'.$a, fn (Request $r) => (new ApiController)->auth($r, $a));
+        if ($a !== 'login') {
+            $route->middleware('throttle:10,1,auth-'.$a);
+        }
     }
     Route::put('auth/profile', fn (Request $r) => (new ApiController)->auth($r, 'profile'));
     foreach (['pages', 'news', 'products', 'search'] as $kind) {

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -45,8 +46,14 @@ class ApiController extends Controller
             return ['csrf_token' => csrf_token()];
         }
         if ($action === 'login') {
-            $v = $r->validate(['phone' => 'required|string', 'password' => 'required|string']);
-            abort_unless(Auth::attempt($v + ['active' => true]), 422, '手機或密碼錯誤');
+            $v = $r->validate(['phone' => 'required|regex:/^09[0-9]{8}$/', 'password' => 'required|string']);
+            $key = 'login:'.hash('sha256', $v['phone'].'|'.$r->ip());
+            abort_if(RateLimiter::tooManyAttempts($key, 5), 429, '登入失敗次數過多，請稍後重試');
+            if (! Auth::attempt($v + ['active' => true])) {
+                RateLimiter::hit($key, 60);
+                abort(422, '手機或密碼錯誤');
+            }
+            RateLimiter::clear($key);
             $r->session()->regenerate();
 
             return ['user' => $this->me($r->user())];
@@ -158,6 +165,8 @@ class ApiController extends Controller
             // Serialize all administrator membership changes to protect the final active admin.
             $roles = Role::orderBy('id')->lockForUpdate()->get();
             User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
+            $this->permit($r, $module === 'roles' ? 'roles.manage.all' : 'users.'.($id ? 'update' : 'create').'.all');
             if ($module === 'roles') {
                 $v = $r->validate(['name' => 'required|string|max:100', 'slug' => ['required', 'string', Rule::unique('roles')->ignore($id)], 'active' => 'required|boolean', 'permissions' => 'present|array', 'permissions.*' => Rule::in(self::permissionNames())]);
                 $x = $id ? Role::findOrFail($id) : new Role;
@@ -166,7 +175,15 @@ class ApiController extends Controller
             } else {
                 $v = $r->validate(['name' => 'required|string|max:100', 'active' => 'required|boolean', 'role_ids' => 'present|array', 'role_ids.*' => 'exists:roles,id', 'phone' => ($id ? 'sometimes' : 'required').'|regex:/^09[0-9]{8}$/', 'password' => ($id ? 'sometimes' : 'required').'|min:10']);
                 $x = $id ? User::findOrFail($id) : new User;
+                if ($id && ($r->has('phone') || $r->has('password'))) {
+                    $this->permit($r, 'roles.manage.all');
+                }
                 $before = $id ? $x->load('roles')->toArray() : [];
+                $currentRoles = $id ? $x->roles->pluck('id')->map(fn ($n) => (int) $n)->sort()->values()->all() : [];
+                $requestedRoles = collect($v['role_ids'])->map(fn ($n) => (int) $n)->unique()->sort()->values()->all();
+                if ($currentRoles !== $requestedRoles) {
+                    $this->permit($r, 'roles.manage.all');
+                }
                 $x->fill(collect($v)->except('role_ids')->all());
                 if (! $id) {
                     $x->email = $v['phone'].'@demo.invalid';

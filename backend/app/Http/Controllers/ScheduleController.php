@@ -86,12 +86,19 @@ class ScheduleController extends ApiController
         if ($id) {
             $rules = array_map(fn ($x) => str_replace('required', 'sometimes', $x), $rules) + ['version' => 'required|integer', 'reason' => 'required|string|max:1000', 'status' => 'sometimes|in:scheduled,cancelled', 'override_conflict' => 'boolean', 'attendance_resolution' => 'nullable|in:void'];
         } else {
-            $rules += ['teacher_ids' => 'required|array|min:1', 'teacher_ids.*' => 'required|integer|distinct|exists:users,id', 'repeat_weeks' => 'nullable|integer|min:1|max:52'];
+            $rules += ['teacher_ids' => 'required|array|min:1', 'teacher_ids.*' => 'required|integer|distinct|exists:users,id', 'repeat_weeks' => 'nullable|integer|min:1|max:52', 'override_conflict' => 'sometimes|boolean', 'reason' => 'required_if:override_conflict,true|string|max:1000'];
         }
         $v = $r->validate($rules);
 
         return DB::transaction(function () use ($r, $id, $v) {
             User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
+            if (! $id) {
+                $this->permit($r, 'schedule.create.all');
+            }
+            if ($v['override_conflict'] ?? false) {
+                $this->permit($r, 'schedule.update.all');
+            }
             if ($id) {
                 $s = ServiceSession::lockForUpdate()->findOrFail($id);
                 $before = $this->snapshot($s);
@@ -109,7 +116,10 @@ class ScheduleController extends ApiController
                 abort_unless($s->version === $v['version'], 409, '版本已更新');
                 $d = array_merge($s->data, collect($v)->except(['version', 'reason', 'override_conflict', 'attendance_resolution'])->all());
                 abort_unless($d['end_time'] > $d['start_time'], 422);
-                $changed = $d['service_date'] !== $s->data['service_date'] || $d['start_time'] !== $s->data['start_time'] || $d['end_time'] !== $s->data['end_time'] || $d['location'] !== $s->data['location'] || $d['status'] === 'cancelled';
+                if (! $admin) {
+                    abort_if(now('Asia/Taipei')->gte(Carbon::parse($d['service_date'].' '.$d['end_time'], 'Asia/Taipei')), 422, '不可將排課改至已結束的時間');
+                }
+                $changed = $d['service_date'] !== $s->data['service_date'] || $d['start_time'] !== $s->data['start_time'] || $d['end_time'] !== $s->data['end_time'] || $d['location'] !== $s->data['location'] || $d['status'] !== $s->data['status'];
                 if ($changed) {
                     DB::table('invitations')->whereIn('assignment_id', $s->assignments()->pluck('id'))->where('status', 'pending')->update(['status' => 'cancelled']);
                 }
@@ -125,17 +135,17 @@ class ScheduleController extends ApiController
             }
             $out = [];
             for ($i = 0; $i < ($v['repeat_weeks'] ?? 1); $i++) {
-                $d = collect($v)->except(['teacher_ids', 'repeat_weeks'])->all();
+                $d = collect($v)->except(['teacher_ids', 'repeat_weeks', 'reason', 'override_conflict'])->all();
                 $d['service_date'] = Carbon::parse($v['service_date'])->addWeeks($i)->format('Y-m-d');
                 $d['status'] = 'scheduled';
                 $d['original_teacher_count'] = count($v['teacher_ids']);
                 foreach ($v['teacher_ids'] as $teacher) {
                     $this->teacher($teacher);
-                    abort_if($this->conflict($teacher, $d), 409, '教師時間衝突');
+                    abort_if($this->conflict($teacher, $d) && ! ($v['override_conflict'] ?? false), 409, '教師時間衝突');
                 }$s = ServiceSession::create(['data' => $d]);
                 foreach ($v['teacher_ids'] as $teacher) {
                     $s->assignments()->create(['teacher_id' => $teacher]);
-                }$this->event($r, $s, '新增排課', '建立');
+                }$this->event($r, $s, '新增排課', $v['reason'] ?? '建立');
                 $out[] = $this->output($s);
             }
 
@@ -152,6 +162,7 @@ class ScheduleController extends ApiController
 
         return DB::transaction(function () use ($r, $id, $action, $v) {
             User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
             $a = Assignment::findOrFail($id);
             $s = ServiceSession::lockForUpdate()->findOrFail($a->session_id);
             $before = $this->snapshot($s);
@@ -177,6 +188,7 @@ class ScheduleController extends ApiController
                 DB::table('invitations')->where('assignment_id', $id)->where('status', 'pending')->update(['status' => 'cancelled']);
             }
             if ($action === 'invite') {
+                $this->mutable($s);
                 abort_unless(in_array($a->status, ['assigned', 'leave']), 409);
                 $this->teacher($v['teacher_id']);
                 abort_if($v['teacher_id'] === $a->teacher_id || $s->assignments()->where('teacher_id', $v['teacher_id'])->exists() || $this->conflict($v['teacher_id'], $s->data, $s->id), 409, '教師不可代課');
@@ -214,17 +226,20 @@ class ScheduleController extends ApiController
 
     public function invitations(Request $r, ?int $id = null)
     {
+        $this->permit($r, 'schedule.update.own');
         if (! $id) {
             return ['data' => DB::table('invitations')->where('teacher_id', $r->user()->id)->get()->map(function ($i) {
                 $a = Assignment::find($i->assignment_id);
 
-                return (array) $i + ['session' => $a ? $this->output($a->session) : null];
+                return (array) $i + ['session_id' => $a?->session_id, 'session' => $a ? $this->output($a->session) : null];
             })];
         }
         $v = $r->validate(['action' => 'required|in:accept,decline']);
 
         return DB::transaction(function () use ($r, $id, $v) {
             User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
+            $this->permit($r, 'schedule.update.own');
             $i = DB::table('invitations')->where('id', $id)->first();
             abort_unless($i, 404);
             $a = Assignment::findOrFail($i->assignment_id);
