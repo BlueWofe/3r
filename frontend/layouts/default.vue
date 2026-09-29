@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { loggedIn, refresh, logout } = useAuth();
+const { loggedIn, user, refresh, logout } = useAuth();
 const navOpen = ref(false);
 const navButton = ref<HTMLButtonElement | null>(null);
 const { servicePath, managementPath } = useWorkspaceNavigation();
@@ -54,7 +54,8 @@ onMounted(refresh);
         ><NuxtLink class="button gold" to="/donate">支持事工</NuxtLink
         ><NuxtLink v-if="!loggedIn" class="button" to="/login"
           >會員登入</NuxtLink
-        ><NuxtLink v-else class="button" :to="servicePath">志工工作台</NuxtLink
+        ><NuxtLink v-else class="button" :to="servicePath"
+          >{{ user?.name }} 的工作台</NuxtLink
         ><NuxtLink
           v-if="loggedIn && managementPath"
           class="button ghost"
