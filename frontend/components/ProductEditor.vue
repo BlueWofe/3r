@@ -40,7 +40,20 @@ const form = reactive<any>({
 });
 const image = ref<File | null>(null);
 const galleryFiles = ref<File[]>([]);
+const galleryPreviews = ref<string[]>([]);
 const { error, run } = useApiError();
+function selectGallery(event: Event) {
+  galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url));
+  galleryFiles.value = Array.from(
+    (event.target as HTMLInputElement).files || [],
+  ).slice(0, 10);
+  galleryPreviews.value = galleryFiles.value.map((file) =>
+    URL.createObjectURL(file),
+  );
+}
+function removeSavedGallery(index: string | number) {
+  form.metadata.gallery_ids.splice(Number(index), 1);
+}
 function axis() {
   if (form.metadata.spec_axes.length < 2)
     form.metadata.spec_axes.push({ name: "規格名稱", options: [] });
@@ -134,11 +147,7 @@ async function save() {
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
-            @change="
-              galleryFiles = Array.from(
-                ($event.target as HTMLInputElement).files || [],
-              ).slice(0, 10)
-            "
+            @change="selectGallery"
         /></label>
       </div>
       <div
@@ -147,6 +156,38 @@ async function save() {
       >
         已儲存圖片 {{ form.metadata.gallery_ids?.length || 0 }} 張；本次準備上傳
         {{ galleryFiles.length }} 張。
+      </div>
+      <div
+        v-if="form.metadata.gallery_ids?.length || galleryPreviews.length"
+        class="grid responsive-two"
+        style="grid-template-columns: repeat(3, 1fr)"
+      >
+        <figure
+          v-for="(id, i) in form.metadata.gallery_ids"
+          :key="id"
+          class="card"
+        >
+          <img
+            :src="`/api/v1/files/${id}/download`"
+            alt="已儲存的商品圖片"
+            style="width: 100%; height: 110px; object-fit: cover"
+          />
+          <button
+            type="button"
+            class="button danger"
+            @click="removeSavedGallery(i)"
+          >
+            移除
+          </button>
+        </figure>
+        <figure v-for="(url, i) in galleryPreviews" :key="url" class="card">
+          <img
+            :src="url"
+            :alt="`準備上傳的商品圖片 ${i + 1}`"
+            style="width: 100%; height: 110px; object-fit: cover"
+          />
+          <figcaption class="muted">準備上傳</figcaption>
+        </figure>
       </div>
       <label class="field"
         >摘要<textarea v-model="form.summary"></textarea></label

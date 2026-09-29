@@ -94,7 +94,10 @@ watch([selected, quantity], () => {
           成分：{{ data?.data?.metadata?.ingredients || "未提供"
           }}<br />過敏原：{{ data?.data?.metadata?.allergens || "未提供"
           }}<br />淨重：{{ data?.data?.metadata?.net_weight || "未提供"
-          }}<br />保存：{{ data?.data?.metadata?.storage || "未提供" }}
+          }}<br />保存期限：{{ data?.data?.metadata?.shelf_life || "未提供"
+          }}<br />保存方式：{{ data?.data?.metadata?.storage || "未提供"
+          }}<br />產地：{{ data?.data?.metadata?.origin || "未提供"
+          }}<br />展示單位：{{ data?.data?.metadata?.unit || "未提供" }}
         </p>
         <div v-if="variants.length" class="card">
           <h3>選擇規格與數量</h3>
@@ -105,7 +108,8 @@ watch([selected, quantity], () => {
                 :key="v.id"
                 :value="v"
               >
-                {{ v.options?.join("／") || "一般規格" }} · 庫存 {{ v.stock }}
+                {{ v.options?.join("／") || "一般規格" }} · 基本價
+                {{ v.price }} TWD · 庫存 {{ v.stock }}
               </option>
             </select></label
           ><label class="field"
@@ -113,8 +117,17 @@ watch([selected, quantity], () => {
               v-model.number="quantity"
               type="number"
               min="1"
-              :max="selected?.stock || 1" /></label
-          ><button class="button" :disabled="quoting" @click="getQuote">
+              :max="selected?.stock || 1"
+          /></label>
+          <p v-if="selected" class="muted">
+            基本單價：{{ selected.price }} TWD
+          </p>
+          <ul v-if="selected?.wholesale?.length" class="muted">
+            <li v-for="tier in selected.wholesale" :key="tier.min_quantity">
+              滿 {{ tier.min_quantity }} 件，優惠單價 {{ tier.unit_price }} TWD
+            </li>
+          </ul>
+          <button class="button" :disabled="quoting" @click="getQuote">
             {{ quoting ? "計算中…" : "查詢報價" }}
           </button>
           <p v-if="quote" class="notice">
