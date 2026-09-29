@@ -12,6 +12,7 @@ const fields = [
       { id: true, name: "啟用" },
       { id: false, name: "停用" },
     ],
+    defaultValue: true,
   },
 ];
 </script>

@@ -1,8 +1,21 @@
 <script setup lang="ts">
-const props = defineProps<{ cases: any[] }>();
+const props = defineProps<{ cases: any[]; canWrite: boolean }>();
 const caseId = ref<number | null>(null),
   records = ref<any[]>([]),
-  saved = ref("");
+  saved = ref(""),
+  loading = ref(false);
+let request = 0;
+const taipeiTime = (value?: string) =>
+  value
+    ? new Intl.DateTimeFormat("zh-TW", {
+        timeZone: "Asia/Taipei",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(value))
+    : "";
 const form = reactive({
   service_date: new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Taipei",
@@ -18,15 +31,20 @@ const form = reactive({
 });
 const { error, run } = useApiError();
 async function loadRecords() {
-  if (!caseId.value) {
-    records.value = [];
-    return;
-  }
+  const id = caseId.value;
+  const sequence = ++request;
+  records.value = [];
+  error.value = "";
+  if (!id) return;
+  loading.value = true;
   try {
-    const response = await api<any>(`/cases/${caseId.value}`);
-    records.value = response.data?.records || response.records || [];
+    const response = await api<any>(`/cases/${id}`);
+    if (sequence === request && id === caseId.value)
+      records.value = response.data?.records || response.records || [];
   } catch (caught: any) {
-    error.value = caught.message;
+    if (sequence === request) error.value = caught.message;
+  } finally {
+    if (sequence === request) loading.value = false;
   }
 }
 watch(caseId, loadRecords);
@@ -35,6 +53,7 @@ watch(
   (rows) => {
     if (caseId.value && !rows.some((row) => row.id === caseId.value))
       caseId.value = null;
+    else if (caseId.value) loadRecords();
   },
   { deep: true },
 );
@@ -52,7 +71,7 @@ async function save() {
 <template>
   <section class="section" style="padding-bottom: 0">
     <h2 class="serif">服務紀錄</h2>
-    <form class="card form" @submit.prevent="save">
+    <form v-if="canWrite" class="card form" @submit.prevent="save">
       <label class="field"
         >個案<select v-model="caseId" required>
           <option :value="null">請選擇個案</option>
@@ -78,13 +97,18 @@ async function save() {
     </form>
     <p v-if="saved" class="notice">{{ saved }}</p>
     <p v-if="error" class="error">{{ error }}</p>
-    <ol v-if="caseId && records.length" class="story-timeline">
+    <p v-if="loading" class="muted">載入服務紀錄中…</p>
+    <ol v-else-if="caseId && records.length" class="story-timeline">
       <li v-for="record in records" :key="record.id">
         <b>{{ record.service_date }}｜{{ record.type }}</b
-        ><br />{{ record.summary
-        }}<small class="muted"
+        ><br />
+        {{ record.summary }}
+        <p v-if="record.follow_up" class="muted">
+          後續追蹤：{{ record.follow_up }}
+        </p>
+        <small class="muted"
           >{{ record.author_name || "服務同工" }} ·
-          {{ record.created_at || "" }}</small
+          {{ taipeiTime(record.created_at) }}</small
         >
       </li>
     </ol>

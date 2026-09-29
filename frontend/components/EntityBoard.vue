@@ -8,6 +8,7 @@ const p = defineProps<{
     type?: string;
     options?: any[];
     displayKey?: string;
+    defaultValue?: any;
     optional?: boolean;
     readonly?: boolean;
   }[];
@@ -24,6 +25,21 @@ const rows = ref<any[]>([]),
 const files = reactive<Record<string, File | null>>({});
 const { error, run } = useApiError();
 const saved = ref("");
+const pending = ref(false);
+function displayValue(row: any, field: any) {
+  const named = field.displayKey ? row[field.displayKey] : undefined;
+  if (named !== undefined && named !== null && named !== "") return named;
+  const value = row[field.key];
+  if (Array.isArray(value))
+    return value.map((item: any) => item.name || item).join("、");
+  return (
+    field.options?.find(
+      (option: any) => String(option.id ?? option) === String(value),
+    )?.name ??
+    value ??
+    "—"
+  );
+}
 async function load() {
   try {
     const r: any = await api(p.endpoint);
@@ -39,7 +55,10 @@ async function load() {
 function newRow() {
   editing.value = null;
   Object.keys(form).forEach((k) => delete form[k]);
-  p.fields.forEach((f) => (form[f.key] = f.type === "multiselect" ? [] : ""));
+  p.fields.forEach(
+    (f) =>
+      (form[f.key] = f.defaultValue ?? (f.type === "multiselect" ? [] : "")),
+  );
   Object.keys(files).forEach((key) => delete files[key]);
   open.value = true;
 }
@@ -53,29 +72,38 @@ function edit(r: any) {
   open.value = true;
 }
 async function save() {
-  const body = { ...form };
-  for (const field of p.fields.filter((f) => f.type === "file")) {
-    const file = files[field.key];
-    if (!file) continue;
-    const data = new FormData();
-    data.append("file", file);
-    data.append("visibility", "public");
-    data.append("title", file.name);
-    const uploaded: any = await run(() =>
-      api("/files", { method: "POST", body: data }),
+  if (pending.value) return;
+  pending.value = true;
+  try {
+    const body = { ...form };
+    p.fields
+      .filter((field) => field.readonly)
+      .forEach((field) => delete body[field.key]);
+    for (const field of p.fields.filter((f) => f.type === "file")) {
+      const file = files[field.key];
+      if (!file) continue;
+      const data = new FormData();
+      data.append("file", file);
+      data.append("visibility", "public");
+      data.append("title", file.name);
+      const uploaded: any = await run(() =>
+        api("/files", { method: "POST", body: data }),
+      );
+      body[field.key] = uploaded.id;
+    }
+    if (editing.value?.version) body.version = editing.value.version;
+    await run(() =>
+      api(editing.value ? `${p.endpoint}/${editing.value.id}` : p.endpoint, {
+        method: editing.value ? "PUT" : "POST",
+        body,
+      }),
     );
-    body[field.key] = uploaded.id;
+    open.value = false;
+    await load();
+    saved.value = "已更新";
+  } finally {
+    pending.value = false;
   }
-  if (editing.value?.version) body.version = editing.value.version;
-  await run(() =>
-    api(editing.value ? `${p.endpoint}/${editing.value.id}` : p.endpoint, {
-      method: editing.value ? "PUT" : "POST",
-      body,
-    }),
-  );
-  open.value = false;
-  await load();
-  saved.value = "已更新";
 }
 onMounted(load);
 </script>
@@ -101,11 +129,7 @@ onMounted(load);
       <tbody>
         <tr v-for="r in rows" :key="r.id">
           <td v-for="f in fields" :key="f.key" :data-label="f.label">
-            {{
-              Array.isArray(r[f.key])
-                ? r[f.key].map((x: any) => x.name || x).join("、")
-                : r[f.displayKey || f.key]
-            }}
+            {{ displayValue(r, f) }}
           </td>
           <td data-label="操作">
             <button
@@ -123,6 +147,7 @@ onMounted(load);
       </tbody>
     </table>
   </div>
+  <p v-if="error && !open" class="notice">{{ error }}</p>
   <p v-if="saved" class="notice">{{ saved }}</p>
   <div v-if="open" class="modal">
     <form class="dialog form" @submit.prevent="save">
@@ -145,6 +170,9 @@ onMounted(load);
           :multiple="f.type === 'multiselect'"
           :disabled="f.readonly"
         >
+          <option v-if="f.optional && f.type !== 'multiselect'" value="">
+            未選擇
+          </option>
           <option v-for="o in f.options" :key="o.id ?? o" :value="o.id ?? o">
             {{ o.name ?? o }}
           </option></select
@@ -164,7 +192,9 @@ onMounted(load);
           :disabled="f.readonly"
       /></label>
       <p v-if="error" class="error">{{ error }}</p>
-      <button class="button">儲存</button>
+      <button class="button" :disabled="pending">
+        {{ pending ? "儲存中…" : "儲存" }}
+      </button>
     </form>
   </div>
 </template>

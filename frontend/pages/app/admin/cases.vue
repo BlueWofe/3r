@@ -55,5 +55,5 @@ onMounted(async () => {
   <p v-if="error" class="notice">
     負責同工選單暫時無法取得，既有指派仍會保留。
   </p>
-  <CaseRecordEntry v-if="canUpdate()" :cases="caseRows" />
+  <CaseRecordEntry :cases="caseRows" :can-write="canUpdate()" />
 </template>
