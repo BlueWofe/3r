@@ -1,0 +1,16 @@
+services:
+  backend:
+    volumes:
+      - /srv/3r/uat/storage:/app/storage
+  worker:
+    volumes:
+      - /srv/3r/uat/storage:/app/storage
+  scheduler:
+    volumes:
+      - /srv/3r/uat/storage:/app/storage
+  postgres:
+    volumes:
+      - /srv/3r/uat/postgres:/var/lib/postgresql/data
+  redis:
+    volumes:
+      - /srv/3r/uat/redis:/data
