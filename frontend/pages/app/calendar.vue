@@ -12,6 +12,7 @@ const selectedDay = ref("");
 const today = yyyyToday();
 function yyyyToday() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date()); }
 let previousOverflow = "";
+let dayTrigger: HTMLElement | null = null;
 let request = 0;
 const yyyyMMdd = (d: Date) => {
   const z = (n: number) => String(n).padStart(2, "0");
@@ -83,7 +84,8 @@ function shift(n: number) {
 const sessionsFor = (date: string) =>
   sessions.value.filter((session) => session.service_date === date)
     .sort((a, b) => a.start_time.localeCompare(b.start_time) || a.id - b.id);
-function openDay(date: string) {
+function openDay(date: string, event: MouseEvent) {
+  dayTrigger = event.currentTarget as HTMLElement;
   selectedDay.value = date;
   previousOverflow = document.body.style.overflow;
   document.body.style.overflow = "hidden";
@@ -91,6 +93,7 @@ function openDay(date: string) {
 }
 function closeDay() {
   document.body.style.overflow = previousOverflow;
+  if (!selected.value) dayTrigger?.focus({ preventScroll: true });
 }
 onBeforeUnmount(() => {
   if (dayDialog.value?.open) closeDay();
@@ -149,7 +152,7 @@ async function sessionUpdated() {
         :class="{ 'is-today': d === today, 'other-month': view === 'month' && Number(d.slice(5, 7)) !== cursor.getMonth() + 1 }"
         :aria-current="d === today ? 'date' : undefined"
         :aria-label="`${d}，${sessionsFor(d).length} 場服務`"
-        @click="openDay(d)"
+        @click="openDay(d, $event)"
       >
         <b>{{ Number(d.slice(8)) }}</b
         ><span class="event-bars" :aria-hidden="true"
