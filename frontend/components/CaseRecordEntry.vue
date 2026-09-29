@@ -1,5 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{ cases: any[]; canWrite: boolean }>();
+const route = useRoute();
+const router = useRouter();
 const pending = ref(false);
 const caseId = ref<number | null>(null),
   records = ref<any[]>([]),
@@ -41,22 +43,32 @@ async function loadRecords() {
   loading.value = true;
   try {
     const response = await api<any>(`/cases/${id}`);
-    if (sequence === request && id === caseId.value)
-      records.value = response.data?.records || response.records || [];
+    if (sequence === request && id === caseId.value) {
+      const detail = response.data?.data || response.data || response;
+      records.value = Array.isArray(detail.records) ? detail.records : [];
+    }
   } catch (caught: any) {
     if (sequence === request) error.value = caught.message;
   } finally {
     if (sequence === request) loading.value = false;
   }
 }
-watch(caseId, () => {
+watch(caseId, async (id) => {
   saved.value = "";
+  records.value = [];
+  await router.replace({
+    query: { ...route.query, case_id: id ? String(id) : undefined },
+  });
   loadRecords();
 });
 watch(
   () => props.cases,
   (rows) => {
-    if (caseId.value && !rows.some((row) => row.id === caseId.value))
+    if (!rows.length) return;
+    if (
+      caseId.value &&
+      !rows.some((row) => Number(row.id) === Number(caseId.value))
+    )
       caseId.value = null;
     else if (caseId.value) loadRecords();
   },
@@ -70,7 +82,7 @@ async function save() {
       api(`/cases/${caseId.value}/records`, { method: "POST", body: form }),
     );
     await loadRecords();
-    saved.value = "服務紀錄已更新";
+    saved.value = "已更新";
     form.summary = "";
     form.follow_up = "";
   } finally {

@@ -15,6 +15,7 @@ const fields = computed(() => [
     label: "可查看角色",
     type: "multiselect",
     options: roles.value,
+    displayKey: "role_names",
     optional: true,
   },
   {
