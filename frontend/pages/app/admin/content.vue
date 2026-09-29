@@ -5,7 +5,7 @@ const fields = [
     key: "kind",
     label: "類型",
     type: "select",
-    options: ["page", "news", "product"],
+    options: ["page", "news"],
   },
   { key: "title", label: "標題" },
   { key: "slug", label: "網址代稱" },

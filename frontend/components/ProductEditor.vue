@@ -1,0 +1,246 @@
+<script setup lang="ts">
+const props = defineProps<{ product?: any | null }>();
+const emit = defineEmits(["close", "saved"]);
+const p = props.product;
+const form = reactive<any>({
+  title: p?.title || "",
+  slug: p?.slug || "",
+  summary: p?.summary || "",
+  body: p?.body || "",
+  category: p?.category || "",
+  status: p?.status || "draft",
+  sort_order: p?.sort_order ?? 0,
+  image_id: p?.image_id || null,
+  metadata: {
+    unit: p?.metadata?.unit || "份",
+    currency: "TWD",
+    gallery_ids: p?.metadata?.gallery_ids || [],
+    spec_axes: p?.metadata?.spec_axes || [],
+    variants: structuredClone(
+      p?.metadata?.variants || [
+        {
+          id: crypto.randomUUID(),
+          sku: "",
+          options: [],
+          price: 0,
+          stock: 0,
+          active: true,
+          wholesale: [],
+        },
+      ],
+    ),
+    ingredients: p?.metadata?.ingredients || "",
+    allergens: p?.metadata?.allergens || "",
+    net_weight: p?.metadata?.net_weight || "",
+    shelf_life: p?.metadata?.shelf_life || "",
+    storage: p?.metadata?.storage || "",
+    origin: p?.metadata?.origin || "",
+  },
+});
+const image = ref<File | null>(null);
+const { error, run } = useApiError();
+function axis() {
+  if (form.metadata.spec_axes.length < 2)
+    form.metadata.spec_axes.push({ name: "規格名稱", options: [] });
+}
+function variant() {
+  form.metadata.variants.push({
+    id: crypto.randomUUID(),
+    sku: "",
+    options: [],
+    price: 0,
+    stock: 0,
+    active: true,
+    wholesale: [],
+  });
+}
+function tier(v: any) {
+  v.wholesale.push({ min_quantity: 2, unit_price: v.price });
+}
+async function save() {
+  const body = structuredClone(form);
+  if (image.value) {
+    const fd = new FormData();
+    fd.append("file", image.value);
+    fd.append("visibility", "public");
+    fd.append("title", image.value.name);
+    body.image_id = (
+      await run(() => api<any>("/files", { method: "POST", body: fd }))
+    ).id;
+  }
+  await run(() =>
+    api(p ? `/products/${p.id}` : "/products", {
+      method: p ? "PUT" : "POST",
+      body,
+    }),
+  );
+  emit("saved");
+  emit("close");
+}
+</script>
+<template>
+  <div class="modal">
+    <form class="dialog form" @submit.prevent="save">
+      <div class="workhead">
+        <h2>{{ product ? "編輯" : "新增" }}食品展示</h2>
+        <button type="button" class="button ghost" @click="emit('close')">
+          關閉
+        </button>
+      </div>
+      <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
+        <label class="field">名稱<input v-model="form.title" required /></label
+        ><label class="field"
+          >網址代稱<input v-model="form.slug" required /></label
+        ><label class="field">分類<input v-model="form.category" /></label
+        ><label class="field"
+          >排序<input v-model.number="form.sort_order" type="number" /></label
+        ><label class="field"
+          >狀態<select v-model="form.status">
+            <option>draft</option>
+            <option>published</option>
+          </select></label
+        ><label class="field"
+          >主圖片<input
+            type="file"
+            accept="image/*"
+            @change="
+              image = ($event.target as HTMLInputElement).files?.[0] || null
+            "
+        /></label>
+      </div>
+      <label class="field"
+        >摘要<textarea v-model="form.summary"></textarea></label
+      ><label class="field"
+        >介紹<textarea v-model="form.body"></textarea>
+      </label>
+      <div class="card">
+        <div class="workhead">
+          <h3>規格軸（最多兩組）</h3>
+          <button type="button" class="button ghost" @click="axis">
+            新增規格軸
+          </button>
+        </div>
+        <div
+          v-for="(a, i) in form.metadata.spec_axes"
+          :key="i"
+          class="grid responsive-two"
+          style="grid-template-columns: 1fr 2fr"
+        >
+          <input v-model="a.name" placeholder="例如：口味" /><input
+            :value="a.options.join(',')"
+            placeholder="選項，以逗號分隔"
+            @input="
+              a.options = ($event.target as HTMLInputElement).value
+                .split(',')
+                .filter(Boolean)
+            "
+          /><button
+            type="button"
+            class="button danger"
+            @click="form.metadata.spec_axes.splice(i, 1)"
+          >
+            移除
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="workhead">
+          <h3>規格 SKU、庫存與大量優惠</h3>
+          <button type="button" class="button ghost" @click="variant">
+            新增規格
+          </button>
+        </div>
+        <article
+          v-for="(v, i) in form.metadata.variants"
+          :key="v.id"
+          class="card"
+        >
+          <div
+            class="grid responsive-two"
+            style="grid-template-columns: 1fr 1fr"
+          >
+            <label class="field">SKU<input v-model="v.sku" required /></label
+            ><label class="field"
+              >規格選項（依軸順序）<input
+                :value="v.options.join(',')"
+                @input="
+                  v.options = ($event.target as HTMLInputElement).value
+                    .split(',')
+                    .filter(Boolean)
+                " /></label
+            ><label class="field"
+              >單價<input
+                v-model.number="v.price"
+                type="number"
+                min="0"
+                step="0.01"
+                required /></label
+            ><label class="field"
+              >庫存<input
+                v-model.number="v.stock"
+                type="number"
+                min="0"
+                required
+            /></label>
+          </div>
+          <label><input v-model="v.active" type="checkbox" /> 啟用此規格</label>
+          <div v-for="(t, j) in v.wholesale" :key="j" class="toolbar">
+            <input
+              v-model.number="t.min_quantity"
+              type="number"
+              min="2"
+              placeholder="數量門檻"
+            /><input
+              v-model.number="t.unit_price"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="優惠單價"
+            /><button
+              type="button"
+              class="button danger"
+              @click="v.wholesale.splice(j, 1)"
+            >
+              移除
+            </button>
+          </div>
+          <div class="actions">
+            <button type="button" class="button ghost" @click="tier(v)">
+              新增大量優惠</button
+            ><button
+              type="button"
+              class="button danger"
+              @click="form.metadata.variants.splice(i, 1)"
+            >
+              移除此規格
+            </button>
+          </div>
+        </article>
+      </div>
+      <div class="card">
+        <h3>食品資料</h3>
+        <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
+          <label class="field"
+            >成分<textarea
+              v-model="form.metadata.ingredients"
+            ></textarea></label
+          ><label class="field"
+            >過敏原<textarea
+              v-model="form.metadata.allergens"
+            ></textarea></label
+          ><label class="field"
+            >淨重<input v-model="form.metadata.net_weight" /></label
+          ><label class="field"
+            >保存期限<input v-model="form.metadata.shelf_life" /></label
+          ><label class="field"
+            >保存方式<input v-model="form.metadata.storage" /></label
+          ><label class="field"
+            >產地<input v-model="form.metadata.origin"
+          /></label>
+        </div>
+      </div>
+      <p v-if="error" class="error">{{ error }}</p>
+      <button class="button">儲存食品</button>
+    </form>
+  </div>
+</template>

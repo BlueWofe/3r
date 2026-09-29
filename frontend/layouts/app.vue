@@ -14,6 +14,14 @@ const adminLinks = [
     () => can("schedule.create.all") || can("schedule.update.all"),
   ],
   [
+    "/app/admin/classes",
+    "班別管理",
+    () =>
+      can("schedule.read.all") ||
+      can("schedule.create.all") ||
+      can("schedule.update.all"),
+  ],
+  [
     "/app/admin/users",
     "人員與角色",
     () => can("users.read.all") || can("users.update.all"),
@@ -22,6 +30,11 @@ const adminLinks = [
   [
     "/app/admin/content",
     "內容管理",
+    () => can("content.read.all") || can("content.update.all"),
+  ],
+  [
+    "/app/admin/products",
+    "食品展示管理",
     () => can("content.read.all") || can("content.update.all"),
   ],
   [
