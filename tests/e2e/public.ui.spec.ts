@@ -1,0 +1,21 @@
+import { test, expect } from '@playwright/test';
+import { demoPassword } from './helpers';
+
+test('public site, login and calendar render at desktop and mobile sizes', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('body')).toContainText(/示範|服事|協會|3R/i);
+
+  await page.goto('/login');
+  await expect(page.locator('input').first()).toBeVisible();
+  const fields = page.locator('input');
+  await fields.nth(0).fill('0900000001');
+  await fields.nth(1).fill(demoPassword!);
+  const submit = page.getByRole('button', { name: /登入|登錄|login/i });
+  await submit.click();
+  await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
+
+  await page.goto('/calendar');
+  await expect(page.locator('body')).toContainText(/行事曆|排程|課程|登入/i);
+  const dimensions = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+  expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client + 2);
+});
