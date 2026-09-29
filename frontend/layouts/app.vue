@@ -96,6 +96,7 @@ onMounted(async () => {
 <template>
   <div class="app-shell">
     <header
+      v-if="ready"
       class="workspace-mobile-header"
       @keydown.esc.prevent="closeMenu(true)"
     >
@@ -127,6 +128,7 @@ onMounted(async () => {
       </div>
     </header>
     <aside
+      v-if="ready"
       :class="['side', { 'menu-open': openMenu }]"
       @keydown.esc.prevent="closeMenu(true)"
     >
