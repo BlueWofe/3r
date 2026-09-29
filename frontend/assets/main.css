@@ -196,10 +196,7 @@ a {
 .hero {
   position: relative;
   min-height: 640px;
-  background:
-    linear-gradient(105deg, rgba(8, 28, 23, 0.92) 0%, rgba(8, 28, 23, 0.72) 46%, rgba(8, 28, 23, 0.22) 100%),
-    url("https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1800&q=85")
-      center/cover;
+  background: linear-gradient(105deg, rgba(8, 28, 23, 0.96), rgba(8, 28, 23, 0.75) 48%, rgba(68, 106, 86, 0.72)), radial-gradient(circle at 78% 30%, rgba(225, 193, 116, 0.6), transparent 16%), radial-gradient(ellipse at 80% 70%, #e5d6ae 0 12%, transparent 13%), #315d4b;
   display: flex;
   align-items: center;
   color: #fff;
@@ -264,6 +261,7 @@ a {
   margin: 8px 0 18px;
   letter-spacing: 0.02em;
 }
+.full-verse { padding: 72px 0; background: var(--pine); color: #fff; text-align: center; }.full-verse p { max-width: 850px; margin: 0 auto 14px; font: 600 clamp(23px, 3vw, 34px)/1.6 "Noto Serif TC"; }.full-verse cite { color: #efd9a5; font-style: normal; }
 .section-lead {
   max-width: 640px;
   margin: -4px 0 8px;

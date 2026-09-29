@@ -131,4 +131,5 @@ const taipeiDate = (value?: string) =>
       </ol>
     </div>
   </section>
+  <FullVerse />
 </template>
