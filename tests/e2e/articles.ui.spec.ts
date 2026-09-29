@@ -79,6 +79,14 @@ test('admin formats, saves and edits an authored story that renders publicly wit
 
     const articleRow = page.getByRole('row').filter({ hasText: title });
     await expect(articleRow).toBeVisible();
+    await expect(page).toHaveURL(/section=testimony/);
+    await expect(page.getByRole('button', { name: /見證分享/ })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: /最新消息/ }).click();
+    await expect(page).toHaveURL(/section=news/);
+    await expect(page.getByRole('row').filter({ hasText: title })).toHaveCount(0);
+    await page.getByRole('button', { name: /見證分享/ }).click();
+    await expect(page).toHaveURL(/section=testimony/);
+    await expect(articleRow).toBeVisible();
     await articleRow.getByRole('button', { name: '編輯' }).click();
     const reopenedEditor = page.getByRole('textbox', { name: '本文' });
     await expect(reopenedEditor.locator('h2')).toContainText('更新的見證標題');
@@ -105,6 +113,12 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     await expect(publicImage).toHaveAttribute('src', new RegExp(`/api/v1/files/${fileId}/download`));
     await expect.poll(() => publicImage.evaluate(image => ({ complete: (image as HTMLImageElement).complete, width: (image as HTMLImageElement).naturalWidth }))).toMatchObject({ complete: true, width: 1 });
     await expect(page.locator('article p.muted').filter({ hasText: 'E2E 見證作者' })).toContainText(/\d{4}年.+\d{1,2}:\d{2}/);
+
+    await page.goto('/news');
+    const publicNewsLink = page.getByRole('link', { name: new RegExp(title) });
+    await expect(publicNewsLink).toBeVisible();
+    await publicNewsLink.click();
+    await expect(page).toHaveURL(new RegExp(`/news/${createdId}$`));
   } finally {
     try {
       if (!createdId) {
@@ -125,5 +139,58 @@ test('admin formats, saves and edits an authored story that renders publicly wit
     } finally {
       await admin.dispose();
     }
+  }
+});
+
+test('content management sections filter latest news, testimony, and association pages', async ({ page }) => {
+  const api = await apiContext();
+  const suffix = unique('content-sections');
+  const fixtures = [
+    { section: 'news', title: `${suffix} 最新消息`, kind: 'news', category: '最新消息' },
+    { section: 'testimony', title: `${suffix} 見證分享`, kind: 'news', category: '見證分享' },
+    { section: 'pages', title: `${suffix} 協會頁面`, kind: 'page', category: '' },
+  ] as const;
+  const ids: number[] = [];
+  try {
+    await login(api, '0900000001');
+    for (const fixture of fixtures) {
+      const content = await json<{ id: number }>(await mutate(api, 'post', '/api/v1/contents', {
+        kind: fixture.kind,
+        title: fixture.title,
+        slug: `${suffix}-${fixture.section}`.toLowerCase(),
+        body: `合成內容：${fixture.title}`,
+        body_format: 'text',
+        summary: '僅供 E2E 驗收',
+        category: fixture.category,
+        status: 'draft',
+        sort_order: 0,
+        metadata: {},
+      }));
+      ids.push(content.id);
+    }
+
+    await loginAsAdmin(page);
+    await page.goto('/app/admin/content?section=news');
+    await expect(page.getByRole('heading', { name: '內容管理', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /最新消息/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('row').filter({ hasText: fixtures[0].title })).toBeVisible();
+    await expect(page.getByRole('row').filter({ hasText: fixtures[1].title })).toHaveCount(0);
+    await expect(page.getByRole('row').filter({ hasText: fixtures[2].title })).toHaveCount(0);
+
+    await page.getByRole('button', { name: /見證分享/ }).click();
+    await expect(page).toHaveURL(/section=testimony/);
+    await expect(page.getByRole('row').filter({ hasText: fixtures[1].title })).toBeVisible();
+    await expect(page.getByRole('row').filter({ hasText: fixtures[0].title })).toHaveCount(0);
+
+    await page.getByRole('button', { name: /協會頁面/ }).click();
+    await expect(page).toHaveURL(/section=pages/);
+    await expect(page.getByRole('row').filter({ hasText: fixtures[2].title })).toBeVisible();
+    await expect(page.getByRole('row').filter({ hasText: fixtures[1].title })).toHaveCount(0);
+  } finally {
+    for (const id of ids) {
+      const deleted = await mutate(api, 'delete', `/api/v1/contents/${id}`);
+      expect([200, 204, 404]).toContain(deleted.status());
+    }
+    await api.dispose();
   }
 });

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { demoPassword } from './helpers';
+import { apiContext, demoPassword, json, login, mutate, unique } from './helpers';
 
 test.use({ timezoneId: 'Asia/Taipei' });
 
@@ -41,11 +41,11 @@ test('產品與班別有各自的管理導覽入口', async ({ page, isMobile })
   await page.goto('/app');
   if (isMobile)
     await page.getByRole('button', { name: '管理工作台', exact: true }).click();
+  await page.locator('summary').filter({ hasText: '官網內容' }).click();
 
   const productsLink = page.getByRole('link', { name: '產品管理' });
   const classesLink = page.getByRole('link', { name: '班別管理' });
   await expect(productsLink).toBeVisible();
-  await expect(classesLink).toBeVisible();
 
   await productsLink.click();
   await expect(page).toHaveURL(/\/app\/admin\/products$/);
@@ -53,6 +53,8 @@ test('產品與班別有各自的管理導覽入口', async ({ page, isMobile })
   await page.goto('/app');
   if (isMobile)
     await page.getByRole('button', { name: '管理工作台', exact: true }).click();
+  await page.locator('summary').filter({ hasText: '課務與關懷' }).click();
+  await expect(classesLink).toBeVisible();
   await classesLink.click();
   await expect(page).toHaveURL(/\/app\/admin\/classes$/);
   await expect(page.getByRole('heading', { name: /班別/ })).toBeVisible();
@@ -104,6 +106,15 @@ test('admin can create and edit a product with multiple axes and a quantity tier
 });
 
 test('admin can create, preview and edit a recurring class template', async ({ page }) => {
+  const api = await apiContext();
+  await login(api, '0900000001');
+  const prisonName = unique('UI班別監所');
+  const prison = await json<{ id: number }>(await mutate(api, 'post', '/api/v1/prisons', {
+    name: prisonName,
+    active: true,
+  }));
+  await api.dispose();
+
   await loginAsAdmin(page);
   await page.goto('/app/admin/classes');
   await expect(page.getByRole('heading', { name: '班別管理' })).toBeVisible();
@@ -112,7 +123,7 @@ test('admin can create, preview and edit a recurring class template', async ({ p
   const className = `E2E 班別 ${Date.now()}`;
   const editedName = `${className} 已編輯`;
   await page.getByLabel('班別名稱').fill(className);
-  await page.getByLabel('監所').fill('合成場域');
+  await page.getByLabel('監所').selectOption(String(prison.id));
   await page.getByLabel('地點').fill('E2E 教室');
   await page.getByLabel('參與人數').fill('4');
   await page.getByLabel('開始日').fill(taipeiToday());
