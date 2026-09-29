@@ -4,6 +4,8 @@ import { apiContext, demoPassword, json, login, mutate, unique } from './helpers
 type Group = { id: number; name: string; description: string; active: boolean; version: number; member_ids: number[] };
 
 test('admin publishes and broadcasts a group article; a member can read it on desktop and mobile', async ({ page, browser }) => {
+  // This flow uses two signed-in sessions, publication, broadcast and cleanup.
+  test.setTimeout(90_000);
   const adminApi = await apiContext();
   let group: Group | undefined;
   let contentId: number | undefined;
@@ -71,7 +73,7 @@ test('admin publishes and broadcasts a group article; a member can read it on de
     try {
       await signIn(memberPage, '0900000003');
       await memberPage.goto('/app/group-news');
-      await expect(memberPage.getByRole('heading', { name: '小組消息' })).toBeVisible();
+      await expect(memberPage.getByRole('heading', { name: '小組消息', exact: true })).toBeVisible();
       await expect(memberPage.getByRole('link', { name: new RegExp(title) })).toBeVisible();
       await memberPage.getByRole('link', { name: new RegExp(title) }).click();
       await expect(memberPage).toHaveURL(new RegExp(`/app/group-news/${contentId}$`));

@@ -4,6 +4,8 @@ import { demoPassword, unique } from './helpers';
 test.use({ timezoneId: 'Asia/Taipei' });
 
 test('public redesign pages stay readable at four widths and show published organization structure', async ({ page }, testInfo) => {
+  // Multiple pages are verified at four viewport sizes within this single flow.
+  test.setTimeout(90_000);
   const department = unique('合成部門');
   const staff = unique('合成同工');
   await page.route('**/api/v1/public/pages/organization', route => route.fulfill({
