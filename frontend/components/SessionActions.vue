@@ -12,6 +12,7 @@ const open = ref(!!props.openOnMount),
   reason = ref(""),
   teacherId = ref<number | undefined>(),
   assignmentId = ref<number | undefined>(),
+  photo = ref<File | null>(null),
   present = ref(true),
   resolution = ref(false),
   override = ref(false),
@@ -43,7 +44,7 @@ async function doAssignment(
         )
       : mine.value);
   if (!a) return;
-  if (!reason.value.trim()) {
+  if (kind !== "attendance" && !reason.value.trim()) {
     error.value = "請填寫異動原因。";
     return;
   }
@@ -55,9 +56,16 @@ async function doAssignment(
     if (resolution.value) body.attendance_resolution = "void";
   }
   if (kind === "attendance") {
-    body.present = present.value;
+    if (admin.value && !reason.value.trim()) {
+      error.value = "管理補登請填寫異動原因。";
+      return;
+    }
+    const data = new FormData();
+    if (reason.value.trim()) data.append("reason", reason.value);
+    if (admin.value) data.append("present", String(present.value));
+    if (photo.value) data.append("photo", photo.value);
     await run(() =>
-      api(`/assignments/${a.id}/attendance`, { method: "POST", body }),
+      api(`/assignments/${a.id}/attendance`, { method: "POST", body: data }),
     );
   } else
     await run(() =>
@@ -118,9 +126,12 @@ onMounted(async () => {
         </button>
       </div>
       <label class="field"
-        >異動原因／備註<textarea
+        >{{
+          mine?.status === "assigned" && !admin
+            ? "簽到備註（選填）"
+            : "異動原因／備註"
+        }}<textarea
           v-model="reason"
-          required
           placeholder="請說明異動原因"
         ></textarea></label
       ><label v-if="admin" class="field"
@@ -143,6 +154,14 @@ onMounted(async () => {
         ><input v-model="resolution" type="checkbox" />
         將既有簽到記錄作廢</label
       >
+      <label v-if="mine?.status === 'assigned' && !admin" class="field"
+        >簽到照片（選填，JPEG／PNG／WebP）<input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          @change="
+            photo = ($event.target as HTMLInputElement).files?.[0] || null
+          "
+      /></label>
       <div v-if="active" class="actions">
         <button
           v-if="mine?.status === 'assigned'"
