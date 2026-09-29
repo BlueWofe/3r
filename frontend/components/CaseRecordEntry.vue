@@ -3,7 +3,11 @@ const props = defineProps<{ cases: any[]; canWrite: boolean }>();
 const route = useRoute();
 const router = useRouter();
 const pending = ref(false);
-const caseId = ref<number | null>(null),
+const queryCaseId = () => {
+  const value = Number(route.query.case_id);
+  return Number.isInteger(value) && value > 0 ? value : null;
+};
+const caseId = ref<number | null>(queryCaseId()),
   records = ref<any[]>([]),
   saved = ref(""),
   loading = ref(false);
@@ -56,11 +60,19 @@ async function loadRecords() {
 watch(caseId, async (id) => {
   saved.value = "";
   records.value = [];
-  await router.replace({
-    query: { ...route.query, case_id: id ? String(id) : undefined },
-  });
+  const next = id ? String(id) : undefined;
+  if (route.query.case_id !== next)
+    await router.replace({ query: { ...route.query, case_id: next } });
   loadRecords();
 });
+watch(
+  () => route.query.case_id,
+  (value) => {
+    const next = Number(value);
+    const valid = Number.isInteger(next) && next > 0 ? next : null;
+    if (caseId.value !== valid) caseId.value = valid;
+  },
+);
 watch(
   () => props.cases,
   (rows) => {
@@ -72,7 +84,7 @@ watch(
       caseId.value = null;
     else if (caseId.value) loadRecords();
   },
-  { deep: true },
+  { deep: true, immediate: true },
 );
 async function save() {
   if (!caseId.value || pending.value) return;

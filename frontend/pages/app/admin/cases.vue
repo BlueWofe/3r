@@ -37,6 +37,19 @@ const fields = computed(() => [
     readonly: !canAssign(),
   },
 ]);
+
+watch(activeTab, async (tab) => {
+  const section = tab === "records" ? "records" : undefined;
+  if (route.query.section !== section)
+    await router.replace({ query: { ...route.query, section } });
+});
+watch(
+  () => route.query.section,
+  (section) => {
+    activeTab.value = section === "records" ? "records" : "directory";
+  },
+);
+
 onMounted(async () => {
   await loadPrisons();
   if (!canAssign()) return;
