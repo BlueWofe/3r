@@ -12,6 +12,17 @@ const { data, error } = await useAsyncData(
       <p class="eyebrow" style="margin-top: 30px">
         {{ data?.data?.category || "示範消息" }}
       </p>
+      <img
+        v-if="data?.data?.image_id"
+        :src="`/api/v1/files/${data.data.image_id}/download`"
+        :alt="data.data.title"
+        style="
+          width: 100%;
+          max-height: 420px;
+          object-fit: cover;
+          border-radius: 8px;
+        "
+      />
       <h1 class="serif" style="font-size: 42px">
         {{ data?.data?.title || "消息內容" }}
       </h1>

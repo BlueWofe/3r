@@ -9,7 +9,7 @@ const fields = [
   },
   { key: "title", label: "標題" },
   { key: "slug", label: "網址代稱" },
-  { key: "summary", label: "摘要", type: "textarea" },
+  { key: "summary", label: "摘要", type: "textarea", optional: true },
   { key: "body", label: "本文（純文字／安全標記）", type: "textarea" },
   {
     key: "status",
@@ -17,7 +17,14 @@ const fields = [
     type: "select",
     options: ["draft", "published"],
   },
-  { key: "category", label: "分類" },
+  { key: "category", label: "分類", optional: true },
+  {
+    key: "sort_order",
+    label: "排序（數字愈小愈前）",
+    type: "number",
+    optional: true,
+  },
+  { key: "image_id", label: "公開圖片", type: "file", optional: true },
 ];
 </script>
 <template>

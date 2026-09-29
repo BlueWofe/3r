@@ -8,7 +8,20 @@ const { data } = await useAsyncData(
 <template>
   <section class="section">
     <div class="container grid" style="grid-template-columns: 1fr 1fr">
+      <img
+        v-if="data?.data?.image_id"
+        :src="`/api/v1/files/${data.data.image_id}/download`"
+        :alt="data.data.title"
+        style="
+          min-height: 350px;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 8px;
+        "
+      />
       <div
+        v-else
         style="
           min-height: 350px;
           background: #eee3cb;

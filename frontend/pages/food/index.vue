@@ -19,7 +19,19 @@ const { data } = await useAsyncData("products", () =>
           :key="p.id"
           class="card"
           :to="`/food/${p.id}`"
-          ><div
+          ><img
+            v-if="p.image_id"
+            :src="`/api/v1/files/${p.image_id}/download`"
+            :alt="p.title"
+            style="
+              height: 150px;
+              width: 100%;
+              object-fit: cover;
+              border-radius: 5px;
+            "
+          />
+          <div
+            v-else
             style="
               height: 150px;
               background: #eee3cb;

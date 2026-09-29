@@ -2,32 +2,58 @@
 const p = defineProps<{
   title: string;
   endpoint: string;
-  fields: { key: string; label: string; type?: string; options?: string[] }[];
+  fields: {
+    key: string;
+    label: string;
+    type?: string;
+    options?: string[];
+    optional?: boolean;
+  }[];
   description?: string;
 }>();
 const rows = ref<any[]>([]),
   open = ref(false),
   editing = ref<any>(null),
   form = reactive<any>({});
+const files = reactive<Record<string, File | null>>({});
 const { error, run } = useApiError();
 async function load() {
-  const r: any = await api(p.endpoint);
-  rows.value = r.data || [];
+  try {
+    const r: any = await api(p.endpoint);
+    rows.value = r.data || [];
+    error.value = "";
+  } catch (e: any) {
+    error.value = e.message;
+  }
 }
 function newRow() {
   editing.value = null;
   Object.keys(form).forEach((k) => delete form[k]);
   p.fields.forEach((f) => (form[f.key] = ""));
+  Object.keys(files).forEach((key) => delete files[key]);
   open.value = true;
 }
 function edit(r: any) {
   editing.value = r;
   Object.keys(form).forEach((k) => delete form[k]);
   p.fields.forEach((f) => (form[f.key] = r[f.key] ?? ""));
+  Object.keys(files).forEach((key) => delete files[key]);
   open.value = true;
 }
 async function save() {
   const body = { ...form };
+  for (const field of p.fields.filter((f) => f.type === "file")) {
+    const file = files[field.key];
+    if (!file) continue;
+    const data = new FormData();
+    data.append("file", file);
+    data.append("visibility", "public");
+    data.append("title", file.name);
+    const uploaded: any = await run(() =>
+      api("/files", { method: "POST", body: data }),
+    );
+    body[field.key] = uploaded.id;
+  }
   if (editing.value?.version) body.version = editing.value.version;
   await run(() =>
     api(editing.value ? `${p.endpoint}/${editing.value.id}` : p.endpoint, {
@@ -92,7 +118,18 @@ onMounted(load);
           <option v-for="o in f.options" :key="o" :value="o">
             {{ o }}
           </option></select
-        ><input v-else v-model="form[f.key]" :type="f.type || 'text'" required
+        ><input
+          v-else-if="f.type === 'file'"
+          type="file"
+          accept="image/*"
+          @change="
+            files[f.key] =
+              ($event.target as HTMLInputElement).files?.[0] || null
+          " /><input
+          v-else
+          v-model="form[f.key]"
+          :type="f.type || 'text'"
+          :required="!f.optional"
       /></label>
       <p v-if="error" class="error">{{ error }}</p>
       <button class="button">儲存</button>
