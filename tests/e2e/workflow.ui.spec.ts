@@ -107,15 +107,13 @@ test("member workspace has no scheduling controls and public mobile navigation i
   ).toHaveCount(0);
   await page.getByRole("link", { name: /的工作台$/ }).click();
   await expect(page).toHaveURL(/\/app\/(?:forms|profile)$/);
-  if (isMobile) {
-    await expect(
-      page.getByRole("button", { name: "我的服務", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "管理工作台", exact: true }),
-    ).toHaveCount(0);
-    await page.getByRole("button", { name: "我的服務", exact: true }).click();
-  }
+  await expect(
+    page.getByRole("button", { name: "我的服務", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "管理工作台", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "我的服務", exact: true }).click();
   await expect(
     page.getByRole("link", { name: "排程管理", exact: true }),
   ).toHaveCount(0);

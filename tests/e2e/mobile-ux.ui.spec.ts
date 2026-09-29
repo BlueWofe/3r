@@ -48,6 +48,48 @@ test('admin tables and the two workspace menus fit 320px and 390px viewports', a
   }
 });
 
+test('desktop workspace menus collapse, switch, navigate, and restore focus with Escape', async ({ page, isMobile }, testInfo) => {
+  test.skip(isMobile, 'desktop collapsed navigation layout');
+  await loginAs(page, '0900000001');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/app/admin/users');
+
+  const serviceButton = page.getByRole('button', { name: '我的服務', exact: true });
+  const managementButton = page.getByRole('button', { name: '管理工作台', exact: true });
+  const serviceNav = page.locator('#service-navigation');
+  const managementNav = page.locator('#management-navigation');
+  await expect(serviceButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(managementButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(serviceNav.getByRole('link', { name: '今日行程', exact: true })).toBeHidden();
+  await expect(managementNav.getByRole('link', { name: '人員與角色', exact: true })).toBeHidden();
+  await page.screenshot({ path: testInfo.outputPath('desktop-navigation-collapsed.png') });
+
+  await serviceButton.click();
+  await expect(serviceButton).toHaveAttribute('aria-expanded', 'true');
+  await expect(serviceNav.getByRole('link', { name: '今日行程', exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('desktop-navigation-service-expanded.png') });
+
+  await managementButton.click();
+  await expect(serviceButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(managementButton).toHaveAttribute('aria-expanded', 'true');
+  await expect(serviceNav.getByRole('link', { name: '今日行程', exact: true })).toBeHidden();
+  await expect(managementNav.getByRole('link', { name: '人員與角色', exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('desktop-navigation-management-expanded.png') });
+
+  await page.keyboard.press('Escape');
+  await expect(managementButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(managementButton).toBeFocused();
+
+  await managementButton.click();
+  const schedulingGroup = managementNav.locator('details.management-category').filter({ hasText: '課務與關懷' });
+  await schedulingGroup.locator('summary').click();
+  await managementNav.getByRole('link', { name: '排程管理', exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/admin\/schedule$/);
+  await expect(serviceButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(managementButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(managementNav.getByRole('link', { name: '排程管理', exact: true })).toBeHidden();
+});
+
 test('volunteer can submit leave from the calendar at 320px and 390px', async ({ page }) => {
   const admin = await apiContext();
   const created: { title: string; serviceDate: string; assignmentId: number }[] = [];
