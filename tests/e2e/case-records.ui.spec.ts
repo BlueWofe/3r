@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { apiContext, demoPassword, json, login, mutate, unique } from './helpers';
 
-test('case records survive page reloads and tab switches preserve selectable cases', async ({ page }) => {
+test('case records survive page reloads and tab switches preserve selectable cases', async ({ page }, testInfo) => {
   const api = await apiContext();
   let caseId: number | undefined;
   try {
@@ -42,12 +42,14 @@ test('case records survive page reloads and tab switches preserve selectable cas
 
     // A new document request rehydrates the record from the API instead of local component state.
     await page.reload();
-    await page.getByRole('button', { name: '服務紀錄', exact: true }).click();
+    await expect(page.getByRole('button', { name: '服務紀錄', exact: true })).toHaveAttribute('aria-pressed', 'true');
     const reloadedPicker = page.getByLabel('個案');
     await expect(reloadedPicker.locator(`option[value="${caseId}"]`)).toContainText(caseRow.name);
-    await reloadedPicker.selectOption(String(caseId));
+    await expect(reloadedPicker).toHaveValue(String(caseId));
     await expect(page.locator('ol.story-timeline')).toContainText(summary);
     await expect(page.locator('ol.story-timeline')).toContainText(followUp);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+    await page.screenshot({ path: testInfo.outputPath('case-records.png'), fullPage: true });
   } finally {
     if (caseId) {
       const removed = await mutate(api, 'delete', `/api/v1/cases/${caseId}`);
@@ -93,7 +95,7 @@ test('meeting administration displays role names while keeping the role selectio
     await expect(roleCell).toHaveText(role!.name);
     await expect(roleCell).not.toHaveText(String(role!.id));
     await row.getByRole('button', { name: '編輯', exact: true }).click();
-    await expect(page.getByLabel('可查看角色')).toHaveValue([String(role!.id)]);
+    await expect(page.getByLabel('可查看角色')).toHaveValues([String(role!.id)]);
     await expect(page.getByLabel('可查看角色').locator('option:checked')).toHaveText(role!.name);
   } finally {
     if (meetingId) {

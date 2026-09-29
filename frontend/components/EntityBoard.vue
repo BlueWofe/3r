@@ -28,10 +28,11 @@ const saved = ref("");
 const pending = ref(false);
 function displayValue(row: any, field: any) {
   const named = field.displayKey ? row[field.displayKey] : undefined;
-  if (named !== undefined && named !== null && named !== "") return named;
+  if (named !== undefined && named !== null && named !== "")
+    return Array.isArray(named) ? named.join("、") || "—" : named;
   const value = row[field.key];
   if (Array.isArray(value))
-    return value.map((item: any) => item.name || item).join("、");
+    return value.map((item: any) => item.name || field.options?.find((option: any) => String(option.id) === String(item))?.name || item).join("、") || "—";
   return (
     field.options?.find(
       (option: any) => String(option.id ?? option) === String(value),

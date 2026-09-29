@@ -77,6 +77,7 @@ test('admin creates a case and sees its owner, prison, and refreshed service-rec
     await expect(newRow).toContainText(renamedPrisonName);
     await expect(page.getByText('已更新', { exact: true }).first()).toBeVisible();
 
+    await page.getByRole('button', { name: '服務紀錄', exact: true }).click();
     await page.getByLabel('個案').selectOption(String(createdCase.id));
     const summary = unique('即時服務紀錄');
     const followUp = '一週後再聯繫';
@@ -84,7 +85,7 @@ test('admin creates a case and sees its owner, prison, and refreshed service-rec
     await page.getByLabel('服務摘要').fill(summary);
     await page.getByLabel('後續追蹤').fill(followUp);
     await page.getByRole('button', { name: '儲存紀錄', exact: true }).click();
-    await expect(page.getByText('服務紀錄已更新', { exact: true })).toBeVisible();
+    await expect(page.locator('.records-pane').getByText('已更新', { exact: true })).toBeVisible();
     const timeline = page.locator('ol.story-timeline');
     await expect(timeline).toContainText(summary);
     await expect(timeline).toContainText(followUp);
