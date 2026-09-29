@@ -28,6 +28,8 @@ meetings、resources 增加 group_ids，可複選，回應 group_names。GET 列
 
 私人附件下載重查會議／資源對象。不能透過另一個較寬鬆的會議連結，擴大一份小組資源附件的對象；會議選取已上傳資源不會改寫資源存取範圍。群組資源移出小組後直接 API 與檔案 URL 都拒絕。resources.create.own 可上傳到本人有效小組，但不能指定他組／角色；create.all 可選所有有效小組。
 
+PUT /resources/{id} 可編輯 title、category、role_ids、group_ids，需 resources.update.all；未傳欄位保留，檔案本身不替換，保存稽核。group_ids 最多 100 個、小組 member_ids 最多 500 人，儲存時去重。
+
 ## 分工與驗收
 
 Sol owns backend + backend tests；Terra owns frontend；Luna owns tests/e2e/groups* 與操作驗收文件。Astra owns契約、整合與部署，各自獨立工作樹。新增資料庫若需遷移只追加，不 reset，共用 dev/UAT 保留資料。

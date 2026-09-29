@@ -3243,6 +3243,85 @@
             }
           }
         }
+      },
+      "put": {
+        "summary": "Update resource metadata; resources.update.all required; preserve omitted scope and original file",
+        "operationId": "put_resources_id",
+        "tags": [
+          "groups"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Not found or private group content unavailable to this viewer."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "role_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "uniqueItems": true
+                  },
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "uniqueItems": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Update resource metadata; resources.update.all required; preserve omitted scope and original file See groups-articles.md."
       }
     },
     "/cases": {

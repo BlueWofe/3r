@@ -90,3 +90,8 @@ def extend_groups(spec):
               'Send station notifications plus LINE mock once per article version; content.publish.all and groups.broadcast.all required',
               request={'type': 'object', 'required': ['version'], 'properties': {'version': {'type': 'integer', 'minimum': 1}}}, response='Broadcast')
     operation('/contents/{id}/broadcasts', 'get', 'Broadcast history; content.publish.all and groups.broadcast.all required', response='Broadcast', listing=True)
+    operation('/resources/{id}', 'put', 'Update resource metadata; resources.update.all required; preserve omitted scope and original file',
+              request={'type': 'object', 'properties': {
+                  'title': {'type': 'string'}, 'category': {'type': 'string'},
+                  'role_ids': deepcopy(ids), 'group_ids': deepcopy(ids),
+              }})
