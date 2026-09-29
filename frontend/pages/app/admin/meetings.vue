@@ -1,7 +1,9 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
 const { can } = useAuth();
-const roles = ref<any[]>([]);
+const roles = ref<any[]>([]),
+  groups = ref<any[]>([]),
+  filterGroupId = ref("");
 const fields = computed(() => [
   { key: "title", label: "會議名稱" },
   { key: "meeting_date", label: "日期", type: "date" },
@@ -14,6 +16,14 @@ const fields = computed(() => [
     type: "multiselect",
     options: roles.value,
     optional: true,
+  },
+  {
+    key: "group_ids",
+    label: "可查看小組",
+    type: "multiselect",
+    options: groups.value,
+    optional: true,
+    displayKey: "group_names",
   },
   {
     key: "file_ids",
@@ -31,9 +41,19 @@ const resources = ref<any[]>([]),
   title = ref(""),
   category = ref("一般資源");
 const { error, run } = useApiError();
+const meetingEndpoint = computed(
+  () =>
+    `/meetings${filterGroupId.value ? `?group_id=${filterGroupId.value}` : ""}`,
+);
 async function load() {
   try {
-    resources.value = (await api<any>("/resources")).data || [];
+    resources.value =
+      (
+        await api<any>(
+          `/resources${filterGroupId.value ? `?group_id=${filterGroupId.value}` : ""}`,
+        )
+      ).data || [];
+    groups.value = (await api<any>("/groups/options")).data || [];
     if (can("meetings.create.all") || can("meetings.update.all"))
       roles.value = (await api<any>("/role-options")).data || [];
   } catch (e: any) {
@@ -60,12 +80,22 @@ onMounted(load);
 <template>
   <EntityBoard
     title="會議管理"
-    endpoint="/meetings"
+    :endpoint="meetingEndpoint"
     :fields="fields"
     :can-create="can('meetings.create.all')"
     :can-update="can('meetings.update.all')"
-    description="會議議程、紀錄與決議可依角色存取。"
+    description="會議議程、紀錄與決議可依角色或小組存取。"
   />
+  <section class="card meeting-filter">
+    <label class="field"
+      >篩選小組<select v-model="filterGroupId" @change="load">
+        <option value="">全部小組</option>
+        <option v-for="group in groups" :key="group.id" :value="group.id">
+          {{ group.name }}
+        </option>
+      </select></label
+    >
+  </section>
   <section class="section" style="padding-bottom: 0">
     <h2 class="serif">會議資源與檔案</h2>
     <form
@@ -87,6 +117,7 @@ onMounted(load);
         <tr v-for="r in resources" :key="r.id">
           <td data-label="名稱">{{ r.title }}</td>
           <td data-label="分類">{{ r.category }}</td>
+          <td data-label="小組">{{ r.group_names?.join("、") || "—" }}</td>
           <td data-label="操作">
             <a
               class="button ghost"

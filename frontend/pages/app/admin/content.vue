@@ -7,7 +7,11 @@ const allRows = ref<Content[]>([]),
   pending = ref(false),
   imageUploading = ref(false),
   error = ref(""),
-  image = ref<File | null>(null);
+  image = ref<File | null>(null),
+  groups = ref<any[]>([]),
+  broadcasts = ref<any[]>([]),
+  broadcastPending = ref(false),
+  success = ref("");
 const form = reactive<Content>({});
 const route = useRoute();
 const router = useRouter();
@@ -17,6 +21,12 @@ const sections = [
     title: "最新消息",
     description: "協會公告與事工近況",
     icon: "bell",
+  },
+  {
+    id: "sharing",
+    title: "事工分享",
+    description: "事工中的同行與回應",
+    icon: "people",
   },
   {
     id: "testimony",
@@ -86,6 +96,11 @@ async function load() {
     allRows.value = (
       (await api<{ data: Content[] }>("/contents")).data || []
     ).filter((row) => row.kind !== "product");
+    try {
+      groups.value = (await api<any>("/groups/options")).data || [];
+    } catch {
+      groups.value = [];
+    }
     error.value = "";
   } catch (caught: any) {
     error.value = caught.message;
@@ -105,7 +120,18 @@ function reset(record?: Content) {
         ? "見證分享"
         : section.value === "news"
           ? "最新消息"
-          : ""),
+          : section.value === "sharing"
+            ? "監獄事工"
+            : ""),
+    article_type:
+      record?.article_type ||
+      (record?.category === "見證分享"
+        ? "testimony"
+        : section.value === "sharing"
+          ? "sharing"
+          : "news"),
+    visibility: record?.visibility || "public",
+    group_ids: [...(record?.group_ids || [])],
     status: record?.status || "draft",
     sort_order: record?.sort_order ?? 0,
     image_id: record?.image_id || null,
@@ -121,7 +147,10 @@ function reset(record?: Content) {
   });
   image.value = null;
   error.value = "";
+  success.value = "";
+  broadcasts.value = [];
   open.value = true;
+  if (record?.id && record.visibility === "groups") loadBroadcasts(record.id);
 }
 async function save() {
   if (pending.value || imageUploading.value) return;
@@ -149,6 +178,7 @@ async function save() {
       body,
     });
     open.value = false;
+    success.value = "已更新";
     await load();
     await switchSection(sectionOf(body));
   } catch (caught: any) {
@@ -157,6 +187,42 @@ async function save() {
     pending.value = false;
   }
 }
+async function loadBroadcasts(id: number) {
+  try {
+    broadcasts.value =
+      (await api<any>(`/contents/${id}/broadcasts`)).data || [];
+  } catch {
+    broadcasts.value = [];
+  }
+}
+async function broadcast() {
+  if (!editing.value || broadcastPending.value) return;
+  broadcastPending.value = true;
+  error.value = "";
+  try {
+    const result = await api<any>(`/contents/${editing.value.id}/broadcast`, {
+      method: "POST",
+      body: { version: editing.value.version },
+    });
+    success.value = result.duplicate
+      ? "此版本已發送通知"
+      : `已發送給 ${result.recipient_count} 位小組成員`;
+    await loadBroadcasts(editing.value.id);
+  } catch (caught: any) {
+    error.value = caught.message || "群發失敗";
+  } finally {
+    broadcastPending.value = false;
+  }
+}
+watch(
+  () => form.visibility,
+  (visibility) => {
+    if (visibility === "groups") {
+      form.image_id = null;
+      image.value = null;
+    }
+  },
+);
 onMounted(load);
 </script>
 <template>
@@ -188,6 +254,7 @@ onMounted(load);
     </button>
   </nav>
   <h2 class="content-list-title">{{ sectionTitle }}</h2>
+  <p v-if="success && !open" class="notice">{{ success }}</p>
   <p v-if="error && !open" class="notice">{{ error }}</p>
   <div class="tablewrap">
     <table class="table">
@@ -241,6 +308,12 @@ onMounted(load);
             <option value="news">消息</option>
             <option value="page">頁面</option>
           </select></label
+        ><label v-if="form.kind === 'news'" class="field"
+          >文章類型<select v-model="form.article_type">
+            <option value="news">最新消息</option>
+            <option value="sharing">事工分享</option>
+            <option value="testimony">生命見證</option>
+          </select></label
         ><label class="field">標題<input v-model="form.title" required /></label
         ><label class="field"
           >網址代稱<input v-model="form.slug" required /></label
@@ -249,7 +322,12 @@ onMounted(load);
             v-model="form.category"
             list="category-options"
             placeholder="最新消息或見證分享" /><datalist id="category-options">
-            <option value="最新消息" />
+            <option value="監獄事工" />
+            <option value="更生輔導" />
+            <option value="志工招募" />
+            <option value="愛心義賣" />
+            <option value="代禱消息" />
+            <option value="協會公告" />
             <option value="見證分享" /></datalist></label
         ><label class="field"
           >作者<input
@@ -262,6 +340,19 @@ onMounted(load);
           /><small class="muted"
             >首次發布留白時由系統使用目前時間。</small
           ></label
+        ><label v-if="form.kind === 'news'" class="field"
+          >公開範圍<select v-model="form.visibility">
+            <option value="public">公開文章</option>
+            <option value="groups">限定小組</option>
+          </select></label
+        ><label
+          v-if="form.kind === 'news' && form.visibility === 'groups'"
+          class="field"
+          >指定小組（可複選）<select v-model="form.group_ids" multiple required>
+            <option v-for="group in groups" :key="group.id" :value="group.id">
+              {{ group.name }}
+            </option></select
+          ><small class="muted">小組消息不使用公開圖片。</small></label
         ><label class="field"
           >狀態<select v-model="form.status">
             <option value="draft">草稿</option>
@@ -269,7 +360,7 @@ onMounted(load);
           </select></label
         ><label class="field"
           >排序<input v-model.number="form.sort_order" type="number" /></label
-        ><label class="field"
+        ><label v-if="form.visibility !== 'groups'" class="field"
           >公開圖片<input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -286,7 +377,9 @@ onMounted(load);
       ><label class="field">本文</label
       ><ClientOnly
         ><RichTextEditor
+          :key="form.visibility"
           v-model="form.body_html"
+          :allow-images="form.visibility !== 'groups'"
           @uploading="imageUploading = $event"
       /></ClientOnly>
       <details class="card">
@@ -300,6 +393,32 @@ onMounted(load);
         <summary>組織與同工預覽</summary>
         <OrganizationOverview :metadata="form.metadata" />
       </details>
+      <section
+        v-if="
+          editing &&
+          form.kind === 'news' &&
+          form.visibility === 'groups' &&
+          form.status === 'published'
+        "
+        class="card broadcast-panel"
+      >
+        <h3>小組通知</h3>
+        <p class="muted">
+          通知只顯示「新的小組消息」，成員開啟後仍會重新確認小組資格。
+        </p>
+        <button
+          type="button"
+          class="button"
+          :disabled="broadcastPending"
+          @click="broadcast"
+        >
+          {{ broadcastPending ? "發送中…" : "發送小組通知" }}
+        </button>
+        <p v-if="broadcasts.length" class="muted">
+          最近發送：{{ broadcasts[0].recipient_count }} 位收件人
+        </p>
+      </section>
+      <p v-if="success" class="notice">{{ success }}</p>
       <p v-if="error" class="error">{{ error }}</p>
       <button class="button" :disabled="pending || imageUploading">
         {{ pending || imageUploading ? "儲存中…" : "儲存" }}

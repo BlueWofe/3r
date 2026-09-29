@@ -12,7 +12,13 @@ const serviceLinks = computed(() =>
     ["/app", "今日行程", "calendar", schedule()],
     ["/app/calendar", "行事曆", "calendar", schedule()],
     ["/app/changes", "異動通知", "bell", schedule()],
-    ["/app/invitations", "邀請與通知", "mail", schedule()],
+    [
+      "/app/invitations",
+      schedule() ? "邀請與通知" : "通知收件匣",
+      "mail",
+      true,
+    ],
+    ["/app/group-news", "小組消息", "people", true],
     [
       "/app/resources",
       "資源下載",
@@ -41,6 +47,7 @@ const managementIcons: Record<string, string> = {
   reports: "chart",
   settings: "settings",
   prisons: "home",
+  groups: "people",
 };
 const managementIcon = (path: string) =>
   managementIcons[path.split("?")[0]!.split("/").pop() || ""] || "folder";
@@ -462,11 +469,25 @@ button:focus-visible {
     padding: 20px 16px;
   }
   .workspace-brand {
+    display: flex;
+    min-width: 52px;
+    margin-right: 0;
+  }
+  .workspace-brand > span:last-child {
     display: none;
   }
+  .workspace-brand .backend-logo-frame {
+    width: 52px;
+    height: 52px;
+  }
+  .workspace-brand .backend-logo-frame img {
+    width: 80px;
+    height: 100px;
+  }
   .workspace-mobile-header {
-    display: grid;
-    gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 10px 16px;
     background: linear-gradient(180deg, #164538, #0e3026);
     color: #fff;
@@ -496,7 +517,7 @@ button:focus-visible {
     color: inherit;
     border-radius: 999px;
     font: inherit;
-    font-size: 14px;
+    font-size: clamp(11px, 3.4vw, 14px);
     cursor: pointer;
     padding: 6px 8px;
   }
@@ -513,12 +534,21 @@ button:focus-visible {
     max-height: none;
     border-radius: 0;
     box-shadow: none;
-    top: 109px;
+    top: 75px;
     z-index: 35;
     height: auto;
     padding: 10px 16px 14px;
     overflow: visible;
     white-space: normal;
+  }
+  @media (max-width: 350px) {
+    .workspace-menu-buttons button {
+      padding: 5px;
+      gap: 3px;
+    }
+    .workspace-menu-buttons button .nav-icon:last-child {
+      display: none;
+    }
   }
   .side.menu-open {
     display: block;

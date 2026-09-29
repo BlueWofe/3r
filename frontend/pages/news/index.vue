@@ -22,27 +22,39 @@ const taipeiDateTime = (value?: string) =>
   <div class="pagehead">
     <div class="container">
       <div class="toolbar">
-        <select v-model="articleType" @change="() => refresh()">
-          <option value="">全部文章</option>
-          <option value="news">最新消息</option>
-          <option value="sharing">事工分享</option>
-          <option value="testimony">生命見證</option></select
-        ><select v-model="category" @change="() => refresh()">
-          <option value="">全部主題</option>
-          <option
-            v-for="item in [
-              '監獄事工',
-              '更生輔導',
-              '志工招募',
-              '愛心義賣',
-              '代禱消息',
-              '協會公告',
-            ]"
-            :key="item"
+        <label
+          >文章類型<select
+            v-model="articleType"
+            aria-label="文章類型"
+            @change="() => refresh()"
           >
-            {{ item }}
-          </option>
-        </select>
+            <option value="">全部文章</option>
+            <option value="news">最新消息</option>
+            <option value="sharing">事工分享</option>
+            <option value="testimony">生命見證</option>
+          </select></label
+        ><label
+          >主題分類<select
+            v-model="category"
+            aria-label="主題分類"
+            @change="() => refresh()"
+          >
+            <option value="">全部主題</option>
+            <option
+              v-for="item in [
+                '監獄事工',
+                '更生輔導',
+                '志工招募',
+                '愛心義賣',
+                '代禱消息',
+                '協會公告',
+              ]"
+              :key="item"
+            >
+              {{ item }}
+            </option>
+          </select></label
+        >
       </div>
       <div class="eyebrow">NEWS</div>
       <h1>最新消息</h1>
@@ -53,6 +65,9 @@ const taipeiDateTime = (value?: string) =>
       <p class="demo">示範內容</p>
       <div v-if="pending" class="empty">載入中…</div>
       <div v-else-if="error" class="notice">目前無法取得消息，請稍後再試。</div>
+      <div v-else-if="!data?.data?.length" class="card empty">
+        目前沒有符合篩選條件的文章。
+      </div>
       <div v-else class="grid cards">
         <NuxtLink
           v-for="n in data?.data"
@@ -65,7 +80,16 @@ const taipeiDateTime = (value?: string) =>
             :src="`/api/v1/files/${n.image_id}/download`"
             :alt="n.title"
           /><span v-else class="media-placeholder" aria-hidden="true">✦</span
-          ><span class="eyebrow">{{ n.category || "協會消息" }}</span>
+          ><span class="eyebrow"
+            >{{
+              n.article_type === "sharing"
+                ? "事工分享"
+                : n.article_type === "testimony" || n.category === "見證分享"
+                  ? "生命見證"
+                  : "最新消息"
+            }}
+            · {{ n.category || "未分類" }}</span
+          >
           <h3>{{ n.title }}</h3>
           <p class="muted">{{ n.summary }}</p>
           <small class="muted"

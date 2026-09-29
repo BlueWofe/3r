@@ -21,6 +21,7 @@ export function useWorkspaceNavigation() {
       () => can("users.read.all") || can("users.update.all"),
     ],
     ["/app/admin/roles", "角色權限", () => can("roles.manage.all")],
+    ["/app/admin/groups", "小組管理", () => can("groups.manage.all")],
     ["/app/admin/prisons", "監所管理", () => can("prisons.manage.all")],
     [
       "/app/admin/content?section=news",
@@ -76,7 +77,7 @@ export function useWorkspaceNavigation() {
       {
         title: "人員與系統",
         icon: "settings",
-        paths: ["users", "roles", "settings"],
+        paths: ["users", "roles", "groups", "settings"],
       },
     ]
       .map((group) => ({

@@ -72,6 +72,14 @@ const permissionMenus = [
     },
   },
   {
+    module: "groups",
+    title: "小組管理與通知",
+    labels: {
+      "manage.all": "管理小組、成員與停用狀態",
+      "broadcast.all": "發送已發布小組消息通知",
+    },
+  },
+  {
     module: "resources",
     title: "資源下載與管理",
     labels: {

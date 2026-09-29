@@ -3,7 +3,10 @@ import Image from "@tiptap/extension-image";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 
-const props = defineProps<{ modelValue: string }>();
+const props = withDefaults(
+  defineProps<{ modelValue: string; allowImages?: boolean }>(),
+  { allowImages: true },
+);
 const emit = defineEmits<{
   "update:modelValue": [value: string];
   uploading: [value: boolean];
@@ -19,7 +22,9 @@ const editor = useEditor({
       link: { openOnClick: false },
       heading: { levels: [2, 3] },
     }),
-    Image.configure({ inline: false, allowBase64: false }),
+    ...(props.allowImages
+      ? [Image.configure({ inline: false, allowBase64: false })]
+      : []),
   ],
   editorProps: {
     attributes: {
@@ -34,25 +39,25 @@ const editor = useEditor({
 watch(
   () => props.modelValue,
   (value) => {
-    if (editor.value && value !== editor.value.getHTML()) {
+    if (editor.value && value !== editor.value.getHTML())
       editor.value.commands.setContent(value, { emitUpdate: false });
-    }
   },
 );
 onBeforeUnmount(() => editor.value?.destroy());
-
 function setLink() {
   const url = window.prompt("輸入連結網址");
-  if (!url) return;
-  editor.value
-    ?.chain()
-    .focus()
-    .extendMarkRange("link")
-    .setLink({ href: url })
-    .run();
+  if (url)
+    editor.value
+      ?.chain()
+      .focus()
+      .extendMarkRange("link")
+      .setLink({ href: url })
+      .run();
 }
 async function uploadImage(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!props.allowImages) return;
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
   uploadError.value = "";
   if (!file) return;
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -83,11 +88,10 @@ async function uploadImage(event: Event) {
   } finally {
     uploading.value = false;
     emit("uploading", false);
-    (event.target as HTMLInputElement).value = "";
+    input.value = "";
   }
 }
 </script>
-
 <template>
   <div class="rich-editor">
     <div class="rich-toolbar" aria-label="本文格式工具列">
@@ -148,16 +152,22 @@ async function uploadImage(event: Event) {
       >
         重做
       </button>
-      <button type="button" :disabled="uploading" @click="imageInput?.click()">
-        {{ uploading ? "上傳中…" : "插入圖片" }}
-      </button>
-      <input
-        ref="imageInput"
-        class="visually-hidden"
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        @change="uploadImage"
-      />
+      <template v-if="props.allowImages">
+        <button
+          type="button"
+          :disabled="uploading"
+          @click="imageInput?.click()"
+        >
+          {{ uploading ? "上傳中…" : "插入圖片" }}
+        </button>
+        <input
+          ref="imageInput"
+          class="visually-hidden"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          @change="uploadImage"
+        />
+      </template>
     </div>
     <EditorContent :editor="editor" />
     <p v-if="uploadError" class="error">{{ uploadError }}</p>

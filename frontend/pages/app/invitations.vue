@@ -63,9 +63,22 @@ onMounted(async () => {
       class="card"
       style="margin: 8px 0"
     >
-      <b>{{ n.title || n.type }}</b>
-      <p class="muted">{{ n.body || n.message }}</p>
-      <button v-if="!n.read_at" class="button ghost" @click="read(n)">
+      <NuxtLink v-if="n.url" :to="n.url"
+        ><b>{{
+          n.type === "group_news" ? "新的小組消息" : n.title || n.type
+        }}</b></NuxtLink
+      >
+      <b v-else>{{
+        n.type === "group_news" ? "新的小組消息" : n.title || n.type
+      }}</b>
+      <p v-if="n.type !== 'group_news'" class="muted">
+        {{ n.body || n.message }}
+      </p>
+      <button
+        v-if="!n.read && !n.read_at"
+        class="button ghost"
+        @click="read(n)"
+      >
         標為已讀
       </button>
     </article>
