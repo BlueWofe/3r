@@ -16,44 +16,38 @@
     <div class="container">
       <div class="eyebrow">OUR MINISTRY</div>
       <h2>陪伴旅程</h2>
-      <ol class="journey-timeline">
+      <ol class="ministry-grid">
         <li>
-          <article class="card">
-            <span class="eyebrow">01</span>
-            <h3>走進高牆</h3>
-            <p class="muted">
-              以監所服務、生命教育與節慶關懷，主動走近需要被聽見的人。
-            </p>
-            <NuxtLink to="/about">了解服務 →</NuxtLink>
-          </article>
+          <NuxtLink to="/about" class="ministry-panel ministry-panel--door" aria-label="走進高牆：了解監所服務">
+            <span class="ministry-number">01 / OUR MINISTRY</span>
+            <span class="ministry-arrow" aria-hidden="true">↗</span>
+            <MinistryIllustration kind="door" class="ministry-illustration" />
+            <div class="ministry-caption"><h3>走進高牆</h3><p>讓關懷，走進每一個角落。</p></div>
+          </NuxtLink>
         </li>
         <li>
-          <article class="card">
-            <span class="eyebrow">02</span>
-            <h3>建立信任</h3>
-            <p class="muted">透過穩定會面與支持關係，讓改變有安全的開始。</p>
-            <NuxtLink to="/contact">聯絡我們 →</NuxtLink>
-          </article>
+          <NuxtLink to="/contact" class="ministry-panel ministry-panel--people" aria-label="建立信任：與我們聯絡">
+            <span class="ministry-number">02 / OUR MINISTRY</span>
+            <span class="ministry-arrow" aria-hidden="true">↗</span>
+            <MinistryIllustration kind="people" class="ministry-illustration" />
+            <div class="ministry-caption"><h3>建立信任</h3><p>用傾聽，陪伴生命的改變。</p></div>
+          </NuxtLink>
         </li>
         <li>
-          <article class="card">
-            <span class="eyebrow">03</span>
-            <h3>預備復歸</h3>
-            <p class="muted">
-              連結工作、居住、家庭與專業資源，預備走回社會的每一步。
-            </p>
-            <NuxtLink to="/news">閱讀消息 →</NuxtLink>
-          </article>
+          <NuxtLink to="/news" class="ministry-panel ministry-panel--growth" aria-label="預備復歸：閱讀服務消息">
+            <span class="ministry-number">03 / OUR MINISTRY</span>
+            <span class="ministry-arrow" aria-hidden="true">↗</span>
+            <MinistryIllustration kind="growth" class="ministry-illustration" />
+            <div class="ministry-caption"><h3>預備復歸</h3><p>為重新出發，預備一份力量。</p></div>
+          </NuxtLink>
         </li>
         <li>
-          <article class="card">
-            <span class="eyebrow">04</span>
-            <h3>社區同行</h3>
-            <p class="muted">
-              回到社區後持續陪伴，讓家庭、教會與在地網絡共同承接新的生活。
-            </p>
-            <NuxtLink to="/donate">支持事工 →</NuxtLink>
-          </article>
+          <NuxtLink to="/donate" class="ministry-panel ministry-panel--home" aria-label="社區同行：支持陪伴事工">
+            <span class="ministry-number">04 / OUR MINISTRY</span>
+            <span class="ministry-arrow" aria-hidden="true">↗</span>
+            <MinistryIllustration kind="home" class="ministry-illustration" />
+            <div class="ministry-caption"><h3>社區同行</h3><p>回家的路，我們一起走。</p></div>
+          </NuxtLink>
         </li>
       </ol>
     </div>
