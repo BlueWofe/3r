@@ -58,6 +58,21 @@ class SchedulePolicyTest extends TestCase
         $this->assertSame(3, Entity::where('type', 'changes')->count());
     }
 
+    public function test_teacher_role_revocation_stops_new_course_and_mock_line_notices(): void
+    {
+        $admin = $this->teacher();
+        $admin->roles()->attach(Role::create(['name' => '系統管理員', 'slug' => 'system-admin', 'permissions' => []]));
+        $teacher = $this->teacher();
+        $session = $this->course([$teacher]);
+        Entity::create(['type' => 'line', 'owner_id' => $teacher->id, 'data' => ['bound' => true, 'subscribed' => true]]);
+        $teacher->roles()->detach();
+
+        $this->actingAs($admin)->putJson('/api/v1/sessions/'.$session->id, ['version' => 1, 'reason' => '示範調整', 'location' => '新地點'])->assertOk();
+        $this->assertSame(0, Entity::where('type', 'notifications')->where('owner_id', $teacher->id)->count());
+        $this->assertSame(0, Entity::where('type', 'line-outbox')->where('owner_id', $teacher->id)->count());
+        $this->assertSame(1, Entity::where('type', 'notifications')->where('owner_id', $admin->id)->count());
+    }
+
     private function teacher(): User
     {
         $role = Role::firstOrCreate(['slug' => 'teacher'], ['name' => '教師', 'permissions' => ['schedule.read.own', 'schedule.update.own', 'attendance.create.own']]);

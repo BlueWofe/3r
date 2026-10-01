@@ -51,7 +51,7 @@ class NotificationAccess
             }
             $systemAdmin = $user->roles->where('active', true)->contains('slug', 'system-admin');
             $all = $user->canDo('schedule.read.all');
-            $own = $user->canDo('schedule.read.own');
+            $own = $user->canDo('schedule.read.own') || $user->canDo('schedule.update.own');
             $invitation = ! empty($d['invitation']);
             if ($invitation && (! $user->canDo('schedule.update.own') || ($session->data['status'] ?? '') !== 'scheduled' || now('Asia/Taipei')->gte(Carbon::parse($session->data['service_date'].' '.$session->data['end_time'], 'Asia/Taipei')) || $session->assignments()->whereNotNull('attendance')->exists())) {
                 return null;
@@ -62,7 +62,7 @@ class NotificationAccess
             }
             $pending = $invitation && $invitationQuery->exists();
             $related = $session->assignments()->where('teacher_id', $user->id)->exists();
-            if ($invitation ? ! ($own && $pending) : ! ($systemAdmin || ($related && ($own || $all)))) {
+            if ($invitation ? ! ($own && $pending) : ! ($systemAdmin || ($related && $own))) {
                 return null;
             }
             $d['url'] = $invitation ? '/app/invitations'.(isset($d['invitation_id']) ? '?invitation_id='.(int) $d['invitation_id'] : '') : ($all ? '/app/admin/schedule?session_id='.$session->id : '/app/calendar?session_id='.$session->id);

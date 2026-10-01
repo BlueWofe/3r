@@ -46,7 +46,9 @@ class ScheduleController extends ApiController
         $currentTeachers = $s->assignments()->whereIn('status', ['assigned', 'leave'])->pluck('teacher_id');
         $systemAdmins = User::where('active', true)->whereHas('roles', fn ($q) => $q->where('slug', 'system-admin')->where('roles.active', true))->pluck('id');
         $recipients = $beforeTeachers->merge($currentTeachers)->merge($systemAdmins)->unique();
-        $activeRecipients = User::where('active', true)->whereIn('id', $recipients)->pluck('id');
+        $activeRecipients = User::where('active', true)->whereIn('id', $recipients)->with('roles')->get()
+            ->filter(fn ($user) => $user->roles->where('active', true)->contains('slug', 'system-admin') || $user->canDo('schedule.read.own') || $user->canDo('schedule.update.own'))
+            ->pluck('id');
         foreach ($activeRecipients as $recipient) {
             Entity::create(['type' => 'notifications', 'owner_id' => $recipient, 'data' => ['title' => $s->data['title'], 'message' => $action.'：'.$reason, 'session_id' => $s->id, 'read' => false]]);
             $line = Entity::where('type', 'line')->where('owner_id', $recipient)->first();
