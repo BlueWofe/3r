@@ -106,9 +106,12 @@ class NotificationInboxCategoriesTest extends TestCase
         $this->postJson('/api/v1/notifications/read-all')
             ->assertOk()
             ->assertJsonPath('unread_count', 0);
+        $this->postJson('/api/v1/notifications/read-all')->assertOk()->assertJsonPath('unread_count', 0);
 
         $this->assertTrue((bool) Entity::find($course->id)->data['read']);
         $this->assertTrue((bool) Entity::find($message->id)->data['read']);
+        $this->assertTrue((bool) Entity::find($product->id)->data['read']);
+        $this->assertTrue((bool) Entity::find($contact->id)->data['read']);
         $this->assertFalse((bool) Entity::find($staleInquiry->id)->data['read']);
         $this->assertFalse((bool) Entity::find($otherOwner->id)->data['read']);
     }
@@ -120,9 +123,24 @@ class NotificationInboxCategoriesTest extends TestCase
         $notice = $this->notification($owner, ['contact_inquiry_id' => $inquiry->id, 'title' => '新聯絡']);
 
         $this->postJson('/api/v1/notifications/read-all')->assertUnauthorized();
-        $this->actingAs($owner)->getJson('/api/v1/notifications')->assertJsonCount(0, 'data');
+        $this->actingAs($owner)->getJson('/api/v1/notifications')->assertJsonCount(1, 'data');
         $owner->roles()->first()->update(['permissions' => []]);
         $this->actingAs($owner->fresh())->postJson('/api/v1/notifications/read-all')->assertOk()->assertJsonPath('unread_count', 0);
         $this->assertFalse((bool) Entity::find($notice->id)->data['read']);
+    }
+
+    public function test_trial_and_bulk_inquiry_categories_are_product_notifications(): void
+    {
+        $owner = $this->account(['contacts.read.all']);
+        foreach (['試吃', '大宗認購專案'] as $category) {
+            $inquiry = $this->inquiry($category);
+            $this->notification($owner, ['contact_inquiry_id' => $inquiry->id, 'title' => '分類由資料決定']);
+        }
+
+        $this->actingAs($owner)->getJson('/api/v1/notifications')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.category', 'product')
+            ->assertJsonPath('data.1.category', 'product');
     }
 }

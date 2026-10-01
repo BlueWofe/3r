@@ -35,12 +35,18 @@ test('notification inbox filters categories, follows safe links, and refreshes u
   });
   await page.route('**/api/v1/notifications', route => route.fulfill({ json: { data: rows, unread_count: rows.filter(row => !row.read).length } }));
   await page.route('**/api/v1/invitations', route => route.fulfill({ json: { data: [] } }));
+  await page.route('**/api/v1/sessions**', route => {
+    const path = new URL(route.request().url()).pathname;
+    return path.endsWith('/sessions/12')
+      ? route.fulfill({ json: { id: 12, title: '合成課程異動', service_date: '2035-01-01', start_time: '09:00', end_time: '10:00', status: 'scheduled', version: 1, assignments: [{ id: 1, teacher_id: 1, status: 'assigned', attendance: null }], invitations: [], events: [] } })
+      : route.fulfill({ json: { data: [] } });
+  });
 
   await page.goto('/app/invitations');
   const tabs = page.getByRole('tablist', { name: '通知分類' });
   await expect(tabs).toBeVisible();
   await expect(tabs.getByRole('tab')).toHaveCount(5);
-  await expect(page.getByText('通知收件匣')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '通知收件匣', exact: true })).toBeVisible();
 
   const bell = page.getByRole('button', { name: '通知收件匣' });
   await expect(page.getByLabel('3 則未讀通知')).toBeVisible();
@@ -52,6 +58,7 @@ test('notification inbox filters categories, follows safe links, and refreshes u
 
   await page.locator('[data-notification-id="102"]').getByRole('button').click();
   await expect(page).toHaveURL(/\/app\/calendar\?session_id=12$/);
+  await expect(page.locator('.dialog')).toContainText('合成課程異動');
   await page.goto('/app/invitations');
   await page.getByRole('button', { name: '全部已讀' }).click();
   await expect.poll(() => readAllCalls).toBe(1);
