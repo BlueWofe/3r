@@ -171,7 +171,7 @@ class GroupsArticlesTest extends TestCase
             $raw = json_encode($e->data, JSON_UNESCAPED_UNICODE);
             $this->assertStringNotContainsString('私人標題測試', $raw);
             $this->assertStringNotContainsString('私人內文測試', $raw);
-            $this->assertSame('/app/group-news/'.$id, $e->data['url']);
+            $this->assertSame('/app/group-news?content_id='.$id, $e->data['url']);
         }
         $this->getJson('/api/v1/contents/'.$id.'/broadcasts')->assertJsonCount(1, 'data')->assertJsonPath('data.0.version', 1);
         $this->putJson('/api/v1/contents/'.$id, $this->article(['visibility' => 'groups', 'group_ids' => [$one->id], 'version' => 1]))->assertOk()->assertJsonPath('version', 2);

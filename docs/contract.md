@@ -43,3 +43,5 @@ Logo: POST /settings/logo accepts multipart file (JPEG/PNG/WebP, maximum 5 MB), 
 Member account: PUT /auth/password {current_password,password,password_confirmation}, authenticated, confirmed password min10, throttled 5/minute. Checks current password under a user row lock, revokes other login sessions and leaves the current session usable; audit never stores passwords. GET /donations?own=1 always limits records to the authenticated owner even for financial administrators. Registration creates the default member role with only donations.read.own when it is missing. Account UI separates profile, password, own donations and notifications into tabs.
 
 Class templates may include excluded_dates: distinct YYYY-MM-DD dates, at most 366. Preview/generation skip matching dates and report the reason; updates that omit the field preserve it. Imported semester schedules remain bounded by start_date/end_date and explicit exclusions; source import identifiers are retained on template edits.
+
+通知連結只定位相關列表項目，不自動開啟明細或編輯視窗。訂單、聯絡表單以 `id`，課程以 `session_id`，小組消息以 `content_id` 指定醒目標示的項目；老師課程切換至議程列表。手動點選查看／編輯才開啟視窗。

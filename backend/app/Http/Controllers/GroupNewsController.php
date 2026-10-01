@@ -64,9 +64,9 @@ class GroupNewsController extends ApiController
             abort_if($recipients->isEmpty(), 422, '沒有有效的小組收件人。');
             $recordId = DB::table('content_broadcasts')->insertGetId(['content_id' => $id, 'version' => $v['version'], 'recipient_count' => $recipients->count(), 'sent_at' => now(), 'actor_id' => $r->user()->id]);
             foreach ($recipients as $recipient) {
-                $message = ['title' => '新的小組消息', 'message' => '新的小組消息', 'content_id' => $id, 'url' => '/app/group-news/'.$id, 'read' => false, 'broadcast_id' => $recordId];
+                $message = ['title' => '新的小組消息', 'message' => '新的小組消息', 'content_id' => $id, 'url' => '/app/group-news?content_id='.$id, 'read' => false, 'broadcast_id' => $recordId];
                 Entity::create(['type' => 'notifications', 'owner_id' => $recipient, 'data' => $message]);
-                Entity::create(['type' => 'line-outbox', 'owner_id' => $recipient, 'data' => ['mode' => 'mock', 'message' => '新的小組消息', 'content_id' => $id, 'url' => '/app/group-news/'.$id, 'broadcast_id' => $recordId, 'delivered' => false]]);
+                Entity::create(['type' => 'line-outbox', 'owner_id' => $recipient, 'data' => ['mode' => 'mock', 'message' => '新的小組消息', 'content_id' => $id, 'url' => '/app/group-news?content_id='.$id, 'broadcast_id' => $recordId, 'delivered' => false]]);
             }
             Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'contents', 'subject_id' => $id, 'action' => 'broadcast', 'version' => $v['version'], 'broadcast_id' => $recordId, 'recipient_count' => $recipients->count()]]);
 

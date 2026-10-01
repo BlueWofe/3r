@@ -42,7 +42,7 @@ class NotificationAccess
             }
             $d['title'] = '新的小組消息';
             $d['message'] = '您有新的小組消息。';
-            $d['url'] = '/app/group-news/'.$article->id;
+            $d['url'] = '/app/group-news?content_id='.$article->id;
             $d['category'] = 'message';
         } elseif (isset($d['session_id'])) {
             $session = ServiceSession::find($d['session_id']);

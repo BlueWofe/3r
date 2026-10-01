@@ -81,7 +81,7 @@ class CatalogContactNotificationsTest extends TestCase
         $group->members()->attach($member);
         $article = Entity::create(['type' => 'contents', 'data' => ['kind' => 'news', 'title' => '私密標題', 'body' => '私密內文', 'status' => 'published', 'visibility' => 'groups', 'group_ids' => [$group->id]]]);
         $notification = Entity::create(['type' => 'notifications', 'owner_id' => $member->id, 'data' => ['content_id' => $article->id, 'url' => 'https://evil.test', 'title' => '私密標題', 'read' => false]]);
-        $this->actingAs($member)->getJson('/api/v1/notifications')->assertJsonPath('data.0.url', '/app/group-news/'.$article->id)->assertJsonPath('unread_count', 1)->assertJsonMissing(['title' => '私密標題']);
+        $this->actingAs($member)->getJson('/api/v1/notifications')->assertJsonPath('data.0.url', '/app/group-news?content_id='.$article->id)->assertJsonPath('unread_count', 1)->assertJsonMissing(['title' => '私密標題']);
         $group->members()->detach($member);
         $this->getJson('/api/v1/notifications')->assertJsonPath('unread_count', 0)->assertJsonCount(0, 'data');
         $this->postJson('/api/v1/notifications/'.$notification->id.'/read')->assertForbidden();
