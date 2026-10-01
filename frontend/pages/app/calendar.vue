@@ -209,7 +209,7 @@ async function sessionUpdated() {
         session.status === "cancelled" ? "已取消" : "已排定"
       }}</span
       ><b>{{ session.start_time }} {{ session.title }}</b
-      ><small>{{ session.prison }}／{{ session.location }}</small>
+      ><small>{{ session.class_name ? `${session.class_name}・` : "" }}{{ session.prison }}／{{ session.location }}</small>
     </button>
   </dialog>
   <SessionActions

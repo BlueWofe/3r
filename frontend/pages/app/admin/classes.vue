@@ -180,7 +180,7 @@ onMounted(load);
       </div>
       <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
         <label class="field"
-          >班別名稱<input v-model="form.name" required /></label
+          >班級名稱<input v-model="form.name" required /></label
         ><label class="field"
           >監所<select v-model="form.prison_id" required>
             <option :value="null">請選擇監所</option>
@@ -196,7 +196,7 @@ onMounted(load);
             </option>
           </select></label
         ><label class="field"
-          >地點<input v-model="form.location" required /></label
+          >上課位置<input v-model="form.location" placeholder="例如：教化大樓二樓第一教室" required /></label
         ><label class="field"
           >參與人數<input
             v-model.number="form.participant_count"

@@ -34,6 +34,22 @@ class PrisonDirectoryTest extends TestCase
         return array_merge(['title' => '示範場次', 'prison' => '相容監所', 'location' => '教室', 'participant_count' => 1, 'service_date' => '2035-01-01', 'start_time' => '09:00', 'end_time' => '10:00', 'teacher_ids' => [$teacher]], $extra);
     }
 
+    public function test_class_name_and_location_survive_reload_and_teacher_cannot_rename_class(): void
+    {
+        $admin = $this->account([], true);
+        $teacher = $this->account(['schedule.read.own', 'schedule.update.own']);
+        $this->actingAs($admin);
+        $prison = $this->postJson('/api/v1/prisons', ['name' => '課程測試監所', 'address' => '測試市測試路一號'])->assertOk()->json('id');
+        $this->getJson('/api/v1/prisons')->assertJsonPath('data.0.address', '測試市測試路一號');
+        $id = $this->postJson('/api/v1/sessions', $this->sessionBody($teacher->id, ['prison_id' => $prison, 'class_name' => '生命更新甲班', 'location' => '教化大樓二樓教室']))->assertOk()->assertJsonPath('class_name', '生命更新甲班')->json('id');
+        $this->getJson('/api/v1/sessions/'.$id)->assertOk()->assertJsonPath('location', '教化大樓二樓教室')->assertJsonPath('class_name', '生命更新甲班');
+        $this->getJson('/api/v1/sessions?q='.urlencode('生命更新甲班'))->assertJsonCount(1, 'data');
+        $this->actingAs($teacher)->putJson('/api/v1/sessions/'.$id, ['class_name' => null, 'version' => 1, 'reason' => '嘗試清除班級'])->assertForbidden();
+        $this->putJson('/api/v1/sessions/'.$id, ['class_name' => '其他班', 'version' => 1, 'reason' => '嘗試改班'])->assertForbidden();
+        $this->putJson('/api/v1/sessions/'.$id, ['location' => '教化大樓三樓教室', 'version' => 1, 'reason' => '教室調整'])->assertOk()->assertJsonPath('class_name', '生命更新甲班');
+        $this->getJson('/api/v1/sessions/'.$id)->assertJsonPath('location', '教化大樓三樓教室');
+    }
+
     public function test_prison_management_permissions_version_uniqueness_and_options_privacy(): void
     {
         $member = $this->account();

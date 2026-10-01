@@ -10,6 +10,7 @@ const { can } = useAuth();
 const manager = computed(() => can("schedule.update.all"));
 const form = reactive<any>({
   title: p.session?.title || "",
+  class_name: p.session?.class_name || "",
   prison_id: p.session?.prison_id || null,
   location: p.session?.location || "",
   participant_count: p.session?.participant_count || 0,
@@ -34,6 +35,7 @@ async function save() {
   if (p.session && !manager.value) {
     for (const key of [
       "title",
+      "class_name",
       "prison_id",
       "participant_count",
       "teacher_ids",
@@ -63,10 +65,12 @@ async function save() {
       </div>
       <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
         <label class="field"
-          >主題<input
+          >課程主題<input
             v-model="form.title"
             :disabled="!!session && !manager"
             required /></label
+        ><label class="field"
+          >班級名稱<input v-model="form.class_name" :disabled="!!session && !manager" maxlength="200" placeholder="例如：生命更新班" required /></label
         ><label class="field"
           >監所／單位<select
             v-model="form.prison_id"
@@ -86,7 +90,7 @@ async function save() {
             </option>
           </select></label
         ><label class="field"
-          >地點<input v-model="form.location" required /></label
+          >上課位置<input v-model="form.location" maxlength="200" placeholder="例如：教化大樓二樓第一教室" required /></label
         ><label class="field"
           >參與人數<input
             v-model.number="form.participant_count"

@@ -126,6 +126,13 @@ for prison_path in ['/prisons', '/prisons/{id}', '/prisons/options']:
         operation['description'] = 'Shared prison directory and inactive-reference rules: docs/prisons-cases.md.'
 paths['/prisons']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Prison'}}}}}}
 paths['/sessions']['get']['parameters'].append({'name': 'prison_id', 'in': 'query', 'required': False, 'schema': integer})
+spec['components']['schemas']['SessionDetails'] = {'type': 'object', 'additionalProperties': True, 'properties': {
+    'title': {'type': 'string', 'description': 'Course subject'},
+    'class_name': {'type': 'string', 'nullable': True, 'maxLength': 200, 'description': 'Class name; only scheduling managers may change it. Generated templates copy their name.'},
+    'location': {'type': 'string', 'maxLength': 200, 'description': 'Teaching room/floor, distinct from Prison.address'},
+}}
+paths['/sessions']['get']['description'] = 'Schedule list; q searches course title, prison, class name and teaching location. See contract.md.'
+paths['/sessions/{id}']['get']['responses']['200']['content'] = {'application/json': {'schema': {'$ref': '#/components/schemas/SessionDetails'}}}
 paths['/public/news']['get']['parameters'].append({'name': 'limit', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 100}})
 paths['/public/news']['get']['description'] = 'Published articles whose publication time has arrived, ordered by published_at descending then id descending. Homepage uses limit=3. See docs/articles.md.'
 paths['/public/news']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Article'}}}}}}

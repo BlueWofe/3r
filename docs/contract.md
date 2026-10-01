@@ -1,5 +1,7 @@
 # Shared API contract v1
 
+排課場次增加 `class_name`（可為空的班級名稱，最多 200 字），與課程主題 `title` 分別保存；定期班別生成時由班別 `name` 帶入。既有 `location` 用於教室／樓層等上課位置，監所地址另存於 `Prison.address`。班級名稱僅排課管理者可修改，老師保留原有位置異動權限。排課搜尋包含班級名稱與位置。
+
 商品規格、數量階梯報價、班別模板與自動排課擴充見 [catalog-classes-v2.md](catalog-classes-v2.md)。
 共用監所與個案欄位擴充見 [prisons-cases.md](prisons-cases.md)，消息與圖文編輯見 [articles.md](articles.md)。
 

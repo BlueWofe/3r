@@ -22,6 +22,7 @@ class ClassTemplatesTest extends TestCase
         $id = $this->postJson('/api/v1/class-templates', $this->body())->json('id');
         $this->postJson("/api/v1/class-templates/$id/generate", ['version' => 1])->assertOk();
         $s = ServiceSession::where('template_id', $id)->first();
+        $this->assertEquals($this->body()['name'], $s->data['class_name']);
         $this->expectException(QueryException::class);
         ServiceSession::create(['data' => $s->data, 'template_id' => $id, 'template_rule_id' => $s->template_rule_id, 'occurrence_date' => $s->occurrence_date]);
     }

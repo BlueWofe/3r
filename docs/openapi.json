@@ -1259,7 +1259,8 @@
           "422": {
             "description": "Validation failed"
           }
-        }
+        },
+        "description": "Schedule list; q searches course title, prison, class name and teaching location. See contract.md."
       },
       "post": {
         "summary": "POST /sessions",
@@ -1327,7 +1328,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDetails"
+                }
+              }
+            }
           },
           "401": {
             "description": "Login required"
@@ -5566,6 +5574,27 @@
           },
           "version": {
             "type": "integer"
+          }
+        }
+      },
+      "SessionDetails": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Course subject"
+          },
+          "class_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200,
+            "description": "Class name; only scheduling managers may change it. Generated templates copy their name."
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Teaching room/floor, distinct from Prison.address"
           }
         }
       },

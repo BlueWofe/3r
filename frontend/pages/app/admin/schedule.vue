@@ -115,7 +115,8 @@ onMounted(async () => {
         <tr>
           <th>日期時間</th>
           <th>服務</th>
-          <th>地點</th>
+          <th>班級名稱</th>
+          <th>上課位置</th>
           <th>同工</th>
           <th>狀態</th>
           <th></th>
@@ -127,7 +128,8 @@ onMounted(async () => {
           <td data-label="服務">
             {{ s.title }}<br /><small>{{ s.prison }}</small>
           </td>
-          <td data-label="地點">{{ s.location }}</td>
+          <td data-label="班級名稱">{{ s.class_name || "—" }}</td>
+          <td data-label="上課位置">{{ s.location }}</td>
           <td data-label="同工">
             {{ assignmentSummary(s) }}<br /><small v-if="s.invitations?.length"
               >邀請中 {{ s.invitations.length }} 位同工</small

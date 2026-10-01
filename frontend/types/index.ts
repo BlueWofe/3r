@@ -8,6 +8,7 @@ export interface User {
 export interface Session {
   id: number;
   title: string;
+  class_name?: string | null;
   prison: string;
   prison_id?: number | null;
   location: string;

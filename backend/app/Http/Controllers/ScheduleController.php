@@ -90,7 +90,7 @@ class ScheduleController extends ApiController
             $sessions = $query->with(['assignments.teacher:id,name', 'prison'])->get()->filter(function ($s) use ($r) {
                 $d = $s->prisonData();
 
-                return (! $r->prison || str_contains((string) $d['prison'], $r->prison)) && (! $r->q || str_contains($d['title'].' '.$d['prison'], $r->q));
+                return (! $r->prison || str_contains((string) $d['prison'], $r->prison)) && (! $r->q || str_contains($d['title'].' '.$d['prison'].' '.($d['class_name'] ?? '').' '.$d['location'], $r->q));
             });
             $assignmentIds = $sessions->flatMap(fn ($s) => $s->assignments->pluck('id'));
             $invitations = DB::table('invitations')->whereIn('assignment_id', $assignmentIds)->get()->groupBy('assignment_id');
@@ -109,6 +109,7 @@ class ScheduleController extends ApiController
         } else {
             $rules += ['teacher_ids' => 'required|array|min:1', 'teacher_ids.*' => 'required|integer|distinct|exists:users,id', 'repeat_weeks' => 'nullable|integer|min:1|max:52', 'override_conflict' => 'sometimes|boolean', 'reason' => 'required_if:override_conflict,true|string|max:1000'];
         }
+        $rules['class_name'] = 'sometimes|nullable|string|max:200';
         $v = $r->validate($rules);
 
         return DB::transaction(function () use ($r, $id, $v) {
@@ -133,6 +134,7 @@ class ScheduleController extends ApiController
                     foreach (['title', 'participant_count'] as $field) {
                         abort_if(isset($v[$field]) && $v[$field] !== $s->data[$field], 403, '此欄位須由管理員修改');
                     }
+                    abort_if(array_key_exists('class_name', $v) && $v['class_name'] !== ($s->data['class_name'] ?? null), 403, '班級名稱須由管理員修改');
                     abort_if(isset($v['prison_id']) && (int) $v['prison_id'] !== $s->prison_id, 403, '監所須由管理員修改');
                     abort_if(isset($v['prison']) && ! in_array($v['prison'], [$s->data['prison'], $s->prisonData()['prison']], true), 403, '監所須由管理員修改');
                     if ($s->prison_id) {
