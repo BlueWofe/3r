@@ -74,9 +74,7 @@ onMounted(refresh);
             >{{ contact?.data?.association_name || "中華復甦更新發展協會" }}
           </div>
           <p>
-            陪伴生命走過幽谷，在盼望中重新站立。<br /><span class="demo"
-              >示範網站・所有內容均為虛構 UAT 資料</span
-            >
+            陪伴生命走過幽谷，在盼望中重新站立。
           </p>
         </div>
         <div>

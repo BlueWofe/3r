@@ -242,10 +242,6 @@ onMounted(async () => {
       </section>
     </aside>
     <main v-if="ready" class="workspace">
-      <div class="notice">
-        <span class="demo">示範模式</span>
-        所有通知、金流及雲端操作皆為測試模擬，資料以權限及版本控制保護。
-      </div>
       <slot />
     </main>
   </div>
