@@ -59,6 +59,7 @@ class ClassGeneration
                 }
                 $data = ['title' => $template->data['name'], 'prison' => $template->prisonData()['prison'], 'prison_id' => $template->prison_id, 'location' => $template->data['location'], 'participant_count' => $template->data['participant_count'], 'service_date' => $occurrence['service_date'], 'start_time' => $occurrence['start_time'], 'end_time' => $occurrence['end_time'], 'status' => 'scheduled', 'original_teacher_count' => max(1, count($teachers)), 'template_id' => $templateId, 'rule_id' => $occurrence['rule_id'], 'occurrence_date' => $occurrence['service_date']];
                 $data['class_name'] = $template->data['name'];
+                $data['color'] = $template->data['color'] ?? '#3d8768';
                 $s = ServiceSession::create(['data' => $data, 'template_id' => $templateId, 'template_rule_id' => $occurrence['rule_id'], 'occurrence_date' => $occurrence['service_date']]);
                 foreach ($teachers as $teacher) {
                     $s->assignments()->create(['teacher_id' => $teacher->id]);

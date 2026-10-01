@@ -33,6 +33,30 @@ class ClassTemplatesTest extends TestCase
         $this->travelTo(Carbon::parse('2028-01-01 00:00:00', 'Asia/Taipei'));
     }
 
+    public function test_color_is_saved_inherited_and_existing_occurrences_keep_their_color(): void
+    {
+        $this->actingAs($this->account(true));
+        $body = $this->body();
+        $body['color'] = '#326e9c';
+        $id = $this->postJson('/api/v1/class-templates', $body)->assertOk()->assertJsonPath('color', '#326e9c')->json('id');
+        $this->postJson("/api/v1/class-templates/$id/generate", ['version' => 1])->assertOk();
+        $s = ServiceSession::where('template_id', $id)->firstOrFail();
+        $this->getJson('/api/v1/sessions/'.$s->id)->assertJsonPath('color', '#326e9c');
+        $body['version'] = 1;
+        unset($body['color']);
+        $this->putJson('/api/v1/class-templates/'.$id, $body)->assertOk()->assertJsonPath('color', '#326e9c');
+        $body['version'] = 2;
+        $body['color'] = '#8055a3';
+        $this->putJson('/api/v1/class-templates/'.$id, $body)->assertOk();
+        $this->postJson("/api/v1/class-templates/$id/generate", ['version' => 3])->assertOk()->assertJsonPath('created', 0);
+        $this->assertEquals('#326e9c', $s->fresh()->data['color']);
+        $this->putJson('/api/v1/sessions/'.$s->id, ['color' => '#8055a3', 'version' => 1, 'reason' => '調整顯示色'])->assertOk()->assertJsonPath('color', '#8055a3');
+        $this->putJson('/api/v1/sessions/'.$s->id, ['color' => 'url(https://example.test)', 'version' => 2, 'reason' => '無效色彩'])->assertUnprocessable();
+        $body['version'] = 3;
+        $body['color'] = 'red';
+        $this->putJson('/api/v1/class-templates/'.$id, $body)->assertUnprocessable();
+    }
+
     private function account(bool $admin = false): User
     {
         $role = Role::firstOrCreate(['slug' => $admin ? 'system-admin' : 'teacher'], ['name' => '示範', 'permissions' => $admin ? [] : ['schedule.read.own', 'schedule.update.own']]);

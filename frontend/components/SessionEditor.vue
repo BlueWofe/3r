@@ -11,6 +11,7 @@ const manager = computed(() => can("schedule.update.all"));
 const form = reactive<any>({
   title: p.session?.title || "",
   class_name: p.session?.class_name || "",
+  color: scheduleColor(p.session?.color),
   prison_id: p.session?.prison_id || null,
   location: p.session?.location || "",
   participant_count: p.session?.participant_count || 0,
@@ -36,6 +37,7 @@ async function save() {
     for (const key of [
       "title",
       "class_name",
+      "color",
       "prison_id",
       "participant_count",
       "teacher_ids",
@@ -117,6 +119,7 @@ async function save() {
           >結束時間<input v-model="form.end_time" type="time" required
         /></label>
       </div>
+      <ScheduleColorPicker v-model="form.color" label="課程顯示顏色" :disabled="!!session && !manager" />
       <label v-if="!session" class="field"
         >授課／服務同工<select v-model="form.teacher_ids" multiple>
           <option v-for="t in teachers" :key="t.id" :value="t.id">

@@ -46,6 +46,7 @@ class PrisonDirectoryTest extends TestCase
         $this->getJson('/api/v1/sessions?q='.urlencode('生命更新甲班'))->assertJsonCount(1, 'data');
         $this->actingAs($teacher)->putJson('/api/v1/sessions/'.$id, ['class_name' => null, 'version' => 1, 'reason' => '嘗試清除班級'])->assertForbidden();
         $this->putJson('/api/v1/sessions/'.$id, ['class_name' => '其他班', 'version' => 1, 'reason' => '嘗試改班'])->assertForbidden();
+        $this->putJson('/api/v1/sessions/'.$id, ['color' => '#8055a3', 'version' => 1, 'reason' => '嘗試改色'])->assertForbidden();
         $this->putJson('/api/v1/sessions/'.$id, ['location' => '教化大樓三樓教室', 'version' => 1, 'reason' => '教室調整'])->assertOk()->assertJsonPath('class_name', '生命更新甲班');
         $this->getJson('/api/v1/sessions/'.$id)->assertJsonPath('location', '教化大樓三樓教室');
     }

@@ -9,6 +9,7 @@ export interface Session {
   id: number;
   title: string;
   class_name?: string | null;
+  color?: string;
   prison: string;
   prison_id?: number | null;
   location: string;

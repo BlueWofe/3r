@@ -127,6 +127,7 @@ for prison_path in ['/prisons', '/prisons/{id}', '/prisons/options']:
 paths['/prisons']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Prison'}}}}}}
 paths['/sessions']['get']['parameters'].append({'name': 'prison_id', 'in': 'query', 'required': False, 'schema': integer})
 spec['components']['schemas']['SessionDetails'] = {'type': 'object', 'additionalProperties': True, 'properties': {
+    'color': {'type': 'string', 'pattern': '^#[0-9a-fA-F]{6}$', 'description': 'Class display color. Scheduling managers may override it for an individual session; legacy data defaults to #3d8768 in the UI.'},
     'title': {'type': 'string', 'description': 'Course subject'},
     'class_name': {'type': 'string', 'nullable': True, 'maxLength': 200, 'description': 'Class name; only scheduling managers may change it. Generated templates copy their name.'},
     'location': {'type': 'string', 'maxLength': 200, 'description': 'Teaching room/floor, distinct from Prison.address'},

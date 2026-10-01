@@ -42,6 +42,8 @@ class ClassTemplateController extends ApiController
             $rules[] = $clean;
         }
         $v['rules'] = $rules;
+        $color = $r->validate(['color' => ['sometimes', 'required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/']]);
+        $v = array_merge($v, $color);
         $v['teacher_ids'] = array_map('intval', $v['teacher_ids']);
         $v['participant_count'] = (int) $v['participant_count'];
         $v['active'] = (bool) $v['active'];
@@ -73,6 +75,7 @@ class ClassTemplateController extends ApiController
             }
             $template = $id ? ClassTemplate::lockForUpdate()->findOrFail($id) : new ClassTemplate;
             $before = $id ? $template->publicData() : [];
+            $v['color'] = $v['color'] ?? ($template->data['color'] ?? '#3d8768');
             if ($id) {
                 abort_unless($template->version === (int) $v['version'], 409, '班別版本已更新。');
             }

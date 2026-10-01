@@ -110,6 +110,7 @@ class ScheduleController extends ApiController
             $rules += ['teacher_ids' => 'required|array|min:1', 'teacher_ids.*' => 'required|integer|distinct|exists:users,id', 'repeat_weeks' => 'nullable|integer|min:1|max:52', 'override_conflict' => 'sometimes|boolean', 'reason' => 'required_if:override_conflict,true|string|max:1000'];
         }
         $rules['class_name'] = 'sometimes|nullable|string|max:200';
+        $rules['color'] = ['sometimes', 'required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'];
         $v = $r->validate($rules);
 
         return DB::transaction(function () use ($r, $id, $v) {
@@ -135,6 +136,7 @@ class ScheduleController extends ApiController
                         abort_if(isset($v[$field]) && $v[$field] !== $s->data[$field], 403, '此欄位須由管理員修改');
                     }
                     abort_if(array_key_exists('class_name', $v) && $v['class_name'] !== ($s->data['class_name'] ?? null), 403, '班級名稱須由管理員修改');
+                    abort_if(array_key_exists('color', $v) && $v['color'] !== ($s->data['color'] ?? '#3d8768'), 403, '班級顏色須由管理員修改');
                     abort_if(isset($v['prison_id']) && (int) $v['prison_id'] !== $s->prison_id, 403, '監所須由管理員修改');
                     abort_if(isset($v['prison']) && ! in_array($v['prison'], [$s->data['prison'], $s->prisonData()['prison']], true), 403, '監所須由管理員修改');
                     if ($s->prison_id) {
@@ -174,6 +176,7 @@ class ScheduleController extends ApiController
             $out = [];
             for ($i = 0; $i < ($v['repeat_weeks'] ?? 1); $i++) {
                 $d = collect($v)->except(['teacher_ids', 'repeat_weeks', 'reason', 'override_conflict'])->all();
+                $d['color'] = $d['color'] ?? '#3d8768';
                 $d['service_date'] = Carbon::parse($v['service_date'])->addWeeks($i)->format('Y-m-d');
                 $d['status'] = 'scheduled';
                 $d['original_teacher_count'] = count($v['teacher_ids']);

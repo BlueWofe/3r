@@ -139,8 +139,7 @@ async function sessionUpdated() {
     </div>
   </div>
   <p v-if="view !== 'agenda'" class="calendar-legend">
-    <span class="legend scheduled"></span>已排定
-    <span class="legend cancelled"></span>已取消；點選日期查看場次
+    顏色依班別／課程設定；<span class="legend cancelled"></span>斜線表示已取消。點選日期查看場次
   </p>
   <div v-if="error" class="notice">{{ error }}</div>
   <p v-if="loading" role="status" class="muted">正在載入課程…</p>
@@ -170,6 +169,7 @@ async function sessionUpdated() {
             v-for="s in sessionsFor(d).slice(0, 3)"
             :key="s.id"
             :class="s.status"
+            :style="{ backgroundColor: scheduleColor(s.color) }"
           ></i></span
         ><small v-if="sessionsFor(d).length > 3"
           >+{{ sessionsFor(d).length - 3 }}</small
@@ -179,6 +179,7 @@ async function sessionUpdated() {
           v-for="s in sessionsFor(d)"
           :key="s.id"
           class="event"
+          :style="{ borderLeft: `5px solid ${scheduleColor(s.color)}` }"
           :disabled="refreshing || loading"
           @click="selected = s"
         >
@@ -203,6 +204,7 @@ async function sessionUpdated() {
       v-for="session in sessionsFor(selectedDay)"
       :key="session.id"
       class="day-session"
+      :style="{ borderLeft: `5px solid ${scheduleColor(session.color)}` }"
       @click="openSession(session)"
     >
       <span :class="['status', session.status]">{{
@@ -254,9 +256,10 @@ async function sessionUpdated() {
   height: 5px;
   border-radius: 999px;
   background: #3d8768;
+  box-shadow: inset 0 0 0 1px #0002;
 }
 .event-bars i.cancelled {
-  background: #b35a4d;
+  background-image: repeating-linear-gradient(135deg, transparent, transparent 4px, #ffffffaa 4px, #ffffffaa 6px);
 }
 .calendar-legend {
   font-size: 13px;
@@ -271,7 +274,7 @@ async function sessionUpdated() {
   margin: 0 4px 0 12px;
 }
 .legend.cancelled {
-  background: #b35a4d;
+  background: repeating-linear-gradient(135deg, #626e7a, #626e7a 3px, #ffffffaa 3px, #ffffffaa 5px);
 }
 .day-sheet {
   width: min(680px, 100%);

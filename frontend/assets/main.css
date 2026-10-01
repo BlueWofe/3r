@@ -1352,3 +1352,12 @@ a.card:hover {
     flex: 1 1 100%;
   }
 }
+.class-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border: 1px solid #0003;
+  border-radius: 50%;
+  vertical-align: middle;
+}

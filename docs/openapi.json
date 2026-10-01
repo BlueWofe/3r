@@ -5581,6 +5581,11 @@
         "type": "object",
         "additionalProperties": true,
         "properties": {
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "Class display color. Scheduling managers may override it for an individual session; legacy data defaults to #3d8768 in the UI."
+          },
           "title": {
             "type": "string",
             "description": "Course subject"

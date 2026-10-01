@@ -126,7 +126,7 @@ onMounted(async () => {
         <tr v-for="s in rows" :key="s.id">
           <td data-label="日期時間">{{ s.service_date }} {{ s.start_time }}</td>
           <td data-label="服務">
-            {{ s.title }}<br /><small>{{ s.prison }}</small>
+            <span class="class-color" :style="{ backgroundColor: scheduleColor(s.color) }" aria-hidden="true"></span>{{ s.title }}<br /><small>{{ s.prison }}</small>
           </td>
           <td data-label="班級名稱">{{ s.class_name || "—" }}</td>
           <td data-label="上課位置">{{ s.location }}</td>

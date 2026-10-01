@@ -19,6 +19,7 @@ const taiwanToday = new Intl.DateTimeFormat("en-CA", {
   .replaceAll("/", "-");
 const blank = () => ({
   name: "",
+  color: "#3d8768",
   prison_id: null as number | null,
   location: "",
   participant_count: 0,
@@ -52,6 +53,7 @@ function edit(t?: any) {
   editing.value = t || null;
   Object.keys(form).forEach((key) => delete form[key]);
   Object.assign(form, copy(t || blank()));
+  form.color = scheduleColor(form.color);
   preview.value = null;
   error.value = "";
   open.value = true;
@@ -155,7 +157,7 @@ onMounted(load);
       </thead>
       <tbody>
         <tr v-for="t in templates" :key="t.id">
-          <td data-label="班別">{{ t.name }}</td>
+          <td data-label="班別"><span class="class-color" :style="{ backgroundColor: scheduleColor(t.color) }" aria-hidden="true"></span>{{ t.name }}</td>
           <td data-label="監所／地點">{{ t.prison }}／{{ t.location }}</td>
           <td data-label="同工">{{ t.teacher_ids?.length || 0 }} 位</td>
           <td data-label="規則">{{ t.rules?.length || 0 }} 組</td>
@@ -208,6 +210,8 @@ onMounted(load);
           >結束日<input v-model="form.end_date" type="date"
         /></label>
       </div>
+      <ScheduleColorPicker v-model="form.color" label="班別顯示顏色" />
+      <p class="muted">新生成的課程會使用此顏色；既有課程可到排課個別修改。</p>
       <label class="field"
         >預設同工<select v-model="form.teacher_ids" multiple>
           <option v-for="t in teachers" :key="t.id" :value="t.id">
