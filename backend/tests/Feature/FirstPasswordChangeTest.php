@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Entity;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +14,18 @@ use Tests\TestCase;
 class FirstPasswordChangeTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_forced_accounts_can_read_public_assets_but_not_private_files(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('files/public.txt', 'public content');
+        Storage::disk('local')->put('files/private.txt', 'private content');
+        $staff = $this->createStaff($this->admin());
+        $public = Entity::create(['type' => 'files', 'data' => ['visibility' => 'public', 'path' => 'files/public.txt', 'name' => 'public.txt']]);
+        $private = Entity::create(['type' => 'files', 'owner_id' => $staff->id, 'data' => ['visibility' => 'private', 'path' => 'files/private.txt', 'name' => 'private.txt']]);
+        $this->actingAs($staff)->get('/api/v1/files/'.$public->id.'/download')->assertOk()->assertDownload('public.txt');
+        $this->getJson('/api/v1/files/'.$private->id.'/download')->assertForbidden()->assertJsonPath('code', 'PASSWORD_CHANGE_REQUIRED');
+    }
 
     private function admin(): User
     {

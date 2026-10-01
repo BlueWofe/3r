@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Entity;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -14,6 +15,12 @@ class RequirePasswordChange
         }
 
         if ($request->isMethod('GET') && ($request->is('api/v1/public/*') || $request->is('api/v1/health'))) {
+            return $next($request);
+        }
+
+        if ($request->isMethod('GET')
+            && preg_match('#^api/v1/files/([1-9][0-9]*)/download$#', $request->path(), $matches)
+            && Entity::where('type', 'files')->whereKey((int) $matches[1])->where('data->visibility', 'public')->exists()) {
             return $next($request);
         }
 
