@@ -64,6 +64,13 @@ export async function api<T>(
     return result;
   } catch (error: any) {
     const code = error?.statusCode || error?.response?.status;
+    const apiCode = error?.data?.code;
+    if (!server && code === 403 && apiCode === "PASSWORD_CHANGE_REQUIRED") {
+      const current = useState<any>("auth-user", () => null);
+      if (current.value) current.value = { ...current.value, must_change_password: true };
+      if (nuxt.$router.currentRoute.value.path !== "/change-password")
+        void nuxt.runWithContext(() => navigateTo("/change-password"));
+    }
     const msg =
       error?.data?.message ||
       (code === 409
@@ -71,7 +78,7 @@ export async function api<T>(
         : code === 403
           ? "您沒有此操作權限。"
           : "連線或資料處理失敗，請稍後再試。");
-    throw Object.assign(new Error(msg), { code, details: error?.data?.errors });
+    throw Object.assign(new Error(msg), { code, apiCode, details: error?.data?.errors });
   }
 }
 export function useApiError() {

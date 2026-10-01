@@ -1,8 +1,8 @@
 <script setup lang="ts">
-const { user, logout, refresh, can } = useAuth();
+const { user, logout, can } = useAuth();
 const { schedule, managementLinks, managementGroups } =
   useWorkspaceNavigation();
-const ready = ref(false);
+const ready = computed(() => !!user.value && !user.value.must_change_password);
 const openMenu = ref<"service" | "management" | null>(null);
 const serviceButton = ref<HTMLButtonElement | null>(null);
 const managementButton = ref<HTMLButtonElement | null>(null);
@@ -98,11 +98,6 @@ function closeMenu(restoreFocus = false) {
 function toggleMenu(group: "service" | "management") {
   openMenu.value = openMenu.value === group ? null : group;
 }
-onMounted(async () => {
-  await refresh();
-  if (!user.value) await navigateTo("/login");
-  else ready.value = true;
-});
 </script>
 <template>
   <div class="app-shell">

@@ -4,6 +4,7 @@ export interface User {
   phone: string;
   roles: { id: number; name: string; slug: string }[];
   permissions: string[];
+  must_change_password: boolean;
 }
 export interface Session {
   id: number;

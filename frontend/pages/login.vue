@@ -32,7 +32,8 @@ async function submit() {
   pending.value = true;
   try {
     if (tab.value === "login") {
-      await run(() => login(phone.value, password.value));
+      const signedIn = await run(() => login(phone.value, password.value));
+      if (signedIn?.must_change_password) return navigateTo("/change-password");
       return navigateTo(
         route.query.returnTo === "/donate" ? "/donate" : workspacePath.value,
       );

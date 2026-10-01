@@ -40,7 +40,10 @@ async function save() {
     body.phone = form.phone;
     body.password = form.password;
     body.role_ids = form.role_ids;
-  } else if (canManageRoles()) body.role_ids = form.role_ids;
+  } else {
+    if (form.password) body.password = form.password;
+    if (canManageRoles()) body.role_ids = form.role_ids;
+  }
   await run(() =>
     api(editing.value ? `/users/${editing.value.id}` : "/users", {
       method: editing.value ? "PUT" : "POST",
@@ -112,12 +115,12 @@ onMounted(load);
       <label class="field">姓名<input v-model="form.name" required /></label
       ><label v-if="!editing" class="field"
         >電話<input v-model="form.phone" required /></label
-      ><label v-if="!editing" class="field"
-        >初始密碼（至少 10 字元）<input
+      ><label class="field"
+        >{{ editing ? "重設密碼（選填，至少 9 字元）" : "初始密碼（至少 9 字元）" }}<input
           v-model="form.password"
           type="password"
-          minlength="10"
-          required /></label
+          minlength="9"
+          :required="!editing" /></label
       ><label v-if="canManageRoles()" class="field"
         >角色（可複選）<select v-model="form.role_ids" multiple>
           <option v-for="r in roles" :key="r.id" :value="r.id">
@@ -131,6 +134,9 @@ onMounted(load);
         }}。您沒有角色管理權限，因此不會變更角色。
       </p>
       <label><input v-model="form.active" type="checkbox" /> 啟用帳戶</label>
+      <p v-if="!editing || form.password" class="notice">
+        使用這組初始／重設密碼登入後，系統會要求本人立即設定新密碼。
+      </p>
       <p v-if="error" class="error">{{ error }}</p>
       <button class="button">儲存</button>
     </form>

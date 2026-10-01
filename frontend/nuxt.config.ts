@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     apiInternalUrl: process.env.NUXT_API_INTERNAL_URL || "http://web/api/v1",
     public: { apiBase: process.env.NUXT_PUBLIC_API_BASE || "/api/v1" },
   },
-  routeRules: { "/app/**": { ssr: false } },
+  routeRules: { "/app/**": { ssr: false }, "/change-password": { ssr: false } },
   app: {
     head: {
       title: "中華復甦更新發展協會",
