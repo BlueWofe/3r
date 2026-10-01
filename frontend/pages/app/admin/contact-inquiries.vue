@@ -3,7 +3,7 @@ definePageMeta({ layout: "app" });
 const { can } = useAuth();
 const canUpdate = computed(() => can("contacts.update.all"));
 const route = useRoute();
-const openedRequest = ref("");
+const focusedInquiryId = ref<number | null>(null);
 const categories = [
     "監所探訪與代禱",
     "更生安置與職訓",
@@ -40,12 +40,8 @@ async function load() {
     if (status.value) params.set("status", status.value);
     if (q.value) params.set("q", q.value);
     rows.value = (await api<any>(`/contact-inquiries?${params}`)).data || [];
-    const requested = Number(route.query.id);
-    if (Number.isInteger(requested) && requested > 0 && openedRequest.value !== String(requested)) {
-      const found = rows.value.find((row: any) => Number(row.id) === requested);
-      if (found) { view(found); openedRequest.value = String(requested); }
-    }
   } catch (e: any) {
+    focusedInquiryId.value = null;
     error.value = e.message || "無法載入聯絡表單。";
   } finally {
     loading.value = false;
@@ -79,9 +75,22 @@ async function save() {
     pending.value = false;
   }
 }
-watch(() => route.query.id, load);
-onMounted(load);
-watch(() => route.query.id, () => { if (!pending.value) void load(); });
+async function focusLinkedInquiry() {
+  focusedInquiryId.value = null;
+  const raw = route.query.id;
+  if (raw === undefined) return;
+  selected.value = null;
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) { error.value = "通知指定的聯絡訊息編號無效。"; return; }
+  category.value = ""; status.value = ""; q.value = "";
+  await load();
+  if (!rows.value.some(row => Number(row.id) === id)) { error.value = "找不到指定的聯絡訊息，或您已無權查看。"; return; }
+  focusedInquiryId.value = id;
+  await nextTick();
+  document.querySelector(`[data-inquiry-id="${id}"]`)?.scrollIntoView({ block: "center" });
+}
+onMounted(async () => { await load(); await focusLinkedInquiry(); });
+watch(() => route.query.id, () => { if (!pending.value) void focusLinkedInquiry(); });
 </script>
 <template>
   <div class="workhead">
@@ -129,7 +138,7 @@ watch(() => route.query.id, () => { if (!pending.value) void load(); });
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in rows" :key="row.id">
+        <tr v-for="row in rows" :key="row.id" :data-inquiry-id="row.id" :class="{ 'notification-focus': focusedInquiryId === row.id }">
           <td data-label="姓名">{{ row.name }}</td>
           <td data-label="分類">{{ row.category }}</td>
           <td data-label="訊息摘要">
@@ -225,6 +234,7 @@ watch(() => route.query.id, () => { if (!pending.value) void load(); });
   overflow-wrap: anywhere;
   max-width: 420px;
 }
+.notification-focus { outline: 3px solid rgba(198, 157, 77, .55); outline-offset: -3px; background: #fff8e8; }
 @media (max-width: 760px) {
   .inquiry {
     grid-template-columns: 1fr;

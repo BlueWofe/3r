@@ -37,9 +37,10 @@ test('notification inbox filters categories, follows safe links, and refreshes u
   await page.route('**/api/v1/invitations', route => route.fulfill({ json: { data: [] } }));
   await page.route('**/api/v1/sessions**', route => {
     const path = new URL(route.request().url()).pathname;
+    const session = { id: 12, title: '合成課程異動', service_date: '2035-01-01', start_time: '09:00', end_time: '10:00', status: 'scheduled', version: 1, assignments: [{ id: 1, teacher_id: 1, status: 'assigned', attendance: null }], invitations: [], events: [] };
     return path.endsWith('/sessions/12')
-      ? route.fulfill({ json: { id: 12, title: '合成課程異動', service_date: '2035-01-01', start_time: '09:00', end_time: '10:00', status: 'scheduled', version: 1, assignments: [{ id: 1, teacher_id: 1, status: 'assigned', attendance: null }], invitations: [], events: [] } })
-      : route.fulfill({ json: { data: [] } });
+      ? route.fulfill({ json: session })
+      : route.fulfill({ json: { data: [session] } });
   });
 
   await page.goto('/app/invitations');
@@ -58,7 +59,9 @@ test('notification inbox filters categories, follows safe links, and refreshes u
 
   await page.locator('[data-notification-id="102"]').getByRole('button').click();
   await expect(page).toHaveURL(/\/app\/calendar\?session_id=12$/);
-  await expect(page.locator('.dialog')).toContainText('合成課程異動');
+  await expect(page.getByRole('button', { name: '議程' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-session-id="12"]')).toHaveClass(/notification-focus/);
+  await expect(page.locator('.modal')).toHaveCount(0);
   await page.goto('/app/invitations');
   await page.getByRole('button', { name: '全部已讀' }).click();
   await expect.poll(() => readAllCalls).toBe(1);

@@ -12,7 +12,8 @@ const rows = ref<Session[]>([]),
   status = ref(""),
   query = ref(""),
   refreshing = ref(false),
-  linkedSession = ref<Session | null>(null);
+  focusedSessionId = ref<number | null>(null),
+  actionsKey = ref(0);
 const route = useRoute();
 const { error, run } = useApiError();
 async function load() {
@@ -59,15 +60,19 @@ async function scheduleUpdated() {
 }
 async function openLinkedSession() {
   const id = Number(route.query.session_id);
-  if (!Number.isInteger(id) || id <= 0) { linkedSession.value = null; return; }
+  focusedSessionId.value = null;
+  if (route.query.session_id !== undefined) { modal.value = false; edit.value = null; actionsKey.value++; }
+  if (!Number.isInteger(id) || id <= 0) { if (route.query.session_id !== undefined) error.value = "通知指定的課程編號無效。"; return; }
   try {
     const target = await api<Session>(`/sessions/${id}`);
-    linkedSession.value = target;
+    prison.value = ""; teacher.value = ""; status.value = ""; query.value = "";
     from.value = target.service_date;
     await load();
+    if (!rows.value.some(session => session.id === id)) throw new Error("找不到指定的課程，或您已無權查看。");
+    focusedSessionId.value = id;
     await nextTick();
     document.querySelector(`[data-session-id="${id}"]`)?.scrollIntoView({ block: "center" });
-  } catch (e: any) { error.value = e.message || "找不到指定的課程。"; }
+  } catch (e: any) { focusedSessionId.value = null; error.value = e.message || "找不到指定的課程。"; }
 }
 onMounted(async () => {
   await load();
@@ -139,7 +144,7 @@ watch(() => route.query.session_id, openLinkedSession);
         </tr>
       </thead>
       <tbody>
-        <tr v-for="s in rows" :key="s.id" :data-session-id="s.id" :class="{ 'linked-session': linkedSession?.id === s.id }">
+        <tr v-for="s in rows" :key="s.id" :data-session-id="s.id" :class="{ 'linked-session': focusedSessionId === s.id }">
           <td data-label="日期時間">{{ s.service_date }} {{ s.start_time }}</td>
           <td data-label="服務">
             <span class="class-color" :style="{ backgroundColor: scheduleColor(s.color) }" aria-hidden="true"></span>{{ s.title }}<br /><small>{{ s.prison }}</small>
@@ -157,6 +162,7 @@ watch(() => route.query.session_id, openLinkedSession);
           <td data-label="操作">
             <SessionActions
               v-if="!refreshing"
+              :key="`${s.id}-${actionsKey}`"
               :session="s"
               admin
               @updated="scheduleUpdated"
@@ -175,8 +181,7 @@ watch(() => route.query.session_id, openLinkedSession);
     @close="modal = false"
     @saved="load"
   />
-  <SessionActions v-if="linkedSession" :session="linkedSession" open-on-mount admin @updated="scheduleUpdated" @close="linkedSession = null" />
 </template>
 <style scoped>
-.linked-session { outline: 3px solid var(--gold); outline-offset: -3px; }
+.linked-session { outline: 3px solid rgba(198, 157, 77, .55); outline-offset: -3px; background: #fff8e8; }
 </style>

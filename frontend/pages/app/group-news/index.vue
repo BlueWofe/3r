@@ -1,10 +1,12 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
+const route = useRoute();
 const rows = ref<any[]>([]),
   groups = ref<any[]>([]),
   groupId = ref(""),
   loading = ref(true),
-  error = ref("");
+  error = ref(""),
+  focusedContentId = ref<number | null>(null);
 const taipei = (value?: string) =>
   value
     ? new Intl.DateTimeFormat("zh-TW", {
@@ -34,7 +36,21 @@ async function load() {
     loading.value = false;
   }
 }
-onMounted(load);
+async function focusLinkedContent() {
+  focusedContentId.value = null;
+  const raw = route.query.content_id;
+  if (raw === undefined) return;
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) { error.value = "通知指定的消息編號無效。"; return; }
+  groupId.value = "";
+  await load();
+  if (!rows.value.some(item => Number(item.id) === id)) { error.value = "找不到指定的小組消息，或您已無權查看。"; return; }
+  focusedContentId.value = id;
+  await nextTick();
+  document.querySelector(`[data-content-id="${id}"]`)?.scrollIntoView({ block: "center" });
+}
+onMounted(async () => { await load(); await focusLinkedContent(); });
+watch(() => route.query.content_id, focusLinkedContent);
 </script>
 <template>
   <div class="workhead">
@@ -62,6 +78,8 @@ onMounted(load);
       v-for="item in rows"
       :key="item.id"
       class="card"
+      :class="{ 'notification-focus': focusedContentId === item.id }"
+      :data-content-id="item.id"
       :to="`/app/group-news/${item.id}`"
       ><span class="eyebrow">{{ item.group_names?.join("、") }}</span>
       <h3>{{ item.title }}</h3>
@@ -73,3 +91,6 @@ onMounted(load);
     >
   </div>
 </template>
+<style scoped>
+.notification-focus { border-color: #c69d4d; background: #fff8e8; box-shadow: 0 0 0 3px rgba(198, 157, 77, .25); }
+</style>

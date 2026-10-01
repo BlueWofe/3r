@@ -54,7 +54,7 @@ test('published product category filtering and contact CTAs preserve their exact
   }
 });
 
-test('contact notification bell shows a generic unread alert and opens the authorized inquiry', async ({ page }, testInfo) => {
+test('contact notification bell shows a generic unread alert and focuses the authorized inquiry', async ({ page }, testInfo) => {
   const visitor = await apiContext();
   let inquiryId: number | undefined;
   const marker = unique('contact-bell-ui-private');
@@ -99,11 +99,15 @@ test('contact notification bell shows a generic unread alert and opens the autho
     await notificationButton.click();
     await expect(page).toHaveURL(/\/app\/admin\/contact-inquiries\?id=\d+/);
     await expect(page.getByRole('heading', { name: '聯絡表單', exact: true })).toBeVisible();
+    const id = Number(new URL(page.url()).searchParams.get('id'));
+    expect(id).toBe(inquiryId);
+    const focused = page.locator(`[data-inquiry-id="${id}"]`);
+    await expect(focused).toHaveClass(/notification-focus/);
+    await expect(page.getByRole('heading', { name: '聯絡訊息', exact: true })).toHaveCount(0);
+    await focused.getByRole('button', { name: '查看與處理' }).click();
     await expect(page.getByRole('heading', { name: '聯絡訊息', exact: true })).toBeVisible();
     await expect(page.locator('.dialog').getByText(name, { exact: true })).toBeVisible();
     await expect(page.locator('.dialog').getByText(privateMessage, { exact: true })).toBeVisible();
-    const id = Number(new URL(page.url()).searchParams.get('id'));
-    expect(id).toBe(inquiryId);
   } finally {
     // Contact inquiries and their private notification history are retained as UAT records.
     await visitor.dispose();

@@ -14,6 +14,7 @@ const loading = ref(false);
 const error = ref("");
 const dayDialog = ref<HTMLDialogElement | null>(null);
 const selectedDay = ref("");
+const focusedSessionId = ref<number | null>(null);
 const today = yyyyToday();
 function yyyyToday() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date()); }
 let previousOverflow = "";
@@ -78,15 +79,25 @@ const load = async () => {
   }
 };
 async function openLinkedSession() {
-  const id = Number(route.query.session_id);
-  if (!Number.isInteger(id) || id <= 0) return;
+  focusedSessionId.value = null;
+  const raw = route.query.session_id;
+  if (raw === undefined) return;
+  selected.value = null; selectedActivity.value = null; dayDialog.value?.close();
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) { error.value = "通知指定的課程編號無效。"; return; }
   try {
     const target = await api<Session>(`/sessions/${id}`);
     const date = new Date(`${target.service_date}T12:00:00`);
-    if (!Number.isNaN(date.getTime())) cursor.value = date;
+    if (Number.isNaN(date.getTime())) throw new Error("課程日期資料無效。");
+    view.value = "agenda";
+    cursor.value = date;
     await nextTick();
-    selected.value = target;
-  } catch (e: any) { error.value = e.message || "找不到指定的課程。"; }
+    await load();
+    if (!sessions.value.some(session => session.id === id)) throw new Error("找不到指定的課程，或您已無權查看。");
+    focusedSessionId.value = id;
+    await nextTick();
+    document.querySelector(`[data-session-id="${id}"]`)?.scrollIntoView({ block: "center" });
+  } catch (e: any) { focusedSessionId.value = null; error.value = e.message || "找不到指定的課程。"; }
 }
 onMounted(async () => { await load(); await openLinkedSession(); });
 watch([view, cursor], load);
@@ -209,6 +220,8 @@ async function sessionUpdated() {
           v-for="s in sessionsFor(d)"
           :key="s.id"
           class="event"
+          :class="{ 'notification-focus': focusedSessionId === s.id }"
+          :data-session-id="s.id"
           :style="{ borderLeft: `5px solid ${scheduleColor(s.color)}` }"
           :disabled="refreshing || loading"
           @click="openSession(s)"
@@ -263,6 +276,7 @@ async function sessionUpdated() {
 </template>
 <style scoped>
 .activity-text { white-space: pre-wrap; }
+.notification-focus { background: #fff8e8; box-shadow: 0 0 0 3px rgba(198, 157, 77, .35); }
 .calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; padding: 8px 0; font-size: 13px; color: var(--muted); }
 .iphone-calendar:not(.agenda) { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .iphone-calendar:not(.agenda) .day { height: 106px; min-height: 0; min-width: 0; padding: 4px; overflow: hidden; }
