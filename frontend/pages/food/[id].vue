@@ -51,6 +51,7 @@ watch([selected, quantity], () => {
           :src="`/api/v1/files/${data.data.image_id}/download`"
           :alt="data.data.title"
       /></div>
+      <PastryIllustration v-else-if="['classic-yolk-pastry', 'taro-yolk-pastry'].includes(data?.data?.slug)" :flavor="data?.data?.slug === 'taro-yolk-pastry' ? 'taro' : 'red-bean'" />
       <div v-else class="product-fallback" aria-hidden="true">🍞</div>
       <article>
         <p class="eyebrow">服務成果展示</p>

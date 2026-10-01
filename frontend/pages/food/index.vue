@@ -62,6 +62,7 @@ watch(selectedCategory, () => refresh());
             :src="`/api/v1/files/${p.image_id}/download`"
             :alt="p.title"
           />
+          <PastryIllustration v-else-if="['classic-yolk-pastry', 'taro-yolk-pastry'].includes(p.slug)" :flavor="p.slug === 'taro-yolk-pastry' ? 'taro' : 'red-bean'" />
           <div v-else class="media-placeholder" aria-hidden="true">🍞</div>
           <span v-if="p.category" class="eyebrow">{{ p.category }}</span>
           <h3>{{ p.title }}</h3>

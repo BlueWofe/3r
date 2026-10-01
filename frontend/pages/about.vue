@@ -180,8 +180,39 @@ const cover = computed(() => {
   gap: 48px;
 }
 .history-body {
+  padding-left: clamp(0px, 2vw, 24px);
+}
+.history-body :deep(ol) {
+  list-style: none;
+  margin: 24px 0;
+  padding: 0 0 0 30px;
   border-left: 2px solid #c5d1bf;
-  padding-left: clamp(20px, 4vw, 48px);
+}
+.history-body :deep(ol > li) {
+  position: relative;
+  padding: 0 0 28px 8px;
+}
+.history-body :deep(ol > li:last-child) {
+  padding-bottom: 0;
+}
+.history-body :deep(ol > li::before) {
+  content: "";
+  position: absolute;
+  left: -39px;
+  top: 8px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--pine);
+  border: 3px solid #f7f5ef;
+}
+.history-body :deep(ol > li > p:first-child) {
+  margin: 0;
+  color: #8d6a2d;
+  font-size: 14px;
+}
+.history-body :deep(ol h3) {
+  margin: 8px 0;
 }
 .organization-intro {
   max-width: 760px;
