@@ -68,7 +68,17 @@ test('role permissions union while assigned and disappear immediately after role
       name: 'E2E 隔離權限帳號', phone, password: demoPassword, active: true, role_ids: combinedRoles,
     }));
 
-    await login(teacher, phone);
+    const firstLogin = await login(teacher, phone);
+    expect((await firstLogin.json()).user.must_change_password).toBe(true);
+    const passwordGate = await teacher.get(`/api/v1/sessions/${outsideSession.id}`);
+    expect(passwordGate.status()).toBe(403);
+    expect((await passwordGate.json()).code).toBe('PASSWORD_CHANGE_REQUIRED');
+    const newPassword = `${demoPassword}-changed-${Date.now()}`;
+    const changed = await mutate(teacher, 'put', '/api/v1/auth/password', {
+      current_password: demoPassword, password: newPassword, password_confirmation: newPassword,
+    });
+    expect(changed.ok()).toBeTruthy();
+    expect((await (await teacher.get('/api/v1/auth/me')).json()).user.must_change_password).toBe(false);
     const allAccess = await teacher.get(`/api/v1/sessions/${outsideSession.id}`);
     expect(allAccess.ok()).toBeTruthy();
 
@@ -78,7 +88,7 @@ test('role permissions union while assigned and disappear immediately after role
     expect(revoked.ok()).toBeTruthy();
     const deniedAfterRevoke = await teacher.get(`/api/v1/sessions/${outsideSession.id}`);
     expect([401, 403]).toContain(deniedAfterRevoke.status());
-    await login(teacher, phone);
+    await login(teacher, phone, newPassword);
     expect((await teacher.get(`/api/v1/sessions/${outsideSession.id}`)).status()).toBe(403);
   } finally {
     await Promise.all([admin.dispose(), teacher.dispose()]);

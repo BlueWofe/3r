@@ -9,12 +9,12 @@ export async function apiContext(): Promise<APIRequestContext> {
   return request.newContext({ baseURL, extraHTTPHeaders: { Accept: 'application/json' } });
 }
 
-export async function login(api: APIRequestContext, phone: string) {
+export async function login(api: APIRequestContext, phone: string, password = demoPassword) {
   const csrf = await api.get('/api/v1/auth/csrf');
   expect(csrf.ok(), `CSRF endpoint returned ${csrf.status()}`).toBeTruthy();
   const { csrf_token } = await csrf.json();
   const response = await api.post('/api/v1/auth/login', {
-    data: { phone, password: demoPassword },
+    data: { phone, password },
     headers: { 'X-CSRF-TOKEN': csrf_token },
   });
   expect(response.ok(), `Login for ${phone} returned ${response.status()}`).toBeTruthy();
