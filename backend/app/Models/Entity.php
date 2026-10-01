@@ -25,6 +25,7 @@ class Entity extends Model
             $data['group_names'] = app(GroupAudience::class)->names($data['group_ids']);
         }
         if ($this->type === 'meetings') {
+            $data += ['kind' => 'meeting', 'show_on_calendar' => false, 'color' => '#967323'];
             $ids = array_values(array_unique(array_map('intval', $data['role_ids'] ?? [])));
             $names = Role::whereIn('id', $ids)->pluck('name', 'id');
             $data['role_names'] = array_values(array_filter(array_map(fn ($id) => $names[$id] ?? null, $ids), fn ($name) => $name !== null));

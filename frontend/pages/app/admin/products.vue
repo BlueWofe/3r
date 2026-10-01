@@ -24,7 +24,7 @@ onMounted(load);
       <p class="eyebrow">PRODUCT CATALOG</p>
       <h1>產品管理</h1>
       <p class="muted">
-        管理展示資料、規格 SKU、庫存與大量優惠；本系統沒有訂單或結帳。
+        管理產品資料、規格 SKU、庫存、大量優惠與配送設定；顧客可送出訂單，本系統不收取線上付款。
       </p>
     </div>
     <button
@@ -37,6 +37,7 @@ onMounted(load);
       新增食品
     </button>
   </div>
+  <ShippingSettings />
   <div v-if="error" class="notice">{{ error }}</div>
   <div class="tablewrap">
     <table class="table">

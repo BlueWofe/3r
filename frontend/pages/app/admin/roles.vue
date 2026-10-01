@@ -45,6 +45,11 @@ const permissionMenus = [
     },
   },
   {
+    module: "orders",
+    title: "訂單管理",
+    labels: { "read.all": "查看訂單與顧客聯絡資料", "update.all": "更新訂單處理狀態與備註" },
+  },
+  {
     module: "users",
     title: "人員與角色",
     labels: {
@@ -101,12 +106,12 @@ const permissionMenus = [
   },
   {
     module: "meetings",
-    title: "會議管理",
+    title: "會議／活動管理",
     labels: {
-      "read.own": "查看獲授權的會議與紀錄",
-      "read.all": "查看所有會議與紀錄",
-      "create.all": "新增會議與紀錄",
-      "update.all": "編輯會議與紀錄",
+      "read.own": "查看獲授權的會議、活動與紀錄",
+      "read.all": "查看所有會議、活動與紀錄",
+      "create.all": "新增會議、活動與紀錄",
+      "update.all": "編輯會議、活動與紀錄",
     },
   },
   {

@@ -23,7 +23,8 @@ watch(selectedCategory, () => refresh());
   </div>
   <section class="section">
     <div class="container">
-      <p class="notice">本頁為服務成果展示，並不提供線上購買或付款。</p>
+      <p class="notice">可將商品加入購物車，免登入送出訂單；本網站不提供線上付款。</p>
+      <div class="actions"><NuxtLink class="button ghost" to="/cart">查看購物車 →</NuxtLink></div>
       <section class="bulk-cta">
         <h2>企業 CSR 與教會節慶禮盒大宗認購專案</h2>
         <p>支援客製祝福燙金小卡、開立合法三聯式統一發票及捐贈抵扣憑證</p>

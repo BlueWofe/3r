@@ -6,10 +6,12 @@ use App\Http\Controllers\ContactInquiryController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\GroupNewsController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PrisonController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ShippingController;
 use App\Http\Middleware\ActiveUser;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -48,6 +50,9 @@ Route::prefix('api/v1')->group(function () {
     Route::put('auth/profile', fn (Request $r) => (new ApiController)->auth($r, 'profile'));
     Route::post('public/contact', [ContactInquiryController::class, 'submit'])->middleware(['throttle:20,1,contact-inquiry', 'throttle:100,60,contact-inquiry-hour']);
     Route::get('public/contact', [ApiController::class, 'publicContact']);
+    Route::get('public/shipping-settings', [ShippingController::class, 'publicSettings']);
+    Route::post('public/orders/quote', [OrderController::class, 'quote'])->middleware('throttle:60,1,order-quote');
+    Route::post('public/orders', [OrderController::class, 'submit'])->middleware(['throttle:10,1,guest-order', 'throttle:50,60,guest-order-hour']);
     Route::get('public/products/{id}/quote', [ProductController::class, 'quote']);
     foreach (['pages', 'news', 'products', 'search'] as $kind) {
         Route::get('public/'.$kind, fn (Request $r) => (new ApiController)->publicContent($r, $kind));
@@ -57,6 +62,9 @@ Route::prefix('api/v1')->group(function () {
     }
     Route::get('files/{id}/download', [ModuleController::class, 'files']);
     Route::middleware('auth')->group(function () {
+        Route::match(['get', 'put'], 'shipping-settings', [ShippingController::class, 'settings']);
+        Route::get('orders', [OrderController::class, 'orders']);
+        Route::match(['get', 'put'], 'orders/{id}', [OrderController::class, 'orders']);
         Route::get('contact-inquiries', [ContactInquiryController::class, 'inquiries']);
         Route::put('contact-inquiries/{id}', [ContactInquiryController::class, 'inquiries']);
         Route::get('groups/options', [GroupController::class, 'options']);

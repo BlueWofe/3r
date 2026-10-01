@@ -43,6 +43,7 @@ export function useWorkspaceNavigation() {
       "產品管理",
       () => can("content.read.all") || can("content.update.all"),
     ],
+    ["/app/admin/orders", "訂單管理", () => can("orders.read.all") || can("orders.update.all")],
     [
       "/app/admin/cases",
       "個案紀錄",
@@ -50,7 +51,7 @@ export function useWorkspaceNavigation() {
     ],
     [
       "/app/admin/meetings",
-      "會議管理",
+      "會議／活動管理",
       () => can("meetings.read.all") || can("meetings.read.own"),
     ],
     ["/app/admin/forms", "表單中心", () => can("forms.read.all")],
@@ -80,7 +81,7 @@ export function useWorkspaceNavigation() {
       {
         title: "官網內容",
         icon: "edit",
-        paths: ["content", "products", "settings", "contact-inquiries"],
+        paths: ["content", "products", "orders", "settings", "contact-inquiries"],
       },
       { title: "會務與資源", icon: "folder", paths: ["meetings", "forms"] },
       {

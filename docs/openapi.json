@@ -2592,6 +2592,382 @@
         "security": []
       }
     },
+    "/public/shipping-settings": {
+      "get": {
+        "summary": "GET /public/shipping-settings",
+        "operationId": "get_public_shipping_settings",
+        "tags": [
+          "public"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShippingSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [],
+        "description": "See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing."
+      }
+    },
+    "/shipping-settings": {
+      "get": {
+        "summary": "GET /shipping-settings",
+        "operationId": "get_shipping_settings",
+        "tags": [
+          "shipping-settings"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShippingSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing."
+      },
+      "put": {
+        "summary": "PUT /shipping-settings",
+        "operationId": "put_shipping_settings",
+        "tags": [
+          "shipping-settings"
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShippingSettings"
+              }
+            }
+          }
+        },
+        "description": "See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing."
+      }
+    },
+    "/public/orders/quote": {
+      "post": {
+        "summary": "POST /public/orders/quote",
+        "operationId": "post_public_orders_quote",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "name": "variant_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "quantity",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCart"
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/public/orders": {
+      "post": {
+        "summary": "POST /public/orders",
+        "operationId": "post_public_orders",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "201": {
+            "description": "Created; public confirmation includes order_number, status, total and currency only."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestOrder"
+              }
+            }
+          }
+        },
+        "security": [],
+        "description": "See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing."
+      }
+    },
+    "/orders": {
+      "get": {
+        "summary": "GET /orders",
+        "operationId": "get_orders",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing."
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "summary": "GET /orders/{id}",
+        "operationId": "get_orders__id_",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "description": "See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing."
+      },
+      "put": {
+        "summary": "PUT /orders/{id}",
+        "operationId": "put_orders__id_",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "version",
+                  "status"
+                ],
+                "properties": {
+                  "version": {
+                    "type": "integer"
+                  },
+                  "status": {
+                    "enum": [
+                      "new",
+                      "confirmed",
+                      "shipped",
+                      "completed",
+                      "cancelled"
+                    ]
+                  },
+                  "staff_note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing."
+      }
+    },
     "/public/search": {
       "get": {
         "summary": "GET /public/search",
@@ -3794,7 +4170,7 @@
             "description": "Validation failed"
           }
         },
-        "description": "Functional permission and role/group audience checked before filtering. Group membership does not grant a role."
+        "description": "Meetings and activities authorized by current roles, ownership and groups. Calendar uses show_on_calendar and meeting_date from this same authorized list."
       },
       "post": {
         "summary": "POST /meetings",
@@ -3871,7 +4247,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingActivity"
+                }
+              }
+            }
           },
           "401": {
             "description": "Login required"
@@ -5703,6 +6086,46 @@
           }
         }
       },
+      "MeetingActivity": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "kind": {
+            "enum": [
+              "meeting",
+              "activity"
+            ]
+          },
+          "activity_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "meeting_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "start_time": {
+            "type": "string",
+            "nullable": true,
+            "description": "HH:mm; both times empty means all-day"
+          },
+          "end_time": {
+            "type": "string",
+            "nullable": true
+          },
+          "show_on_calendar": {
+            "type": "boolean"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          }
+        }
+      },
       "ContactSubmission": {
         "type": "object",
         "required": [
@@ -5818,6 +6241,133 @@
           "handled_by_name": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "ShippingSettings": {
+        "type": "object",
+        "properties": {
+          "flat_fee": {
+            "type": "number",
+            "minimum": 0
+          },
+          "free_shipping_threshold": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "shipping_enabled": {
+            "type": "boolean"
+          },
+          "pickup_enabled": {
+            "type": "boolean"
+          },
+          "pickup_instructions": {
+            "type": "string"
+          }
+        }
+      },
+      "OrderCart": {
+        "type": "object",
+        "required": [
+          "delivery_method",
+          "items"
+        ],
+        "properties": {
+          "delivery_method": {
+            "enum": [
+              "shipping",
+              "pickup"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "required": [
+                "product_id",
+                "variant_id",
+                "quantity"
+              ],
+              "properties": {
+                "product_id": {
+                  "type": "integer"
+                },
+                "variant_id": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000000
+                }
+              }
+            }
+          }
+        }
+      },
+      "GuestOrder": {
+        "type": "object",
+        "required": [
+          "delivery_method",
+          "items",
+          "customer_name",
+          "customer_phone",
+          "idempotency_key",
+          "expected_total_cents"
+        ],
+        "properties": {
+          "delivery_method": {
+            "enum": [
+              "shipping",
+              "pickup"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "required": [
+                "product_id",
+                "variant_id",
+                "quantity"
+              ],
+              "properties": {
+                "product_id": {
+                  "type": "integer"
+                },
+                "variant_id": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000000
+                }
+              }
+            }
+          },
+          "customer_name": {
+            "type": "string"
+          },
+          "customer_phone": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "description": "Required for shipping"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expected_total_cents": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       }

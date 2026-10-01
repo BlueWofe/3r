@@ -1,10 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
 import type { Session } from "~/types";
+type CalendarEntry = Session & { activity?: any };
+const { can } = useAuth();
 const view = ref<"agenda" | "week" | "month">("month");
 const cursor = ref(new Date());
-const sessions = ref<Session[]>([]);
+const sessions = ref<CalendarEntry[]>([]);
 const selected = ref<Session | null>(null);
+const selectedActivity = ref<any>(null);
 const refreshing = ref(false);
 const loading = ref(false);
 const error = ref("");
@@ -47,18 +50,28 @@ const load = async () => {
   const sequence = ++request;
   loading.value = true;
   try {
-    const next =
-      (
-        await api<any>(
-          `/sessions?from=${yyyyMMdd(range.value.from)}&to=${yyyyMMdd(range.value.to)}`,
-        )
-      ).data || [];
+    const from = yyyyMMdd(range.value.from), to = yyyyMMdd(range.value.to);
+    const [courses, meetings] = await Promise.all([
+      can("schedule.read.all") || can("schedule.read.own")
+        ? api<any>(`/sessions?from=${from}&to=${to}`) : Promise.resolve({ data: [] }),
+      can("meetings.read.all") || can("meetings.read.own")
+        ? api<any>("/meetings") : Promise.resolve({ data: [] }),
+    ]);
+    const activities: CalendarEntry[] = (meetings.data || [])
+      .filter((m: any) => m.show_on_calendar === true && m.meeting_date >= from && m.meeting_date <= to)
+      .map((m: any) => ({
+        id: -m.id, title: m.title, class_name: m.kind === "activity" ? m.activity_type || "活動" : "會議",
+        prison: "", location: m.location || "", service_date: m.meeting_date,
+        start_time: m.start_time || "", end_time: m.end_time || "", status: "scheduled",
+        color: m.color, version: 1, participant_count: 0, assignments: [], invitations: [], events: [], activity: m,
+      }));
+    const next = [...(courses.data || []), ...activities];
     if (sequence === request) {
       sessions.value = next;
       error.value = "";
     }
   } catch (e: any) {
-    if (sequence === request) error.value = e.message;
+    if (sequence === request) { sessions.value = []; error.value = e.message; }
   } finally {
     if (sequence === request) loading.value = false;
   }
@@ -97,14 +110,18 @@ function openDay(date: string, event: MouseEvent) {
 }
 function closeDay() {
   document.body.style.overflow = previousOverflow;
-  if (!selected.value) dayTrigger?.focus({ preventScroll: true });
+  if (!selected.value && !selectedActivity.value) dayTrigger?.focus({ preventScroll: true });
 }
 onBeforeUnmount(() => {
   if (dayDialog.value?.open) closeDay();
 });
-function openSession(session: Session) {
+async function openSession(session: CalendarEntry) {
   dayDialog.value?.close();
-  selected.value = session;
+  if (session.activity) {
+    try {
+      selectedActivity.value = await api<any>(`/meetings/${session.activity.id}`);
+    } catch (e: any) { error.value = e.message; await load(); }
+  } else selected.value = session;
 }
 async function sessionUpdated() {
   refreshing.value = true;
@@ -160,7 +177,7 @@ async function sessionUpdated() {
         :class="{ 'is-today': d === today, 'other-month': view === 'month' && Number(d.slice(5, 7)) !== cursor.getMonth() + 1 }"
         :aria-current="d === today ? 'date' : undefined"
         :disabled="loading || refreshing"
-        :aria-label="loading ? `${d}，載入中` : `${d}，${sessionsFor(d).length} 場服務`"
+        :aria-label="loading ? `${d}，載入中` : `${d}，${sessionsFor(d).length} 筆行程`"
         @click="openDay(d, $event)"
       >
         <b>{{ Number(d.slice(8)) }}</b
@@ -181,12 +198,12 @@ async function sessionUpdated() {
           class="event"
           :style="{ borderLeft: `5px solid ${scheduleColor(s.color)}` }"
           :disabled="refreshing || loading"
-          @click="selected = s"
+          @click="openSession(s)"
         >
           <span :class="['status', s.status]">{{
-            s.status === "cancelled" ? "取消" : "排定"
+            s.activity ? (s.activity.kind === "activity" ? "活動" : "會議") : s.status === "cancelled" ? "取消" : "排定"
           }}</span>
-          {{ s.start_time }} {{ s.title }}
+          {{ s.start_time || "全天" }} {{ s.title }}
         </button></template
       >
     </div>
@@ -194,11 +211,11 @@ async function sessionUpdated() {
 
   <dialog ref="dayDialog" class="day-sheet" aria-labelledby="day-sheet-title" @close="closeDay">
     <div class="workhead">
-      <h2 id="day-sheet-title">{{ selectedDay }} 的服務</h2>
+      <h2 id="day-sheet-title">{{ selectedDay }} 的行程</h2>
       <button class="button ghost" @click="dayDialog?.close()">關閉</button>
     </div>
     <p v-if="!sessionsFor(selectedDay).length" class="muted">
-      這一天沒有服務場次。
+      這一天沒有行程。
     </p>
     <button
       v-for="session in sessionsFor(selectedDay)"
@@ -208,10 +225,10 @@ async function sessionUpdated() {
       @click="openSession(session)"
     >
       <span :class="['status', session.status]">{{
-        session.status === "cancelled" ? "已取消" : "已排定"
+        session.activity ? (session.activity.kind === "activity" ? "活動" : "會議") : session.status === "cancelled" ? "已取消" : "已排定"
       }}</span
-      ><b>{{ session.start_time }} {{ session.title }}</b
-      ><small>{{ session.class_name ? `${session.class_name}・` : "" }}{{ session.prison }}／{{ session.location }}</small>
+      ><b>{{ session.start_time || "全天" }} {{ session.title }}</b
+      ><small>{{ session.class_name ? `${session.class_name}・` : "" }}{{ [session.prison, session.location].filter(Boolean).join("／") }}</small>
     </button>
   </dialog>
   <SessionActions
@@ -221,8 +238,18 @@ async function sessionUpdated() {
     @updated="sessionUpdated"
     @close="selected = null"
   />
+  <div v-if="selectedActivity" class="modal">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="activity-detail-title">
+      <div class="workhead"><h2 id="activity-detail-title">{{ selectedActivity.title }}</h2><button class="button ghost" @click="selectedActivity = null">關閉</button></div>
+      <p>{{ selectedActivity.kind === "activity" ? selectedActivity.activity_type || "活動" : "會議" }} · {{ selectedActivity.meeting_date }} · {{ selectedActivity.start_time ? `${selectedActivity.start_time}–${selectedActivity.end_time}` : "全天" }}</p>
+      <p v-if="selectedActivity.location">地點：{{ selectedActivity.location }}</p>
+      <p v-if="selectedActivity.agenda" class="activity-text">{{ selectedActivity.agenda }}</p>
+      <NuxtLink class="button ghost" to="/app/admin/meetings">前往會議／活動管理</NuxtLink>
+    </section>
+  </div>
 </template>
 <style scoped>
+.activity-text { white-space: pre-wrap; }
 .calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; padding: 8px 0; font-size: 13px; color: var(--muted); }
 .iphone-calendar:not(.agenda) { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .iphone-calendar:not(.agenda) .day { height: 106px; min-height: 0; min-width: 0; padding: 4px; overflow: hidden; }

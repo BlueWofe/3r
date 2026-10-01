@@ -1,5 +1,7 @@
 # Shared API contract v1
 
+會議／活動共用既有 `/meetings` 與 `meetings.*` 權限。新增 `kind:meeting|activity`、自訂 `activity_type`、`location`、`start_time/end_time`（HH:mm，兩者皆空代表全天）、`show_on_calendar:boolean`、`color:#RRGGBB`。舊會議預設不加入行事曆；新表單可選擇顯示。行事曆讀取同一個經角色與小組授權的會議列表，並於開啟活動時再次檢查詳細資料權限；活動不列入授課次數、出勤及教師衝突檢查。
+
 班別模板與排課接受 `color`（`#RRGGBB` 六碼色碼，省略時新資料預設 `#3d8768`）。班別生成將顏色複製到新場次；修改班別不改寫已生成的場次。排課管理員可個別修改場次顏色，老師不能透過直接 API 修改共享顯示色。既有資料未存顏色時，前端顯示預設綠色。
 
 排課場次增加 `class_name`（可為空的班級名稱，最多 200 字），與課程主題 `title` 分別保存；定期班別生成時由班別 `name` 帶入。既有 `location` 用於教室／樓層等上課位置，監所地址另存於 `Prison.address`。班級名稱僅排課管理者可修改，老師保留原有位置異動權限。排課搜尋包含班級名稱與位置。

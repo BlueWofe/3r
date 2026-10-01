@@ -53,6 +53,12 @@ GET /public/news/{id}
 GET /public/products
 GET /public/products/{id}
 GET /public/products/{id}/quote
+GET /public/shipping-settings
+GET,PUT /shipping-settings
+POST /public/orders/quote
+POST /public/orders
+GET /orders
+GET,PUT /orders/{id}
 GET /public/search
 GET,POST /products
 GET,PUT,DELETE /products/{id}
@@ -139,6 +145,15 @@ paths['/public/news']['get']['description'] = 'Published articles whose publicat
 paths['/public/news']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'type': 'array', 'items': {'$ref': '#/components/schemas/Article'}}}}}}
 paths['/public/news/{id}']['get']['responses']['200']['content'] = {'application/json': {'schema': {'type': 'object', 'properties': {'data': {'$ref': '#/components/schemas/Article'}}}}}
 extend_groups(spec)
+spec['components']['schemas']['MeetingActivity'] = {'type': 'object', 'additionalProperties': True, 'properties': {
+    'kind': {'enum': ['meeting', 'activity']}, 'activity_type': {'type': 'string', 'nullable': True},
+    'meeting_date': {'type': 'string', 'format': 'date'}, 'location': {'type': 'string', 'nullable': True},
+    'start_time': {'type': 'string', 'nullable': True, 'description': 'HH:mm; both times empty means all-day'},
+    'end_time': {'type': 'string', 'nullable': True}, 'show_on_calendar': {'type': 'boolean'},
+    'color': {'type': 'string', 'pattern': '^#[0-9a-fA-F]{6}$'},
+}}
+paths['/meetings']['get']['description'] = 'Meetings and activities authorized by current roles, ownership and groups. Calendar uses show_on_calendar and meeting_date from this same authorized list.'
+paths['/meetings/{id}']['get']['responses']['200']['content'] = {'application/json': {'schema': {'$ref': '#/components/schemas/MeetingActivity'}}}
 extend_contacts(spec)
 paths['/public/products']['get']['parameters'].extend([
     {'name': 'category', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'maxLength': 100}},
@@ -157,5 +172,30 @@ paths['/notifications']['get']['responses']['200']['content'] = {'application/js
         'unread_count': {'type': 'integer', 'minimum': 0},
     },
 }}}
+shipping = {'type': 'object', 'properties': {
+    'flat_fee': {'type': 'number', 'minimum': 0},
+    'free_shipping_threshold': {'type': 'number', 'nullable': True, 'minimum': 0},
+    'shipping_enabled': {'type': 'boolean'}, 'pickup_enabled': {'type': 'boolean'}, 'pickup_instructions': string,
+}}
+spec['components']['schemas']['ShippingSettings'] = shipping
+cart = {'type': 'object', 'required': ['delivery_method', 'items'], 'properties': {
+    'delivery_method': {'enum': ['shipping', 'pickup']},
+    'items': {'type': 'array', 'minItems': 1, 'maxItems': 50, 'items': {'type': 'object', 'required': ['product_id', 'variant_id', 'quantity'], 'properties': {'product_id': integer, 'variant_id': string, 'quantity': {'type': 'integer', 'minimum': 1, 'maximum': 1000000}}}},
+}}
+spec['components']['schemas']['OrderCart'] = cart
+guest = {'type': 'object', 'required': cart['required'] + ['customer_name', 'customer_phone', 'idempotency_key', 'expected_total_cents'], 'properties': cart['properties'] | {
+    'customer_name': string, 'customer_phone': string, 'address': {'type': 'string', 'description': 'Required for shipping'},
+    'idempotency_key': {'type': 'string', 'format': 'uuid'}, 'expected_total_cents': {'type': 'integer', 'minimum': 0},
+}}
+spec['components']['schemas']['GuestOrder'] = guest
+for path in ['/public/shipping-settings', '/shipping-settings', '/public/orders/quote', '/public/orders', '/orders', '/orders/{id}']:
+    for operation in paths[path].values():
+        operation['description'] = 'See docs/orders.md for permissions, shipping, prices, inventory, idempotency and status transitions. No payment processing.'
+for path in ['/public/shipping-settings', '/shipping-settings']:
+    paths[path]['get']['responses']['200']['content'] = {'application/json': {'schema': {'$ref': '#/components/schemas/ShippingSettings'}}}
+for path, method, schema in [('/shipping-settings', 'put', 'ShippingSettings'), ('/public/orders/quote', 'post', 'OrderCart'), ('/public/orders', 'post', 'GuestOrder')]:
+    paths[path][method]['requestBody'] = {'required': True, 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/' + schema}}}}
+paths['/public/orders']['post']['responses']['201'] = {'description': 'Created; public confirmation includes order_number, status, total and currency only.'}
+paths['/orders/{id}']['put']['requestBody'] = {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'required': ['version', 'status'], 'properties': {'version': integer, 'status': {'enum': ['new', 'confirmed', 'shipped', 'completed', 'cancelled']}, 'staff_note': string}}}}}
 target.write_text(json.dumps(spec, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
 print(f'Generated {len(paths)} API paths')

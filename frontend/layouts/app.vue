@@ -10,7 +10,7 @@ const route = useRoute();
 const serviceLinks = computed(() =>
   [
     ["/app", "今日行程", "calendar", schedule()],
-    ["/app/calendar", "行事曆", "calendar", schedule()],
+    ["/app/calendar", "行事曆", "calendar", schedule() || can("meetings.read.own") || can("meetings.read.all")],
     ["/app/changes", "異動通知", "bell", schedule()],
     [
       "/app/invitations",

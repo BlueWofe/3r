@@ -1,5 +1,9 @@
 <script setup lang="ts">
 const route = useRoute();
+const cart = useShoppingCart();
+const added = ref(false);
+const canAdd = computed(() => selected.value?.active && Number.isInteger(quantity.value) && quantity.value > 0 && quantity.value <= selected.value.stock);
+function addToCart() { if (canAdd.value) { cart.add(Number(route.params.id), selected.value.id, quantity.value); added.value = true; } }
 const { data } = await useAsyncData(
   () => `product-${route.params.id}`,
   () => api<any>(`/public/products/${route.params.id}`),
@@ -13,7 +17,7 @@ let requestId = 0;
 const variants = computed(() => data.value?.data?.metadata?.variants || []);
 onMounted(() => {
   selected.value =
-    variants.value.find((v: any) => v.active) || variants.value[0] || null;
+    variants.value.find((v: any) => v.active && v.stock > 0) || variants.value.find((v: any) => v.active) || null;
 });
 async function getQuote() {
   if (!selected.value || quoting.value) return;
@@ -33,6 +37,7 @@ async function getQuote() {
   }
 }
 watch([selected, quantity], () => {
+  added.value = false;
   requestId++;
   quoting.value = false;
   quote.value = null;
@@ -54,7 +59,7 @@ watch([selected, quantity], () => {
       <PastryIllustration v-else-if="['classic-yolk-pastry', 'taro-yolk-pastry'].includes(data?.data?.slug)" :flavor="data?.data?.slug === 'taro-yolk-pastry' ? 'taro' : 'red-bean'" />
       <div v-else class="product-fallback" aria-hidden="true">🍞</div>
       <article>
-        <p class="eyebrow">服務成果展示</p>
+        <p class="eyebrow">愛心好食</p>
         <h1 class="serif">{{ data?.data?.title }}</h1>
         <p class="muted">{{ data?.data?.body || data?.data?.summary }}</p>
         <div
@@ -119,9 +124,14 @@ watch([selected, quantity], () => {
             >
           </p>
           <p v-if="quoteError" class="error">{{ quoteError }}</p>
+          <div class="actions product-cart-actions"><button class="button" :disabled="!canAdd" @click="addToCart">加入購物車</button><NuxtLink class="button ghost" to="/cart">前往購物車</NuxtLink></div><p v-if="added" class="notice" role="status">已加入購物車，可繼續選購或前往確認訂單。</p>
         </div>
-        <div class="notice">此為展示／詢問模式，沒有購物車、訂單或結帳。</div>
+        <div class="notice">免登入即可送出訂單，由協會聯絡確認。本網站不提供線上付款。</div>
       </article>
     </div>
   </section>
 </template>
+
+<style scoped>
+.product-cart-actions{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px}.product-layout article{min-width:0}.product-layout .card{margin:20px 0}
+</style>

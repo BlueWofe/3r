@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { loggedIn, user, refresh, logout } = useAuth();
+const cart = useShoppingCart();
 const navOpen = ref(false);
 const navButton = ref<HTMLButtonElement | null>(null);
 const { servicePath } = useWorkspaceNavigation();
@@ -49,6 +50,7 @@ onMounted(refresh);
           <NuxtLink to="/about">關於我們</NuxtLink
           ><NuxtLink to="/news">最新消息</NuxtLink
           ><NuxtLink to="/food">愛心好食</NuxtLink
+          ><NuxtLink to="/cart">購物車<span v-if="cart.count.value">（{{ cart.count.value }}）</span></NuxtLink
           ><NuxtLink to="/contact">聯絡我們</NuxtLink
           ><NuxtLink to="/search">搜尋</NuxtLink
           ><NuxtLink class="button gold" to="/donate">支持事工</NuxtLink

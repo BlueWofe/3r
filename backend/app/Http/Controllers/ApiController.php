@@ -9,6 +9,7 @@ use App\Services\ArticleContent;
 use App\Services\AssociationLogo;
 use App\Services\GroupAudience;
 use App\Services\PrisonDirectory;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -23,7 +24,7 @@ class ApiController extends Controller
 {
     public static function permissionNames(): array
     {
-        $modules = ['schedule' => ['read.own', 'read.all', 'update.own', 'update.all', 'create.all'], 'attendance' => ['create.own', 'update.all'], 'content' => ['read.all', 'create.all', 'update.all', 'delete.all', 'publish.all'], 'users' => ['read.all', 'update.all', 'create.all'], 'roles' => ['manage.all'], 'cases' => ['read.assigned', 'read.all', 'create.all', 'update.assigned', 'update.all', 'export.all'], 'resources' => ['read.own', 'read.all', 'create.own', 'create.all', 'update.all', 'delete.all'], 'meetings' => ['read.own', 'read.all', 'create.all', 'update.all'], 'forms' => ['read.own', 'read.all', 'create.all', 'update.all', 'export.all'], 'donations' => ['read.own', 'read.all'], 'reports' => ['read.own', 'read.all'], 'settings' => ['manage.all'], 'prisons' => ['manage.all'], 'groups' => ['manage.all', 'broadcast.all'], 'contacts' => ['read.all', 'update.all']];
+        $modules = ['schedule' => ['read.own', 'read.all', 'update.own', 'update.all', 'create.all'], 'attendance' => ['create.own', 'update.all'], 'content' => ['read.all', 'create.all', 'update.all', 'delete.all', 'publish.all'], 'users' => ['read.all', 'update.all', 'create.all'], 'roles' => ['manage.all'], 'cases' => ['read.assigned', 'read.all', 'create.all', 'update.assigned', 'update.all', 'export.all'], 'resources' => ['read.own', 'read.all', 'create.own', 'create.all', 'update.all', 'delete.all'], 'meetings' => ['read.own', 'read.all', 'create.all', 'update.all'], 'forms' => ['read.own', 'read.all', 'create.all', 'update.all', 'export.all'], 'donations' => ['read.own', 'read.all'], 'reports' => ['read.own', 'read.all'], 'settings' => ['manage.all'], 'prisons' => ['manage.all'], 'groups' => ['manage.all', 'broadcast.all'], 'contacts' => ['read.all', 'update.all'], 'orders' => ['read.all', 'update.all']];
         $out = [];
         foreach ($modules as $m => $actions) {
             foreach ($actions as $a) {
@@ -334,6 +335,17 @@ class ApiController extends Controller
         if ($id) {
             $e = Entity::where('type', $type)->lockForUpdate()->findOrFail($id);
         }
+        if ($type === 'meetings') {
+            $rules += [
+                'kind' => 'sometimes|in:meeting,activity',
+                'activity_type' => 'nullable|string|max:100',
+                'location' => 'nullable|string|max:500',
+                'start_time' => 'nullable|required_with:end_time|date_format:H:i',
+                'end_time' => 'nullable|required_with:start_time|date_format:H:i|after:start_time',
+                'show_on_calendar' => 'sometimes|boolean',
+                'color' => ['sometimes', 'required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            ];
+        }
         $before = $e->data;
         $v = $r->validate($rules);
         if ($type === 'cases') {
@@ -354,6 +366,14 @@ class ApiController extends Controller
             Entity::create(['type' => 'audit', 'owner_id' => $r->user()->id, 'data' => ['module' => 'cases', 'subject_id' => $id, 'action' => $id ? 'update' : 'create', 'before' => $before, 'after' => $v]]);
         }
         if ($type === 'meetings') {
+            foreach (['kind' => 'meeting', 'activity_type' => null, 'location' => null, 'start_time' => null, 'end_time' => null, 'show_on_calendar' => false, 'color' => '#967323'] as $field => $default) {
+                if (! array_key_exists($field, $v)) {
+                    $v[$field] = $before[$field] ?? $default;
+                }
+            }
+            abort_if((bool) $v['start_time'] !== (bool) $v['end_time'] || ($v['start_time'] && $v['end_time'] <= $v['start_time']), 422, '請填寫完整且有效的活動時段，或將開始與結束時間都留白作為全天活動。');
+            $v['show_on_calendar'] = (bool) $v['show_on_calendar'];
+            $v['meeting_date'] = CarbonImmutable::parse($v['meeting_date'])->toDateString();
             $v['group_ids'] = array_key_exists('group_ids', $v) ? app(GroupAudience::class)->validate($v['group_ids']) : ($before['group_ids'] ?? []);
             if ($id && ! array_key_exists('role_ids', $v)) {
                 $v['role_ids'] = $before['role_ids'] ?? [];

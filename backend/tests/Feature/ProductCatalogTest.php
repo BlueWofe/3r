@@ -39,6 +39,7 @@ class ProductCatalogTest extends TestCase
         $this->getJson("/api/v1/public/products/$id/quote?variant_id=original&quantity=0")->assertUnprocessable();
         $body = $this->product();
         $body['status'] = 'draft';
+        $body['version'] = 1;
         $this->putJson('/api/v1/products/'.$id, $body)->assertOk();
         $this->getJson("/api/v1/public/products/$id/quote?variant_id=original&quantity=1")->assertNotFound();
         $this->deleteJson('/api/v1/products/'.$id)->assertOk();

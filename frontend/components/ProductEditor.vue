@@ -4,6 +4,7 @@ const emit = defineEmits(["close", "saved"]);
 const p = props.product;
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 const form = reactive<any>({
+  version: p?.version ?? 1,
   title: p?.title || "",
   slug: p?.slug || "",
   summary: p?.summary || "",
@@ -43,6 +44,20 @@ const imagePreview = ref("");
 const galleryFiles = ref<File[]>([]);
 const galleryPreviews = ref<string[]>([]);
 const saving = ref(false);
+const conflict = ref(false);
+async function reloadProduct() {
+  if (!p || saving.value) return;
+  saving.value = true;
+  try {
+    const latest = await api<any>(`/products/${p.id}`);
+    for (const key of Object.keys(form)) if (latest[key] !== undefined) form[key] = copy(latest[key]);
+    form.version = latest.version ?? 1;
+    image.value = null; galleryFiles.value = [];
+    galleryPreviews.value.forEach(url => URL.revokeObjectURL(url)); galleryPreviews.value = [];
+    if (imagePreview.value) URL.revokeObjectURL(imagePreview.value); imagePreview.value = "";
+    conflict.value = false; error.value = ""; emit("saved");
+  } catch (e: any) { error.value = e.message; } finally { saving.value = false; }
+}
 onUnmounted(() => {
   galleryPreviews.value.forEach((url) => URL.revokeObjectURL(url));
   if (imagePreview.value) URL.revokeObjectURL(imagePreview.value);
@@ -124,8 +139,8 @@ async function save() {
     );
     emit("saved");
     emit("close");
-  } catch {
-    // useApiError already exposes the actionable API error in the form.
+  } catch (e: any) {
+    conflict.value = e.code === 409;
   } finally {
     saving.value = false;
   }
@@ -354,6 +369,7 @@ async function save() {
         </div>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
+      <div v-if="conflict" class="notice"><p>商品可能因新訂單或其他編輯而更新，或規格仍有待處理訂單。請檢查異動，或載入最新商品後重新編輯；載入會取代目前未儲存的修改。</p><button type="button" class="button ghost" :disabled="saving" @click="reloadProduct">載入最新商品與庫存</button></div>
       <button class="button" :disabled="saving">
         {{ saving ? "儲存中…" : "儲存食品" }}
       </button>

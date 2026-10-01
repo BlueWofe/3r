@@ -182,6 +182,7 @@ class MinistryTest extends TestCase
         $id = $this->actingAs($admin)->postJson('/api/v1/contents', $body)->assertOk()->json('id');
         $this->getJson('/api/v1/public/products/'.$id)->assertNotFound();
         $body['status'] = 'published';
+        $body['version'] = 1;
         $this->putJson('/api/v1/contents/'.$id, $body)->assertOk();
         $this->getJson('/api/v1/public/products/'.$id)->assertOk()->assertJsonPath('data.body', 'alert(1)示範');
     }

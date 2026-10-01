@@ -5,11 +5,18 @@ const roles = ref<any[]>([]),
   groups = ref<any[]>([]),
   filterGroupId = ref("");
 const fields = computed(() => [
-  { key: "title", label: "會議名稱" },
+  { key: "title", label: "名稱" },
+  { key: "kind", label: "類型", type: "select", defaultValue: "meeting", options: [{id: "meeting", name: "會議"}, {id: "activity", name: "活動"}] },
+  { key: "activity_type", label: "活動分類", optional: true },
   { key: "meeting_date", label: "日期", type: "date" },
-  { key: "agenda", label: "議程", type: "textarea" },
-  { key: "minutes", label: "紀錄", type: "textarea" },
-  { key: "decisions", label: "決議", type: "textarea" },
+  { key: "start_time", label: "開始時間", type: "time", optional: true },
+  { key: "end_time", label: "結束時間", type: "time", optional: true, hideInList: true },
+  { key: "location", label: "地點", optional: true },
+  { key: "show_on_calendar", label: "行事曆", type: "select", defaultValue: true, options: [{id:true,name:"顯示於行事曆"},{id:false,name:"不顯示"}] },
+  { key: "color", label: "顯示顏色", type: "color", defaultValue: "#967323", hideInList: true },
+  { key: "agenda", label: "議程／活動內容", type: "textarea", optional: true, hideInList: true },
+  { key: "minutes", label: "紀錄", type: "textarea", optional: true, hideInList: true },
+  { key: "decisions", label: "決議", type: "textarea", optional: true, hideInList: true },
   {
     key: "role_ids",
     label: "可查看角色",
@@ -17,6 +24,7 @@ const fields = computed(() => [
     options: roles.value,
     displayKey: "role_names",
     optional: true,
+    hideInList: true,
   },
   {
     key: "group_ids",
@@ -25,10 +33,12 @@ const fields = computed(() => [
     options: groups.value,
     optional: true,
     displayKey: "group_names",
+    hideInList: true,
   },
   {
     key: "file_ids",
     label: "會議附件",
+    hideInList: true,
     type: "multiselect",
     options: resources.value.map((r: any) => ({
       id: r.file_id || r.id,
@@ -83,12 +93,12 @@ onMounted(load);
 </script>
 <template>
   <EntityBoard
-    title="會議管理"
+    title="會議／活動管理"
     :endpoint="meetingEndpoint"
     :fields="fields"
     :can-create="can('meetings.create.all')"
     :can-update="can('meetings.update.all')"
-    description="會議議程、紀錄與決議可依角色或小組存取。"
+    description="管理會議、志工培訓、聚會或其他活動；可自訂活動分類並顯示於行事曆。開始與結束時間皆留白代表全天，角色與小組權限仍適用。"
   />
   <section class="card meeting-filter">
     <label class="field"
@@ -101,7 +111,7 @@ onMounted(load);
     >
   </section>
   <section class="section" style="padding-bottom: 0">
-    <h2 class="serif">會議資源與檔案</h2>
+    <h2 class="serif">會議／活動資源與檔案</h2>
     <form
       v-if="can('resources.create.own') || can('resources.create.all')"
       class="card toolbar"

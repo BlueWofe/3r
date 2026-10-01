@@ -11,6 +11,7 @@ const p = defineProps<{
     defaultValue?: any;
     optional?: boolean;
     readonly?: boolean;
+    hideInList?: boolean;
   }[];
   description?: string;
   canCreate?: boolean;
@@ -26,6 +27,7 @@ const files = reactive<Record<string, File | null>>({});
 const { error, run } = useApiError();
 const saved = ref("");
 const pending = ref(false);
+const listFields = computed(() => p.fields.filter((field) => !field.hideInList));
 function displayValue(row: any, field: any) {
   const named = field.displayKey ? row[field.displayKey] : undefined;
   if (named !== undefined && named !== null && named !== "")
@@ -129,13 +131,13 @@ onMounted(load);
     <table class="table">
       <thead>
         <tr>
-          <th v-for="f in fields" :key="f.key">{{ f.label }}</th>
+          <th v-for="f in listFields" :key="f.key">{{ f.label }}</th>
           <th>操作</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="r in rows" :key="r.id">
-          <td v-for="f in fields" :key="f.key" :data-label="f.label">
+          <td v-for="f in listFields" :key="f.key" :data-label="f.label">
             {{ displayValue(r, f) }}
           </td>
           <td data-label="操作">
@@ -149,7 +151,7 @@ onMounted(load);
           </td>
         </tr>
         <tr v-if="!rows.length">
-          <td :colspan="fields.length + 1" class="empty">尚無資料</td>
+          <td :colspan="listFields.length + 1" class="empty">尚無資料</td>
         </tr>
       </tbody>
     </table>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ContactInquiry;
 use App\Models\Entity;
+use App\Models\Order;
 use App\Models\ServiceSession;
 use App\Models\User;
 use Carbon\Carbon;
@@ -17,7 +18,14 @@ class NotificationAccess
             return null;
         }
         $d = $notification->data;
-        if (isset($d['contact_inquiry_id'])) {
+        if (isset($d['order_id'])) {
+            if (! $user->canDo('orders.read.all') || ! Order::whereKey($d['order_id'])->exists()) {
+                return null;
+            }
+            $d['title'] = '新的商品訂單';
+            $d['message'] = '收到新的商品訂單，請查看並處理。';
+            $d['url'] = '/app/admin/orders?id='.(int) $d['order_id'];
+        } elseif (isset($d['contact_inquiry_id'])) {
             if (! $user->canDo('contacts.read.all') || ! ContactInquiry::whereKey($d['contact_inquiry_id'])->exists()) {
                 return null;
             }
