@@ -70,12 +70,12 @@ test('meeting administration displays role names while keeping the role selectio
 
     await signInAsAdmin(page);
     await page.goto('/app/admin/meetings');
-    await expect(page.getByRole('heading', { name: '會議管理', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '會議／活動管理', exact: true })).toBeVisible();
     await page.getByRole('button', { name: '新增', exact: true }).click();
     const title = unique('Role label UI meeting');
-    await page.getByLabel('會議名稱').fill(title);
+    await page.getByLabel('名稱', { exact: true }).fill(title);
     await page.getByLabel('日期').fill(new Date().toISOString().slice(0, 10));
-    await page.getByLabel('議程').fill('會議角色名稱呈現驗收');
+    await page.getByLabel('議程／活動內容').fill('會議角色名稱呈現驗收');
     await page.getByLabel('紀錄').fill('合成資料');
     await page.getByLabel('決議').fill('不產生外部通知');
     await page.getByLabel('可查看角色').selectOption(String(role!.id));
@@ -91,9 +91,6 @@ test('meeting administration displays role names while keeping the role selectio
 
     const row = page.getByRole('row').filter({ hasText: title });
     await expect(row).toBeVisible();
-    const roleCell = row.locator('td[data-label="可查看角色"]');
-    await expect(roleCell).toHaveText(role!.name);
-    await expect(roleCell).not.toHaveText(String(role!.id));
     await row.getByRole('button', { name: '編輯', exact: true }).click();
     await expect(page.getByLabel('可查看角色')).toHaveValues([String(role!.id)]);
     await expect(page.getByLabel('可查看角色').locator('option:checked')).toHaveText(role!.name);

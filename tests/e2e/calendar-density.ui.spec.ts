@@ -58,7 +58,7 @@ test('dense calendar days stay compact and expose every session in a keyboard-ac
       expect(heights.length).toBe(42);
       expect(Math.max(...heights) - Math.min(...heights), `month cells stay equally tall at ${width}px`).toBeLessThanOrEqual(1);
 
-      const dayButton = page.getByRole('button', { name: `${serviceDate}，8 場服務`, exact: true });
+      const dayButton = page.getByRole('button', { name: `${serviceDate}，8 筆行程`, exact: true });
       await expect(dayButton).toBeVisible();
       await expect(page.locator(`.calendar .day[data-date="${serviceDate}"]`)).toContainText('+5');
       await dayButton.click();
