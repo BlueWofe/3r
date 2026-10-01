@@ -41,12 +41,13 @@ export function useNotifications() {
   }
   async function markNotificationRead(item: InboxNotification) {
     const ownerId = user.value?.id;
-    const wasUnread = !item.read && !item.read_at;
     const updated = await api<InboxNotification>(`/notifications/${item.id}/read`, { method: "POST" });
     if (ownerId !== user.value?.id) throw new Error("帳號已變更，請重新開啟通知。");
     Object.assign(item, updated);
     item.read = true;
-    if (wasUnread) unreadCount.value = Math.max(0, unreadCount.value - 1);
+    const cached = items.value.find((row) => row.id === item.id);
+    if (cached) Object.assign(cached, updated);
+    unreadCount.value = items.value.filter((row) => !row.read && !row.read_at).length;
     return updated;
   }
   async function markAllNotificationsRead() {
