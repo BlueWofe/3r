@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\ArticleContent;
 use App\Services\AssociationLogo;
 use App\Services\GroupAudience;
+use App\Services\LoginRecords;
 use App\Services\PrisonDirectory;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -56,10 +57,12 @@ class ApiController extends Controller
             abort_if(RateLimiter::tooManyAttempts($key, 5), 429, '登入失敗次數過多，請稍後重試');
             if (! Auth::attempt($v + ['active' => true])) {
                 RateLimiter::hit($key, 60);
+                app(LoginRecords::class)->record($r, User::where('phone', $v['phone'])->first(), 'failure');
                 abort(422, '手機或密碼錯誤');
             }
             RateLimiter::clear($key);
             $r->session()->regenerate();
+            app(LoginRecords::class)->record($r, $r->user(), 'success');
 
             return ['user' => $this->me($r->user())];
         }

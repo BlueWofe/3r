@@ -14,6 +14,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShippingController;
 use App\Http\Middleware\ActiveUser;
 use App\Models\User;
+use App\Services\LoginRecords;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
@@ -63,6 +64,7 @@ Route::prefix('api/v1')->group(function () {
     }
     Route::get('files/{id}/download', [ModuleController::class, 'files']);
     Route::middleware('auth')->group(function () {
+        Route::get('login-records', fn (Request $r) => app(LoginRecords::class)->list($r));
         Route::match(['get', 'put'], 'shipping-settings', [ShippingController::class, 'settings']);
         Route::get('orders', [OrderController::class, 'orders']);
         Route::match(['get', 'put'], 'orders/{id}', [OrderController::class, 'orders']);
