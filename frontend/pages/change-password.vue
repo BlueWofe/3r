@@ -7,6 +7,8 @@ const pending = ref(false), error = ref("");
 async function submit() {
   if (pending.value) return;
   error.value = "";
+  if (!form.current_password) { error.value = "請輸入目前密碼。"; return; }
+  if (form.password.length < 10) { error.value = "新密碼至少需要 10 個字元。"; return; }
   if (form.password === form.current_password) { error.value = "新密碼不能與初始密碼相同。"; return; }
   if (form.password !== form.password_confirmation) { error.value = "兩次輸入的新密碼不一致。"; return; }
   pending.value = true;
@@ -30,7 +32,7 @@ async function submit() {
       <p class="eyebrow">ACCOUNT SECURITY</p>
       <h1 class="serif">設定您的新密碼</h1>
       <p class="muted">{{ user?.name }}，管理員提供的初始密碼只能用於第一次登入。請先換成只有您知道的新密碼，再進入工作台。</p>
-      <form class="form" @submit.prevent="submit">
+      <form class="form" novalidate @submit.prevent="submit">
         <fieldset :disabled="pending">
           <label class="field">目前密碼<input v-model="form.current_password" type="password" autocomplete="current-password" required autofocus /></label>
           <label class="field">新密碼<input v-model="form.password" type="password" autocomplete="new-password" minlength="10" required /></label>
@@ -49,7 +51,7 @@ async function submit() {
 .password-page { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(circle at top right, rgba(198,157,77,.2), transparent 35%), var(--cream); }
 .password-card { width: min(520px, 100%); padding: clamp(24px, 6vw, 44px); border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: var(--shadow); }
 .password-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; font: 700 17px/1.4 "Noto Serif TC", serif; }
-.password-brand img { width: 72px; height: 72px; object-fit: cover; border-radius: 12px; }
+.password-brand img { width: 72px; height: 72px; object-fit: contain; border-radius: 12px; }
 .password-card h1 { margin: 4px 0 10px; }
 .password-card fieldset { display: grid; gap: 14px; min-width: 0; margin: 24px 0 0; padding: 0; border: 0; }
 .logout-button { display: block; margin: 20px auto 0; border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; }

@@ -41,7 +41,7 @@ async function save() {
     body.password = form.password;
     body.role_ids = form.role_ids;
   } else {
-    if (form.password) body.password = form.password;
+    if (canManageRoles() && form.password) body.password = form.password;
     if (canManageRoles()) body.role_ids = form.role_ids;
   }
   await run(() =>
@@ -115,7 +115,7 @@ onMounted(load);
       <label class="field">姓名<input v-model="form.name" required /></label
       ><label v-if="!editing" class="field"
         >電話<input v-model="form.phone" required /></label
-      ><label class="field"
+      ><label v-if="!editing || canManageRoles()" class="field"
         >{{ editing ? "重設密碼（選填，至少 9 字元）" : "初始密碼（至少 9 字元）" }}<input
           v-model="form.password"
           type="password"
