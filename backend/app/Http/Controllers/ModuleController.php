@@ -223,6 +223,13 @@ class ModuleController extends ApiController
     public function donations(Request $r, ?int $id = null)
     {
         if ($r->isMethod('get')) {
+            if ($r->boolean('own')) {
+                abort_unless($r->user()->canDo('donations.read.all') || $r->user()->canDo('donations.read.own'), 403);
+                $rows = Entity::where('type', 'donations')->where('owner_id', $r->user()->id)->orderByDesc('id')->get();
+
+                return ['data' => $rows->map->publicData()->values()];
+            }
+
             return $this->generic($r, 'donations');
         }
         if ($id) {

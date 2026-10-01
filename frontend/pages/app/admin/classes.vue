@@ -27,6 +27,7 @@ const blank = () => ({
   active: true,
   start_date: taiwanToday,
   end_date: null,
+  excluded_dates: [],
   version: undefined,
   rules: [
     {
@@ -39,6 +40,13 @@ const blank = () => ({
   ],
 });
 const form = reactive<any>(blank());
+const excludedDates = ref("");
+function requestBody() {
+  const dates = [...new Set(excludedDates.value.split(/[\s,，、;；]+/).filter(Boolean))];
+  if (dates.some((date) => !/^\d{4}-\d{2}-\d{2}$/.test(date)))
+    throw new Error("略過日期請使用 YYYY-MM-DD，並以逗號或換行分隔。");
+  return { ...form, excluded_dates: dates };
+}
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 async function load() {
   try {
@@ -54,6 +62,7 @@ function edit(t?: any) {
   Object.keys(form).forEach((key) => delete form[key]);
   Object.assign(form, copy(t || blank()));
   form.color = scheduleColor(form.color);
+  excludedDates.value = (form.excluded_dates || []).join("\n");
   preview.value = null;
   error.value = "";
   open.value = true;
@@ -87,7 +96,7 @@ async function save() {
       editing.value
         ? `/class-templates/${editing.value.id}`
         : "/class-templates",
-      { method: editing.value ? "PUT" : "POST", body: form },
+      { method: editing.value ? "PUT" : "POST", body: requestBody() },
     );
     open.value = false;
     load();
@@ -104,7 +113,7 @@ async function seePreview() {
   try {
     preview.value = await api<any>("/class-templates/preview", {
       method: "POST",
-      body: form,
+      body: requestBody(),
     });
   } catch (e: any) {
     error.value = e.message;
@@ -210,6 +219,8 @@ onMounted(load);
           >結束日<input v-model="form.end_date" type="date"
         /></label>
       </div>
+      <label class="field">略過日期<textarea v-model="excludedDates" rows="3" placeholder="例如：2026-10-09&#10;2026-10-16" /></label>
+      <p class="muted">遇到停課或不排課的日期，可用逗號或換行分隔；只影響尚未生成的場次。</p>
       <ScheduleColorPicker v-model="form.color" label="班別顯示顏色" />
       <p class="muted">新生成的課程會使用此顏色；既有課程可到排課個別修改。</p>
       <label class="field"

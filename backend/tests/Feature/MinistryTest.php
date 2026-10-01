@@ -2,12 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\ApiController;
 use App\Models\Entity;
 use App\Models\Role;
 use App\Models\ServiceSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -198,5 +201,68 @@ class MinistryTest extends TestCase
         $body = ['phone' => '0912345678', 'name' => '示範', 'password' => 'Temporary-Test-Only', 'password_confirmation' => 'Temporary-Test-Only', 'code' => $code];
         $this->postJson('/api/v1/auth/register', $body)->assertOk();
         $this->postJson('/api/v1/auth/register', $body)->assertUnprocessable();
+    }
+
+    public function test_registration_creates_general_member_role_without_admin_permissions(): void
+    {
+        config(['ministry.otp_test_phones' => '0912345678', 'ministry.sms_driver' => 'mock']);
+        Storage::fake('local');
+        $this->postJson('/api/v1/auth/otp', ['phone' => '0912345678', 'purpose' => 'register'])->assertOk();
+        $code = json_decode(Storage::disk('local')->get('otp-mailbox/0912345678.json'), true)['code'];
+        $this->postJson('/api/v1/auth/register', ['phone' => '0912345678', 'name' => '新會員', 'code' => $code, 'password' => 'Strong-Test-Password', 'password_confirmation' => 'Strong-Test-Password'])->assertOk();
+        $user = User::where('phone', '0912345678')->firstOrFail();
+        $this->assertSame(['donations.read.own'], $user->roles->first()->permissions);
+        $this->actingAs($user)->getJson('/api/v1/roles')->assertForbidden();
+        $this->getJson('/api/v1/users')->assertForbidden();
+        $this->getJson('/api/v1/sessions')->assertForbidden();
+        $this->getJson('/api/v1/orders')->assertForbidden();
+    }
+
+    public function test_password_update_checks_old_password_changes_only_current_user_and_audits_without_secret(): void
+    {
+        $user = $this->account(['donations.read.own']);
+        $this->actingAs($user)->putJson('/api/v1/auth/password', ['current_password' => 'Wrong-Old-Password', 'password' => 'New-Strong-Password', 'password_confirmation' => 'New-Strong-Password'])->assertUnprocessable();
+        $this->putJson('/api/v1/auth/password', ['current_password' => 'Temporary-Test-Only', 'password' => 'New-Strong-Password', 'password_confirmation' => 'Not-Matching-Password'])->assertUnprocessable();
+        $this->putJson('/api/v1/auth/password', ['current_password' => 'Temporary-Test-Only', 'password' => 'New-Strong-Password', 'password_confirmation' => 'New-Strong-Password'])->assertOk()->assertJsonPath('message', '密碼已更新');
+        $this->assertTrue(Hash::check('New-Strong-Password', $user->fresh()->password));
+        $this->assertFalse(Hash::check('Temporary-Test-Only', $user->fresh()->password));
+        $audit = Entity::where('type', 'audit')->latest('id')->firstOrFail()->data;
+        $this->assertSame('password-change', $audit['action']);
+        $this->assertArrayNotHasKey('password', $audit);
+        $this->assertArrayNotHasKey('current_password', $audit);
+    }
+
+    public function test_password_change_revokes_other_database_sessions_and_keeps_current_session(): void
+    {
+        config(['session.driver' => 'database']);
+        app('session')->forgetDrivers();
+        $user = $this->account([]);
+        $currentSessionId = str_repeat('a', 40);
+        $otherSessionId = str_repeat('b', 40);
+        foreach ([$currentSessionId, $otherSessionId] as $id) {
+            DB::table('sessions')->insert(['id' => $id, 'user_id' => $user->id, 'ip_address' => '127.0.0.1', 'user_agent' => 'test', 'payload' => '', 'last_activity' => now()->timestamp]);
+        }
+        $session = app('session')->driver();
+        $request = Request::create('/api/v1/auth/password', 'PUT', ['current_password' => 'Temporary-Test-Only', 'password' => 'New-Strong-Password', 'password_confirmation' => 'New-Strong-Password']);
+        $request->setLaravelSession($session);
+        $request->setUserResolver(fn () => $user);
+        $session->setId($currentSessionId);
+        $this->assertSame($currentSessionId, $request->session()->getId());
+        app(ApiController::class)->auth($request, 'password');
+        $remaining = DB::table('sessions')->where('user_id', $user->id)->pluck('id')->all();
+        $this->assertSame([$currentSessionId], $remaining);
+    }
+
+    public function test_donation_own_filter_restricts_even_an_admin(): void
+    {
+        $admin = $this->admin();
+        $owner = $this->account(['donations.read.own']);
+        $other = $this->account(['donations.read.own']);
+        Entity::create(['type' => 'donations', 'owner_id' => $admin->id, 'data' => ['amount' => 50]]);
+        Entity::create(['type' => 'donations', 'owner_id' => $owner->id, 'data' => ['amount' => 100]]);
+        Entity::create(['type' => 'donations', 'owner_id' => $other->id, 'data' => ['amount' => 200]]);
+        $this->actingAs($admin)->getJson('/api/v1/donations?own=1')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.owner_id', $admin->id);
+        $this->getJson('/api/v1/donations?own=true')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.owner_id', $admin->id);
+        $this->actingAs($owner)->getJson('/api/v1/donations?own=1')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.owner_id', $owner->id);
     }
 }

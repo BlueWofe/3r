@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ClassTemplate;
 use App\Models\Entity;
 use App\Models\Role;
 use App\Models\ServiceSession;
@@ -55,6 +56,38 @@ class ClassTemplatesTest extends TestCase
         $body['version'] = 3;
         $body['color'] = 'red';
         $this->putJson('/api/v1/class-templates/'.$id, $body)->assertUnprocessable();
+    }
+
+    public function test_excluded_dates_are_preserved_in_preview_and_generation(): void
+    {
+        $admin = $this->account(true);
+        $this->actingAs($admin);
+        $body = $this->body();
+        $body['excluded_dates'] = ['2028-01-03'];
+        $preview = $this->postJson('/api/v1/class-templates/preview', $body)->assertOk()->json();
+        $this->assertNotContains('2028-01-03', array_column($preview['data'], 'service_date'));
+        $this->assertSame('此班別已排除此日期。', collect($preview['skipped'])->firstWhere('service_date', '2028-01-03')['reason']);
+
+        $id = $this->postJson('/api/v1/class-templates', $body)->assertOk()->assertJsonPath('excluded_dates.0', '2028-01-03')->json('id');
+        $template = ClassTemplate::findOrFail($id);
+        $data = $template->data;
+        $data['import_key'] = 'trusted-source-key';
+        $data['source_sha256'] = str_repeat('a', 64);
+        $template->update(['data' => $data]);
+        $updated = $body;
+        unset($updated['excluded_dates']);
+        $updated['import_key'] = 'untrusted-client-key';
+        $updated['source_sha256'] = str_repeat('b', 64);
+        $updated['version'] = 1;
+        $this->putJson("/api/v1/class-templates/$id", $updated)->assertOk()->assertJsonPath('excluded_dates.0', '2028-01-03')->assertJsonPath('import_key', 'trusted-source-key')->assertJsonPath('source_sha256', str_repeat('a', 64));
+        $this->postJson("/api/v1/class-templates/$id/generate", ['version' => 2])->assertOk();
+        $this->assertDatabaseMissing('service_sessions', ['template_id' => $id, 'occurrence_date' => '2028-01-03']);
+        $tooMany = $body;
+        $tooMany['excluded_dates'] = array_map(fn ($i) => '2028-01-'.str_pad((string) ($i % 31 + 1), 2, '0', STR_PAD_LEFT), range(0, 366));
+        $this->postJson('/api/v1/class-templates/preview', $tooMany)->assertUnprocessable();
+        $invalid = $body;
+        $invalid['excluded_dates'] = ['2028-02-30'];
+        $this->postJson('/api/v1/class-templates/preview', $invalid)->assertUnprocessable();
     }
 
     private function account(bool $admin = false): User

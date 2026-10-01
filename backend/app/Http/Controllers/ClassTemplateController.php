@@ -17,7 +17,7 @@ class ClassTemplateController extends ApiController
 {
     private function validated(Request $r, bool $update = false): array
     {
-        $v = $r->validate(['name' => 'required|string|max:200', 'prison' => 'required_without:prison_id|string|max:100', 'prison_id' => 'required_without:prison|integer|exists:prisons,id', 'location' => 'required|string|max:200', 'participant_count' => 'required|integer|min:0|max:1000000', 'teacher_ids' => 'present|array|max:20', 'teacher_ids.*' => 'integer|distinct|exists:users,id', 'active' => 'required|boolean', 'start_date' => 'required|date_format:Y-m-d', 'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date', 'rules' => 'required|array|min:1|max:12', 'rules.*.id' => 'required|string|max:100|distinct', 'rules.*.frequency' => 'required|in:weekly,monthly_date,monthly_weekday', 'rules.*.start_time' => 'required|date_format:H:i', 'rules.*.end_time' => 'required|date_format:H:i', 'rules.*.weekdays' => 'sometimes|array|max:7', 'rules.*.weekdays.*' => 'integer|between:1,7', 'rules.*.month_day' => 'sometimes|integer|between:1,31', 'rules.*.week_of_month' => 'sometimes|integer|in:-1,1,2,3,4,5', 'rules.*.weekday' => 'sometimes|integer|between:1,7', 'version' => $update ? 'required|integer|min:1' : 'sometimes|integer|min:1']);
+        $v = $r->validate(['name' => 'required|string|max:200', 'prison' => 'required_without:prison_id|string|max:100', 'prison_id' => 'required_without:prison|integer|exists:prisons,id', 'location' => 'required|string|max:200', 'participant_count' => 'required|integer|min:0|max:1000000', 'teacher_ids' => 'present|array|max:20', 'teacher_ids.*' => 'integer|distinct|exists:users,id', 'active' => 'required|boolean', 'start_date' => 'required|date_format:Y-m-d', 'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date', 'rules' => 'required|array|min:1|max:12', 'rules.*.id' => 'required|string|max:100|distinct', 'rules.*.frequency' => 'required|in:weekly,monthly_date,monthly_weekday', 'rules.*.start_time' => 'required|date_format:H:i', 'rules.*.end_time' => 'required|date_format:H:i', 'rules.*.weekdays' => 'sometimes|array|max:7', 'rules.*.weekdays.*' => 'integer|between:1,7', 'rules.*.month_day' => 'sometimes|integer|between:1,31', 'rules.*.week_of_month' => 'sometimes|integer|in:-1,1,2,3,4,5', 'rules.*.weekday' => 'sometimes|integer|between:1,7', 'excluded_dates' => 'sometimes|array|max:366', 'excluded_dates.*' => 'required|date_format:Y-m-d|distinct', 'version' => $update ? 'required|integer|min:1' : 'sometimes|integer|min:1']);
         $rules = [];
         foreach ($v['rules'] as $i => $rule) {
             $fields = match ($rule['frequency']) {
@@ -48,6 +48,9 @@ class ClassTemplateController extends ApiController
         $v['participant_count'] = (int) $v['participant_count'];
         $v['active'] = (bool) $v['active'];
         $v['end_date'] = $v['end_date'] ?? null;
+        if (! $update || array_key_exists('excluded_dates', $v)) {
+            $v['excluded_dates'] = array_values(array_unique($v['excluded_dates'] ?? []));
+        }
 
         return $v;
     }
@@ -75,6 +78,7 @@ class ClassTemplateController extends ApiController
             }
             $template = $id ? ClassTemplate::lockForUpdate()->findOrFail($id) : new ClassTemplate;
             $before = $id ? $template->publicData() : [];
+            $v['excluded_dates'] ??= $template->data['excluded_dates'] ?? [];
             $v['color'] = $v['color'] ?? ($template->data['color'] ?? '#3d8768');
             if ($id) {
                 abort_unless($template->version === (int) $v['version'], 409, '班別版本已更新。');
@@ -83,6 +87,11 @@ class ClassTemplateController extends ApiController
                 $v['prison_id'] = $template->prison_id;
             }
             $data = array_merge(collect($v)->except('version')->all(), app(PrisonDirectory::class)->resolve($v, $template->prison_id, $r->user()->canDo('schedule.create.all') || $r->user()->canDo('prisons.manage.all')));
+            foreach (['import_key', 'source_sha256'] as $trustedField) {
+                if ($id && array_key_exists($trustedField, $template->data)) {
+                    $data[$trustedField] = $template->data[$trustedField];
+                }
+            }
             $template->data = $data;
             $template->active = $v['active'];
             if ($id) {

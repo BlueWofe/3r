@@ -15,6 +15,7 @@ POST /auth/otp
 POST /auth/register
 POST /auth/reset-password
 PUT /auth/profile
+PUT /auth/password
 POST /auth/change-phone
 GET /permissions
 GET /role-options
@@ -197,5 +198,9 @@ for path, method, schema in [('/shipping-settings', 'put', 'ShippingSettings'), 
     paths[path][method]['requestBody'] = {'required': True, 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/' + schema}}}}
 paths['/public/orders']['post']['responses']['201'] = {'description': 'Created; public confirmation includes order_number, status, total and currency only.'}
 paths['/orders/{id}']['put']['requestBody'] = {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'required': ['version', 'status'], 'properties': {'version': integer, 'status': {'enum': ['new', 'confirmed', 'shipped', 'completed', 'cancelled']}, 'staff_note': string}}}}}
+paths['/auth/password']['put']['description'] = 'Authenticated self-service password update. Verify current_password, require confirmed password of at least 10 characters, revoke other login sessions and retain the current session. Rate limit: 5 requests/minute. Audit never includes passwords.'
+paths['/auth/password']['put']['requestBody'] = {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'required': ['current_password', 'password', 'password_confirmation'], 'properties': {'current_password': {'type': 'string', 'format': 'password'}, 'password': {'type': 'string', 'format': 'password', 'minLength': 10}, 'password_confirmation': {'type': 'string', 'format': 'password'}}}}}}
+paths['/donations']['get']['parameters'].append({'name': 'own', 'in': 'query', 'schema': {'type': 'boolean'}, 'description': 'When true, return only donations owned by the authenticated user, including for financial administrators.'})
+paths['/class-templates']['post']['description'] = 'Class template settings; optional excluded_dates is a distinct array of at most 366 YYYY-MM-DD dates. Preview and generation skip these dates. Omitted fields retain exclusions on update.'
 target.write_text(json.dumps(spec, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
 print(f'Generated {len(paths)} API paths')

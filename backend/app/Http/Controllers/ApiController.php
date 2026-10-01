@@ -72,10 +72,8 @@ class ApiController extends Controller
             if ($action === 'register') {
                 abort_if(User::where('phone', $v['phone'])->exists(), 422, '手機已註冊');
                 $u = User::create(['phone' => $v['phone'], 'email' => $v['phone'].'@demo.invalid', 'name' => $v['name'], 'password' => $v['password']]);
-                $role = Role::where('slug', 'member')->first();
-                if ($role) {
-                    $u->roles()->attach($role);
-                }
+                $role = Role::firstOrCreate(['slug' => 'member'], ['name' => '一般使用者', 'permissions' => ['donations.read.own'], 'active' => true]);
+                $u->roles()->attach($role);
             } else {
                 $u = User::where('phone', $v['phone'])->firstOrFail();
                 $u->update(['password' => $v['password']]);
@@ -94,6 +92,23 @@ class ApiController extends Controller
         }
         if ($action === 'profile') {
             $r->user()->update($r->validate(['name' => 'required|string|max:100']));
+        }
+        if ($action === 'password') {
+            $v = $r->validate([
+                'current_password' => 'required|string',
+                'password' => 'required|string|confirmed|min:10',
+            ]);
+            $userId = (int) $r->user()->id;
+            DB::transaction(function () use ($r, $v, $userId) {
+                $user = User::whereKey($userId)->lockForUpdate()->firstOrFail();
+                abort_unless(Hash::check($v['current_password'], $user->password), 422, '目前密碼錯誤');
+                $user->password = $v['password'];
+                $user->save();
+                DB::table('sessions')->where('user_id', $userId)->where('id', '<>', $r->session()->getId())->delete();
+                Entity::create(['type' => 'audit', 'owner_id' => $userId, 'data' => ['module' => 'auth', 'action' => 'password-change']]);
+            });
+
+            return ['message' => '密碼已更新'];
         }
         if ($action === 'change-phone') {
             $v = $r->validate(['phone' => 'required|regex:/^09[0-9]{8}$/|unique:users,phone', 'code' => 'required|string']);

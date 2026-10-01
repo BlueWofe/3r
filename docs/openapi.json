@@ -391,6 +391,74 @@
         }
       }
     },
+    "/auth/password": {
+      "put": {
+        "summary": "PUT /auth/password",
+        "operationId": "put_auth_password",
+        "tags": [
+          "auth"
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch /auth/csrf with the current session. Refresh after login/logout."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."
+          },
+          "401": {
+            "description": "Login required"
+          },
+          "403": {
+            "description": "Role or data scope denied"
+          },
+          "409": {
+            "description": "Stale session version, scheduling conflict or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_password",
+                  "password",
+                  "password_confirmation"
+                ],
+                "properties": {
+                  "current_password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 10
+                  },
+                  "password_confirmation": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Authenticated self-service password update. Verify current_password, require confirmed password of at least 10 characters, revoke other login sessions and retain the current session. Rate limit: 5 requests/minute. Audit never includes passwords."
+      }
+    },
     "/auth/change-phone": {
       "post": {
         "summary": "POST /auth/change-phone",
@@ -1014,7 +1082,7 @@
             "description": "Validation failed"
           }
         },
-        "description": "Request fields, recurrence rules and pricing validation: docs/catalog-classes-v2.md.",
+        "description": "Class template settings; optional excluded_dates is a distinct array of at most 366 YYYY-MM-DD dates. Preview and generation skip these dates. Omitted fields retain exclusions on update.",
         "requestBody": {
           "description": "See contract.md for required module fields and validation.",
           "content": {
@@ -4738,7 +4806,16 @@
         "tags": [
           "donations"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "own",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "When true, return only donations owned by the authenticated user, including for financial administrators."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Lists use {data:[]}; detailed shapes in contract.md."

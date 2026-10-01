@@ -127,7 +127,7 @@ const permissionMenus = [
   },
   {
     module: "donations",
-    title: "個人資料與奉獻",
+    title: "我的帳戶",
     labels: {
       "read.own": "查看自己的奉獻紀錄",
       "read.all": "查看所有奉獻紀錄",

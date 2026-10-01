@@ -31,7 +31,7 @@ const serviceLinks = computed(() =>
       "form",
       can("forms.read.own") || can("forms.read.all"),
     ],
-    ["/app/profile", "個人資料與奉獻", "person", true],
+    ["/app/profile", "我的帳戶", "person", true],
   ].filter((link) => link[3]),
 );
 const managementIcons: Record<string, string> = {

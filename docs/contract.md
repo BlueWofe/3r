@@ -4,12 +4,16 @@
 
 班別模板與排課接受 `color`（`#RRGGBB` 六碼色碼，省略時新資料預設 `#3d8768`）。班別生成將顏色複製到新場次；修改班別不改寫已生成的場次。排課管理員可個別修改場次顏色，老師不能透過直接 API 修改共享顯示色。既有資料未存顏色時，前端顯示預設綠色。
 
+班別模板可傳送 `excluded_dates: string[]`（最多 366 個互異的 `YYYY-MM-DD`）。預覽與排課生成略過命中班規的日期，並在 `skipped` 附「此班別已排除此日期。」原因。新增模板省略時為空陣列；修改省略時沿用原設定。
+
 排課場次增加 `class_name`（可為空的班級名稱，最多 200 字），與課程主題 `title` 分別保存；定期班別生成時由班別 `name` 帶入。既有 `location` 用於教室／樓層等上課位置，監所地址另存於 `Prison.address`。班級名稱僅排課管理者可修改，老師保留原有位置異動權限。排課搜尋包含班級名稱與位置。
 
 商品規格、數量階梯報價、班別模板與自動排課擴充見 [catalog-classes-v2.md](catalog-classes-v2.md)。
 共用監所與個案欄位擴充見 [prisons-cases.md](prisons-cases.md)，消息與圖文編輯見 [articles.md](articles.md)。
 
 Base /api/v1. JSON requests, Accept application/json, credentials include. Mutations require CSRF: GET /auth/csrf returns {csrf_token}; send X-CSRF-TOKEN. Standard response direct JSON objects, list endpoints {data:[]}; validation errors {message,errors}, 403 forbidden, 409 stale/conflict, 422 invalid. Routes use session middleware. API auth endpoints: POST /auth/login {phone,password}, POST /auth/logout, GET /auth/me => {user:{id,name,phone,roles:[{id,name,slug}],permissions:[string]}}; POST /auth/otp {phone,purpose:register|reset|change_phone}; POST /auth/register {phone,name,password,password_confirmation,code}; POST /auth/reset-password {phone,code,password,password_confirmation}. PUT /auth/profile {name}; POST /auth/change-phone {phone,code}. GET /health.
+
+登入會員更改自己的密碼使用 `PUT /auth/password`，傳送 `{current_password,password,password_confirmation}`。新密碼至少 10 字元；需驗證目前密碼。成功回 `{message:"密碼已更新"}`，撤銷該帳號其他登入工作階段並保留目前工作階段，稽核紀錄不存放密碼。一般註冊帳號自動加入 `member` 角色；若角色不存在，建立「一般使用者」並只授予 `donations.read.own`。
 
 文章類型、主題分類、共用小組、群發通知與会議／資源存取規則見 [groups-articles.md](groups-articles.md)。
 
@@ -27,9 +31,13 @@ Cases GET/POST /cases, GET/PUT /cases/{id} fields {code,name,status,prison,conta
 
 New case service records include a server-generated UUID `id`, `author_id`, derived `author_name` and `created_at`. Existing records without IDs remain readable. Record creation appends under a row lock; ordinary case edits preserve the stored records. The case workspace uses directory/records tabs and retains the selected case in URL query `section=records&case_id=ID`, then fetches authorized detail again after refresh. Meeting payloads include `role_names` corresponding to the stored role IDs (including historical inactive role names); they do not expose role permissions or membership.
 
-Donations POST /donations {amount,purpose} => donation; POST /donations/{id}/simulate {result:success|failed|cancelled}; GET /donations => own/all by permissions; idempotency server-side. GET/PUT /integrations/line {bound:bool,subscribed:bool}; GET /integrations/drive => mock folders; POST /integrations/drive/simulate {action:upload|download,name}; mock only. GET /settings, PUT /settings {association_name,contact_phone,contact_email,address} settings authorized.
+Donations POST /donations {amount,purpose} => donation; POST /donations/{id}/simulate {result:success|failed|cancelled}; GET /donations => own/all by permissions; GET /donations?own=1 always limits results to the signed-in account even when it has `donations.read.all`; idempotency server-side. GET/PUT /integrations/line {bound:bool,subscribed:bool}; GET /integrations/drive => mock folders; POST /integrations/drive/simulate {action:upload|download,name}; mock only. GET /settings, PUT /settings {association_name,contact_phone,contact_email,address} settings authorized.
 
 Demo accounts: seed only with DEMO_SEED=true and DEMO_PASSWORD supplied, NEVER hardcode credentials tracked. phone 0900000001 system admin+teacher, 0900000002 teacher, 0900000003 member, 0900000004 teacher, 0900000005 content manager. Public seed marked 示範內容. Mock OTP only for OTP_TEST_PHONES env allowlist; code is written to private local test mailbox (not HTTP). Mitake uses server-side env credentials; no automatic payment. Taiwan time scheduling, no student attendance names. PostgreSQL row locks + optimistic version updates for schedules and admin role safeguard.
 
 Logo: POST /settings/logo accepts multipart file (JPEG/PNG/WebP, maximum 5 MB), requires settings.manage.all, stores public media and updates logo_file_id without replacing contact settings. GET /settings and GET /public/contact expose derived logo_url; private or non-image references cannot be published as logos. Site header/footer and workspace branding use the saved logo. Uploads preserve original bytes and are included in existing storage backups.
 
+
+Member account: PUT /auth/password {current_password,password,password_confirmation}, authenticated, confirmed password min10, throttled 5/minute. Checks current password under a user row lock, revokes other login sessions and leaves the current session usable; audit never stores passwords. GET /donations?own=1 always limits records to the authenticated owner even for financial administrators. Registration creates the default member role with only donations.read.own when it is missing. Account UI separates profile, password, own donations and notifications into tabs.
+
+Class templates may include excluded_dates: distinct YYYY-MM-DD dates, at most 366. Preview/generation skip matching dates and report the reason; updates that omit the field preserve it. Imported semester schedules remain bounded by start_date/end_date and explicit exclusions; source import identifiers are retained on template edits.

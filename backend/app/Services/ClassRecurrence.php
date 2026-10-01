@@ -23,6 +23,7 @@ class ClassRecurrence
         }
         $occurrences = [];
         $skipped = [];
+        $excludedDates = array_flip($template['excluded_dates'] ?? []);
         for ($date = $start; $date->lte($end); $date = $date->addDay()) {
             foreach ($template['rules'] as $rule) {
                 $match = match ($rule['frequency']) {
@@ -33,7 +34,9 @@ class ClassRecurrence
                 };
                 if ($match) {
                     $occurrence = ['rule_id' => $rule['id'], 'service_date' => $date->format('Y-m-d'), 'start_time' => $rule['start_time'], 'end_time' => $rule['end_time']];
-                    if (CarbonImmutable::parse($occurrence['service_date'].' '.$occurrence['end_time'], 'Asia/Taipei')->lte(CarbonImmutable::now('Asia/Taipei'))) {
+                    if (isset($excludedDates[$occurrence['service_date']])) {
+                        $skipped[] = $occurrence + ['reason' => '此班別已排除此日期。'];
+                    } elseif (CarbonImmutable::parse($occurrence['service_date'].' '.$occurrence['end_time'], 'Asia/Taipei')->lte(CarbonImmutable::now('Asia/Taipei'))) {
                         $skipped[] = $occurrence + ['reason' => '時段已結束，未建立過去場次。'];
                     } else {
                         $occurrences[] = $occurrence;

@@ -120,10 +120,22 @@ test("member workspace has no scheduling controls and public mobile navigation i
   await expect(
     page.getByRole("link", { name: "角色權限", exact: true }),
   ).toHaveCount(0);
-  await page.getByRole("link", { name: "個人資料與奉獻", exact: true }).click();
+  await page.getByRole("link", { name: "我的帳戶", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: /個人/ }).first(),
+    page.getByRole("heading", { name: "我的帳戶", exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "更改密碼", exact: true }).click();
+  await page.getByLabel("目前密碼", { exact: true }).fill("Wrong-Current-Password");
+  await page.getByLabel("新密碼", { exact: true }).fill("New-Test-Password");
+  await page.getByLabel("再次輸入新密碼", { exact: true }).fill("New-Test-Password");
+  const passwordResponse = page.waitForResponse(response => response.request().method() === "PUT" && new URL(response.url()).pathname.endsWith("/auth/password"));
+  await page.getByRole("button", { name: "更新密碼", exact: true }).click();
+  expect((await passwordResponse).status()).toBe(422);
+  await expect(page.getByRole("alert")).toContainText("目前密碼錯誤");
+  await page.getByRole("button", { name: "我的奉獻", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "我的奉獻紀錄", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "消息通知", exact: true }).click();
+  await expect(page.getByLabel("訂閱最新消息")).toBeVisible();
   const size = await page.evaluate(() => ({
     width: document.documentElement.clientWidth,
     scroll: document.documentElement.scrollWidth,
