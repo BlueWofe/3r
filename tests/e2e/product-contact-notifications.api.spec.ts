@@ -15,7 +15,7 @@ test('public product categories filter published items and omit draft-only categ
     const draftCategory = `E2E 草稿分類 ${suffix}`;
     const create = async (title: string, category: string, status: 'published' | 'draft') => {
       const row = await json<Product>(await mutate(admin, 'post', '/api/v1/products', {
-        title, slug: `${suffix}-${ids.length}`, body: '合成展示商品，無購買流程。', summary: '只用於公開分類篩選驗收。',
+        title, slug: `${suffix}-${ids.length}`, body: '商品分類篩選合成資料。', summary: '只用於公開分類篩選驗收。',
         category, status, sort_order: 0,
         metadata: {
           unit: '盒', currency: 'TWD', gallery_ids: [], spec_axes: [],

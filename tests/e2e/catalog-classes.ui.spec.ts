@@ -182,9 +182,9 @@ test('admin can create, preview and edit a recurring class template', async ({ p
 
   const className = `E2E 班別 ${Date.now()}`;
   const editedName = `${className} 已編輯`;
-  await page.getByLabel('班別名稱').fill(className);
+  await page.getByLabel('班級名稱').fill(className);
   await page.getByLabel('監所').selectOption(String(prison.id));
-  await page.getByLabel('地點').fill('E2E 教室');
+  await page.getByLabel('上課位置').fill('E2E 教室');
   await page.getByLabel('參與人數').fill('4');
   await page.getByLabel('開始日').fill(taipeiToday());
 
@@ -202,8 +202,8 @@ test('admin can create, preview and edit a recurring class template', async ({ p
   await classRow.getByRole('button', { name: '編輯／預覽' }).click();
   await expect(page.getByRole('heading', { name: '編輯班別' })).toBeVisible();
   await expect(page.getByLabel('每月日期', { exact: true })).toHaveValue('31');
-  await page.getByLabel('班別名稱').fill(editedName);
-  await page.getByLabel('地點').fill('已更新教室');
+  await page.getByLabel('班級名稱').fill(editedName);
+  await page.getByLabel('上課位置').fill('已更新教室');
   await page.getByRole('button', { name: '預覽 90 天' }).click();
   await expect(page.getByText(/預覽 \d+ 場，略過/)).toBeVisible();
   await page.getByRole('button', { name: '儲存班別' }).click();
