@@ -7,6 +7,7 @@ const phone = ref(""),
   code = ref(""),
   otpRequested = ref(false);
 const { login } = useAuth();
+const { associationName, logoUrl } = useAssociationBranding();
 const { workspacePath } = useWorkspaceNavigation();
 const route = useRoute();
 const { error, run } = useApiError();
@@ -72,9 +73,8 @@ async function submit() {
 <template>
   <main class="auth">
     <section class="authbox">
-      <NuxtLink class="brand" to="/"
-        ><span class="seal">✦</span>中華復甦更新發展協會</NuxtLink
-      >
+      <NuxtLink class="brand auth-brand" to="/" aria-label="回到協會官網"
+        ><img class="auth-brand-logo" :src="logoUrl" :alt="`${associationName}標誌`" /><span>{{ associationName }}</span></NuxtLink>
       <h1 class="serif">會員入口</h1>
       <p class="muted auth-lead">同工、志工與會員的服務入口。</p>
       <div class="tabs">
@@ -131,3 +131,9 @@ async function submit() {
     </section>
   </main>
 </template>
+<style scoped>
+.auth-brand { align-items: center; min-width: 0; white-space: normal; }
+.auth-brand-logo { width: 80px; height: 80px; flex: 0 0 80px; object-fit: contain; }
+.auth-brand span { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .auth-brand-logo { width: 72px; height: 72px; flex-basis: 72px; } }
+</style>

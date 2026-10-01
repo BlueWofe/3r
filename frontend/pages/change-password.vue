@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: false });
 const { user, refresh, logout } = useAuth();
+const { associationName, logoUrl } = useAssociationBranding();
 const { workspacePath } = useWorkspaceNavigation();
 const form = reactive({ current_password: "", password: "", password_confirmation: "" });
 const pending = ref(false), error = ref("");
@@ -26,8 +27,8 @@ async function submit() {
   <main class="password-page">
     <section class="password-card">
       <NuxtLink class="password-brand" to="/" aria-label="回到協會官網">
-        <img src="/images/association-backend-logo.png" alt="中華復甦更新發展協會標誌" />
-        <span>中華復甦更新發展協會</span>
+        <img :src="logoUrl" :alt="`${associationName}標誌`" />
+        <span>{{ associationName }}</span>
       </NuxtLink>
       <p class="eyebrow">ACCOUNT SECURITY</p>
       <h1 class="serif">設定您的新密碼</h1>
@@ -50,8 +51,9 @@ async function submit() {
 <style scoped>
 .password-page { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(circle at top right, rgba(198,157,77,.2), transparent 35%), var(--cream); }
 .password-card { width: min(520px, 100%); padding: clamp(24px, 6vw, 44px); border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: var(--shadow); }
-.password-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; font: 700 17px/1.4 "Noto Serif TC", serif; }
+.password-brand { display: flex; align-items: center; gap: 12px; min-width: 0; margin-bottom: 30px; font: 700 17px/1.4 "Noto Serif TC", serif; }
 .password-brand img { width: 72px; height: 72px; object-fit: contain; border-radius: 12px; }
+.password-brand span { min-width: 0; overflow-wrap: anywhere; }
 .password-card h1 { margin: 4px 0 10px; }
 .password-card fieldset { display: grid; gap: 14px; min-width: 0; margin: 24px 0 0; padding: 0; border: 0; }
 .logout-button { display: block; margin: 20px auto 0; border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; }
