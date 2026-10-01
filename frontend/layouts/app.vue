@@ -38,6 +38,7 @@ const managementIcons: Record<string, string> = {
   schedule: "calendar",
   classes: "book",
   users: "people",
+  "login-records": "history",
   roles: "shield",
   content: "edit",
   products: "box",

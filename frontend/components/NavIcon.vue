@@ -27,6 +27,7 @@ const paths: Record<string, string[]> = {
   box: ["m3 7 9-4 9 4v11l-9 4-9-4V7", "m3 7 9 4 9-4M12 11v11M7 5l10 4"],
   folder: ["M3 6h7l2 3h9v11H3V6"],
   chart: ["M3 3v18h18", "M7 17v-5m5 5V7m5 10v-8"],
+  history: ["M3 12a9 9 0 1 0 3-6.7", "M3 4v6h6", "M12 7v5l3 2"],
   settings: [
     "M9 3h6l1 4 4 2v6l-4 2-1 4H9l-1-4-4-2V9l4-2 1-4",
     "M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0",
