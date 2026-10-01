@@ -3,6 +3,7 @@ definePageMeta({ layout: "app" });
 import type { Session } from "~/types";
 type CalendarEntry = Session & { activity?: any };
 const { can } = useAuth();
+const route = useRoute();
 const view = ref<"agenda" | "week" | "month">("month");
 const cursor = ref(new Date());
 const sessions = ref<CalendarEntry[]>([]);
@@ -76,8 +77,20 @@ const load = async () => {
     if (sequence === request) loading.value = false;
   }
 };
-onMounted(load);
+async function openLinkedSession() {
+  const id = Number(route.query.session_id);
+  if (!Number.isInteger(id) || id <= 0) return;
+  try {
+    const target = await api<Session>(`/sessions/${id}`);
+    const date = new Date(`${target.service_date}T12:00:00`);
+    if (!Number.isNaN(date.getTime())) cursor.value = date;
+    await nextTick();
+    selected.value = target;
+  } catch (e: any) { error.value = e.message || "找不到指定的課程。"; }
+}
+onMounted(async () => { await load(); await openLinkedSession(); });
 watch([view, cursor], load);
+watch(() => route.query.session_id, openLinkedSession);
 const days = computed(() =>
   Array.from({ length: range.value.count }, (_, i) => {
     const d = new Date(range.value.from);

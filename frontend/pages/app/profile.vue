@@ -129,7 +129,7 @@ onMounted(load);
   </section>
   <form v-else class="card form account-panel" @submit.prevent="lineSave">
     <h2>消息通知</h2>
-    <NuxtLink class="button ghost" to="/app/invitations">查看站內通知</NuxtLink>
+    <NuxtLink class="button ghost" to="/app/invitations">前往通知收件匣</NuxtLink>
     <h3>LINE 通知（模擬）</h3><p class="muted">目前為模擬綁定與訂閱設定，不會對外發送訊息。</p>
     <p v-if="lineError" class="error" role="alert">{{ lineError }}</p>
     <label><input v-model="line.bound" type="checkbox" /> 已綁定帳號</label>

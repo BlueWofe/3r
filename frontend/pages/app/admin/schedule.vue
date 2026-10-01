@@ -11,7 +11,9 @@ const rows = ref<Session[]>([]),
   teacher = ref(""),
   status = ref(""),
   query = ref(""),
-  refreshing = ref(false);
+  refreshing = ref(false),
+  linkedSession = ref<Session | null>(null);
+const route = useRoute();
 const { error, run } = useApiError();
 async function load() {
   const end = new Date(from.value);
@@ -55,6 +57,18 @@ async function scheduleUpdated() {
     refreshing.value = false;
   }
 }
+async function openLinkedSession() {
+  const id = Number(route.query.session_id);
+  if (!Number.isInteger(id) || id <= 0) { linkedSession.value = null; return; }
+  try {
+    const target = await api<Session>(`/sessions/${id}`);
+    linkedSession.value = target;
+    from.value = target.service_date;
+    await load();
+    await nextTick();
+    document.querySelector(`[data-session-id="${id}"]`)?.scrollIntoView({ block: "center" });
+  } catch (e: any) { error.value = e.message || "找不到指定的課程。"; }
+}
 onMounted(async () => {
   await load();
   try {
@@ -63,7 +77,9 @@ onMounted(async () => {
   } catch (e: any) {
     error.value = e.message;
   }
+  await openLinkedSession();
 });
+watch(() => route.query.session_id, openLinkedSession);
 </script>
 <template>
   <div class="workhead">
@@ -123,7 +139,7 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="s in rows" :key="s.id">
+        <tr v-for="s in rows" :key="s.id" :data-session-id="s.id" :class="{ 'linked-session': linkedSession?.id === s.id }">
           <td data-label="日期時間">{{ s.service_date }} {{ s.start_time }}</td>
           <td data-label="服務">
             <span class="class-color" :style="{ backgroundColor: scheduleColor(s.color) }" aria-hidden="true"></span>{{ s.title }}<br /><small>{{ s.prison }}</small>
@@ -159,4 +175,8 @@ onMounted(async () => {
     @close="modal = false"
     @saved="load"
   />
+  <SessionActions v-if="linkedSession" :session="linkedSession" open-on-mount admin @updated="scheduleUpdated" @close="linkedSession = null" />
 </template>
+<style scoped>
+.linked-session { outline: 3px solid var(--gold); outline-offset: -3px; }
+</style>

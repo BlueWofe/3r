@@ -1,33 +1,15 @@
 <script setup lang="ts">
-const items = ref<any[]>([]),
-  open = ref(false),
-  loading = ref(false),
-  error = ref(""),
-  following = ref(false);
+const open = ref(false), following = ref(false);
+const { items, unreadCount: unread, loading, error, refreshNotifications: load, markNotificationRead } = useNotifications();
 const route = useRoute();
-const unread = computed(
-  () => items.value.filter((item) => !item.read && !item.read_at).length,
-);
-async function load() {
-  loading.value = true;
-  error.value = "";
-  try {
-    items.value = (await api<any>("/notifications")).data || [];
-  } catch (e: any) {
-    error.value = e.message || "通知暫時無法載入。";
-  } finally {
-    loading.value = false;
-  }
-}
 async function follow(item: any) {
   if (following.value) return;
   following.value = true;
   try {
-    if (!item.read && !item.read_at)
-      await api(`/notifications/${item.id}/read`, { method: "POST" });
-    await load();
+    const updated = await markNotificationRead(item);
     open.value = false;
-    if (typeof item.url === "string" && item.url.startsWith("/app/")) await navigateTo(item.url);
+    const destination = notificationDestination(updated.url);
+    if (destination) await navigateTo(destination);
   } catch (e: any) {
     error.value = e.message || "此通知目前無法開啟，請重新整理。";
   } finally {
