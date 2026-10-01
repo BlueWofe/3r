@@ -42,7 +42,7 @@ class ApiController extends Controller
 
     protected function me(User $u): array
     {
-        return ['id' => $u->id, 'name' => $u->name, 'phone' => $u->phone, 'roles' => $u->roles->where('active', true)->values(), 'permissions' => $u->roles->where('active', true)->contains('slug', 'system-admin') ? self::permissionNames() : $u->permissions()];
+        return ['id' => $u->id, 'name' => $u->name, 'phone' => $u->phone, 'must_change_password' => (bool) $u->must_change_password, 'roles' => $u->roles->where('active', true)->values(), 'permissions' => $u->roles->where('active', true)->contains('slug', 'system-admin') ? self::permissionNames() : $u->permissions()];
     }
 
     public function auth(Request $r, string $action)
@@ -68,16 +68,23 @@ class ApiController extends Controller
         }
         if (in_array($action, ['register', 'reset-password'])) {
             $v = $r->validate(['phone' => 'required|regex:/^09[0-9]{8}$/', 'code' => 'required|string', 'password' => 'required|confirmed|min:10', 'name' => ($action === 'register' ? 'required' : 'nullable').'|string|max:100']);
-            $this->consumeOtp($v['phone'], $action === 'register' ? 'register' : 'reset', $v['code']);
             if ($action === 'register') {
+                $this->consumeOtp($v['phone'], 'register', $v['code']);
                 abort_if(User::where('phone', $v['phone'])->exists(), 422, '手機已註冊');
                 $u = User::create(['phone' => $v['phone'], 'email' => $v['phone'].'@demo.invalid', 'name' => $v['name'], 'password' => $v['password']]);
                 $role = Role::firstOrCreate(['slug' => 'member'], ['name' => '一般使用者', 'permissions' => ['donations.read.own'], 'active' => true]);
                 $u->roles()->attach($role);
             } else {
-                $u = User::where('phone', $v['phone'])->firstOrFail();
-                $u->update(['password' => $v['password']]);
-                DB::table('sessions')->where('user_id', $u->id)->delete();
+                $this->consumeOtp($v['phone'], 'reset', $v['code']);
+                DB::transaction(function () use ($v) {
+                    $u = User::where('phone', $v['phone'])->lockForUpdate()->firstOrFail();
+                    abort_if($u->must_change_password && Hash::check($v['password'], $u->password), 422, '新密碼不得與目前密碼相同');
+                    $u->update(['password' => $v['password'], 'must_change_password' => false, 'remember_token' => null]);
+                    DB::table('sessions')->where('user_id', $u->id)->delete();
+                });
+                if ($r->user()?->phone === $v['phone']) {
+                    $r->user()->must_change_password = false;
+                }
             }
 
             return ['message' => '完成'];
@@ -102,11 +109,15 @@ class ApiController extends Controller
             DB::transaction(function () use ($r, $v, $userId) {
                 $user = User::whereKey($userId)->lockForUpdate()->firstOrFail();
                 abort_unless(Hash::check($v['current_password'], $user->password), 422, '目前密碼錯誤');
+                abort_if($user->must_change_password && Hash::check($v['password'], $user->password), 422, '新密碼不得與目前密碼相同');
                 $user->password = $v['password'];
+                $user->must_change_password = false;
+                $user->remember_token = null;
                 $user->save();
                 DB::table('sessions')->where('user_id', $userId)->where('id', '<>', $r->session()->getId())->delete();
                 Entity::create(['type' => 'audit', 'owner_id' => $userId, 'data' => ['module' => 'auth', 'action' => 'password-change']]);
             });
+            $r->user()->must_change_password = false;
 
             return ['message' => '密碼已更新'];
         }
@@ -193,7 +204,7 @@ class ApiController extends Controller
                 $before = $x->toArray();
                 $x->fill($v)->save();
             } else {
-                $v = $r->validate(['name' => 'required|string|max:100', 'active' => 'required|boolean', 'role_ids' => 'present|array', 'role_ids.*' => 'exists:roles,id', 'phone' => ($id ? 'sometimes' : 'required').'|regex:/^09[0-9]{8}$/', 'password' => ($id ? 'sometimes' : 'required').'|min:10']);
+                $v = $r->validate(['name' => 'required|string|max:100', 'active' => 'required|boolean', 'role_ids' => 'present|array', 'role_ids.*' => 'exists:roles,id', 'phone' => ($id ? 'sometimes' : 'required').'|regex:/^09[0-9]{8}$/', 'password' => ($id ? 'sometimes' : 'required').'|string|min:9']);
                 $x = $id ? User::findOrFail($id) : new User;
                 if ($id && ($r->has('phone') || $r->has('password'))) {
                     $this->permit($r, 'roles.manage.all');
@@ -205,6 +216,10 @@ class ApiController extends Controller
                     $this->permit($r, 'roles.manage.all');
                 }
                 $x->fill(collect($v)->except('role_ids')->all());
+                if (array_key_exists('password', $v)) {
+                    $x->must_change_password = true;
+                    $x->remember_token = null;
+                }
                 if (! $id) {
                     $x->email = $v['phone'].'@demo.invalid';
                 }$x->save();
