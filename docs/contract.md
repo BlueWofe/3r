@@ -44,6 +44,8 @@ Member account: PUT /auth/password {current_password,password,password_confirmat
 
 首次改密碼：`GET /auth/me` 與登入回應的 user 包含 `must_change_password:boolean`。後台新建帳號或由管理員重設密碼會設為 true，初始密碼至少 9 字；OTP 自行註冊為 false。旗標由伺服器管理，客戶端不可覆寫。旗標為 true 時，除登入、登出、CSRF、身分查詢、OTP 註冊／密碼恢復及更改密碼外，私人 API 與公開寫入 API 回傳 403、`code: PASSWORD_CHANGE_REQUIRED`。公開讀取仍可使用。前端導向 `/change-password`，要求目前密碼、至少 10 字的新密碼與確認；新密碼不可與舊密碼相同。成功改密碼或有效 OTP 重設後清除旗標、撤銷其他登入，並保留角色與小組。
 
+登入記錄：`GET /login-records` 需要 `users.read.all` 或 `roles.manage.all`，僅提供查詢，不允許一般會員及志工查看所有人的記錄。參數 `category=member|volunteer|admin`、`role_id`、`from`／`to`（台北日期）、`page`／`per_page`；回應 `{data:[{id,user_id,name,result:success|failure,occurred_at,ip_address,user_agent,roles:[{id,name,slug}],categories:[]}],meta:{total,current_page,per_page,last_page},role_options:[{id,name}]}`。登入成功及失敗保存当時角色快照；未識別帳號不保存輸入的電話。一般使用者為 member 角色或沒有志工／管理角色者，志工為 teacher 角色，後台管理角色為 system-admin 或具有 `.all` 管理權限者；多重身份可出現在多個相關頁籤。篩選採記錄當時角色，不因之後角色異動改寫歷史。不得保存密碼、OTP、token 或 cookies。
+
 Class templates may include excluded_dates: distinct YYYY-MM-DD dates, at most 366. Preview/generation skip matching dates and report the reason; updates that omit the field preserve it. Imported semester schedules remain bounded by start_date/end_date and explicit exclusions; source import identifiers are retained on template edits.
 
 通知連結只定位相關列表項目，不自動開啟明細或編輯視窗。訂單、聯絡表單以 `id`，課程以 `session_id`，小組消息以 `content_id` 指定醒目標示的項目；老師課程切換至議程列表。手動點選查看／編輯才開啟視窗。
