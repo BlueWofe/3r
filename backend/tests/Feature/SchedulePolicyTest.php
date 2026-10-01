@@ -30,6 +30,34 @@ class SchedulePolicyTest extends TestCase
         $this->assertEquals(2, $s->assignments()->count());
     }
 
+    public function test_course_change_notifies_only_related_teachers_and_active_system_admins(): void
+    {
+        $admin = $this->teacher();
+        $admin->roles()->attach(Role::create(['name' => '系統管理員', 'slug' => 'system-admin', 'permissions' => []]));
+        $old = $this->teacher();
+        $replacement = $this->teacher();
+        $unrelated = $this->teacher();
+        $manager = $this->teacher();
+        $manager->roles()->attach(Role::create(['name' => '排課管理', 'slug' => 'schedule-manager', 'permissions' => ['schedule.read.all', 'schedule.update.all']]));
+        $session = $this->course([$old]);
+        $assignment = $session->assignments()->first();
+
+        $this->actingAs($admin)->postJson('/api/v1/assignments/'.$assignment->id.'/replace', ['version' => 1, 'reason' => '示範代課', 'teacher_id' => $replacement->id])->assertOk();
+        $owners = Entity::where('type', 'notifications')->pluck('owner_id')->sort()->values()->all();
+        $this->assertSame(collect([$admin->id, $old->id, $replacement->id])->sort()->values()->all(), $owners);
+        $this->assertNotContains($unrelated->id, $owners);
+        $this->assertNotContains($manager->id, $owners);
+
+        $this->putJson('/api/v1/sessions/'.$session->id, ['version' => 2, 'reason' => '示範改期', 'service_date' => '2030-01-02'])->assertOk();
+        $this->assertSame(1, Entity::where('type', 'notifications')->where('owner_id', $old->id)->count());
+        $this->assertSame(2, Entity::where('type', 'notifications')->where('owner_id', $replacement->id)->count());
+
+        $current = $session->assignments()->where('teacher_id', $replacement->id)->first();
+        $this->postJson('/api/v1/assignments/'.$current->id.'/attendance', ['reason' => '示範補登'])->assertOk();
+        $this->assertSame(5, Entity::where('type', 'notifications')->count());
+        $this->assertSame(3, Entity::where('type', 'changes')->count());
+    }
+
     private function teacher(): User
     {
         $role = Role::firstOrCreate(['slug' => 'teacher'], ['name' => '教師', 'permissions' => ['schedule.read.own', 'schedule.update.own', 'attendance.create.own']]);

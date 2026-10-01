@@ -39,8 +39,15 @@ class ScheduleController extends ApiController
     private function event(Request $r, ServiceSession $s, string $action, string $reason, array $before = []): void
     {
         Entity::create(['type' => 'changes', 'owner_id' => $r->user()->id, 'data' => ['session_id' => $s->id, 'action' => $action, 'reason' => $reason, 'version' => $s->version, 'actor' => $r->user()->name, 'acknowledged_by' => [], 'before' => $before, 'after' => $this->snapshot($s)]]);
-        $recipients = $s->assignments()->pluck('teacher_id')->merge(User::where('active', true)->get()->filter(fn ($u) => $u->canDo('schedule.update.all'))->pluck('id'))->unique();
-        foreach ($recipients as $recipient) {
+        if ($action === '簽到') {
+            return;
+        }
+        $beforeTeachers = collect($before['assignments'] ?? [])->filter(fn ($a) => in_array($a['status'] ?? '', ['assigned', 'leave'], true))->pluck('teacher_id');
+        $currentTeachers = $s->assignments()->whereIn('status', ['assigned', 'leave'])->pluck('teacher_id');
+        $systemAdmins = User::where('active', true)->whereHas('roles', fn ($q) => $q->where('slug', 'system-admin')->where('roles.active', true))->pluck('id');
+        $recipients = $beforeTeachers->merge($currentTeachers)->merge($systemAdmins)->unique();
+        $activeRecipients = User::where('active', true)->whereIn('id', $recipients)->pluck('id');
+        foreach ($activeRecipients as $recipient) {
             Entity::create(['type' => 'notifications', 'owner_id' => $recipient, 'data' => ['title' => $s->data['title'], 'message' => $action.'：'.$reason, 'session_id' => $s->id, 'read' => false]]);
             $line = Entity::where('type', 'line')->where('owner_id', $recipient)->first();
             if (($line?->data['bound'] ?? false) && ($line?->data['subscribed'] ?? false)) {
@@ -234,8 +241,8 @@ class ScheduleController extends ApiController
                 $this->teacher($v['teacher_id']);
                 abort_if($v['teacher_id'] === $a->teacher_id || $s->assignments()->where('teacher_id', $v['teacher_id'])->exists() || $this->conflict($v['teacher_id'], $s->data, $s->id), 409, '教師不可代課');
                 abort_if(DB::table('invitations')->where('assignment_id', $id)->where('status', 'pending')->exists(), 409, '已有待回覆邀請');
-                DB::table('invitations')->insert(['assignment_id' => $id, 'teacher_id' => $v['teacher_id'], 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()]);
-                Entity::create(['type' => 'notifications', 'owner_id' => $v['teacher_id'], 'data' => ['title' => '代課邀請', 'message' => $s->data['title'], 'session_id' => $s->id, 'invitation' => true, 'read' => false]]);
+                $invitationId = DB::table('invitations')->insertGetId(['assignment_id' => $id, 'teacher_id' => $v['teacher_id'], 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()]);
+                Entity::create(['type' => 'notifications', 'owner_id' => $v['teacher_id'], 'data' => ['title' => '代課邀請', 'message' => $s->data['title'], 'session_id' => $s->id, 'invitation_id' => $invitationId, 'invitation' => true, 'read' => false]]);
             }
             if ($action === 'replace') {
                 $this->permit($r, 'schedule.update.all');

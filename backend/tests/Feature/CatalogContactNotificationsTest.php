@@ -106,12 +106,12 @@ class CatalogContactNotificationsTest extends TestCase
         $session = ServiceSession::create(['data' => ['title' => '合成排課', 'service_date' => '2035-01-01', 'start_time' => '09:00', 'end_time' => '10:00', 'status' => 'scheduled']]);
         $session->assignments()->create(['teacher_id' => $teacher->id]);
         $notification = Entity::create(['type' => 'notifications', 'owner_id' => $teacher->id, 'data' => ['session_id' => $session->id, 'title' => '排課異動', 'url' => 'https://evil.test']]);
-        $this->actingAs($teacher)->getJson('/api/v1/notifications')->assertJsonPath('data.0.url', '/app/calendar')->assertJsonPath('unread_count', 1);
+        $this->actingAs($teacher)->getJson('/api/v1/notifications')->assertJsonPath('data.0.url', '/app/calendar?session_id='.$session->id)->assertJsonPath('data.0.category', 'course')->assertJsonPath('unread_count', 1);
         $teacher->roles()->first()->update(['permissions' => []]);
         $this->actingAs($teacher->fresh())->getJson('/api/v1/notifications')->assertJsonCount(0, 'data')->assertJsonPath('unread_count', 0);
         $this->postJson('/api/v1/notifications/'.$notification->id.'/read')->assertForbidden();
         $admin = $this->account(['schedule.read.all']);
         Entity::create(['type' => 'notifications', 'owner_id' => $admin->id, 'data' => ['title' => '舊排課通知', 'read' => false]]);
-        $this->actingAs($admin)->getJson('/api/v1/notifications')->assertJsonPath('data.0.url', '/app/admin/schedule');
+        $this->actingAs($admin)->getJson('/api/v1/notifications')->assertJsonCount(0, 'data');
     }
 }

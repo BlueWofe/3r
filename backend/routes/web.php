@@ -120,6 +120,7 @@ Route::prefix('api/v1')->group(function () {
             Route::get($m, fn (Request $r) => (new ModuleController)->inbox($r, $m));
             Route::post($m.'/{id}/'.($m === 'changes' ? 'acknowledge' : 'read'), fn (Request $r, int $id) => (new ModuleController)->inbox($r, $m, $id));
         }
+        Route::post('notifications/read-all', [ModuleController::class, 'readAllNotifications']);
         Route::match(['get', 'put'], 'integrations/line', fn (Request $r) => (new ModuleController)->integrations($r, 'line'));
         Route::get('integrations/drive', fn (Request $r) => (new ModuleController)->integrations($r, 'drive'));
         Route::post('integrations/drive/simulate', fn (Request $r) => (new ModuleController)->integrations($r, 'drive'));

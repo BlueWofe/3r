@@ -295,6 +295,23 @@ class ModuleController extends ApiController
         })->map->publicData()->values()];
     }
 
+    public function readAllNotifications(Request $r)
+    {
+        return DB::transaction(function () use ($r) {
+            $access = app(NotificationAccess::class);
+            $updated = 0;
+            $notices = Entity::where('type', 'notifications')->where('owner_id', $r->user()->id)->lockForUpdate()->get();
+            foreach ($notices as $notice) {
+                if (! ($notice->data['read'] ?? false) && $access->payload($notice, $r->user())) {
+                    $notice->update(['data' => array_merge($notice->data, ['read' => true])]);
+                    $updated++;
+                }
+            }
+
+            return ['updated_count' => $updated, 'unread_count' => 0];
+        });
+    }
+
     public function integrations(Request $r, string $type)
     {
         if ($type === 'drive') {

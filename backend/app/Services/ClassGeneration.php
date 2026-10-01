@@ -65,7 +65,8 @@ class ClassGeneration
                     $s->assignments()->create(['teacher_id' => $teacher->id]);
                 }
                 Entity::create(['type' => 'changes', 'owner_id' => $actor?->id, 'data' => ['session_id' => $s->id, 'action' => '班別產生排課', 'reason' => '班別 '.$template->data['name'], 'version' => 1, 'actor' => $actor?->name ?? '每日排程', 'acknowledged_by' => [], 'before' => [], 'after' => $data + ['version' => 1, 'assignments' => $s->assignments()->get()->toArray()]]]);
-                $recipients = collect($teachers)->pluck('id')->merge(User::where('active', true)->get()->filter(fn ($u) => $u->canDo('schedule.update.all'))->pluck('id'))->unique();
+                $systemAdmins = User::where('active', true)->whereHas('roles', fn ($q) => $q->where('slug', 'system-admin')->where('roles.active', true))->pluck('id');
+                $recipients = collect($teachers)->pluck('id')->merge($systemAdmins)->unique();
                 foreach ($recipients as $recipient) {
                     Entity::create(['type' => 'notifications', 'owner_id' => $recipient, 'data' => ['title' => $data['title'], 'message' => '班別產生排課', 'session_id' => $s->id, 'read' => false]]);
                     $line = Entity::where('type', 'line')->where('owner_id', $recipient)->first();
