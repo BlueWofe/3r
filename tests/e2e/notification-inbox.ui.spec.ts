@@ -84,3 +84,38 @@ test('notification inbox filters categories, follows safe links, and refreshes u
     expect(tabStrip?.width).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
   }
 });
+
+test('bell inbox offers mark all read, preserves unread on failure, and synchronizes category counts on success', async ({ page }, testInfo) => {
+  if (testInfo.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 800 });
+  let read = false, attempts = 0;
+  await page.route('**/api/v1/auth/me', route => route.fulfill({ json: { user: { id: 1, name: '合成同工', permissions: ['schedule.read.own'] } } }));
+  await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { csrf_token: 'mock-csrf' } }));
+  await page.route('**/api/v1/invitations', route => route.fulfill({ json: { data: [] } }));
+  await page.route('**/api/v1/notifications', route => route.fulfill({ json: { data: [{ id: 301, category: 'course', title: '合成課程通知', read, url: '/app/calendar?session_id=301' }], unread_count: read ? 0 : 1 } }));
+  await page.route('**/api/v1/notifications/read-all', async route => {
+    expect(route.request().method()).toBe('POST');
+    attempts++;
+    if (attempts === 1) return route.fulfill({ status: 503, json: { message: '暫時無法標示已讀' } });
+    read = true;
+    await route.fulfill({ json: { message: '已全部標示為已讀', unread_count: 0 } });
+  });
+  await page.goto('/app/invitations');
+  await expect(page.getByTestId('inbox-read-all')).toBeVisible();
+  await page.getByRole('button', { name: '通知收件匣', exact: true }).click();
+  const popover = page.getByRole('region', { name: '通知收件匣', exact: true });
+  const button = popover.getByTestId('bell-read-all');
+  await expect(button).toBeVisible();
+  await button.click();
+  await expect(popover.locator('.error')).toContainText('暫時無法標示已讀');
+  await expect(page.getByTestId('notification-tab-count-course')).toHaveText('1');
+  await expect(button).toBeEnabled();
+  await button.click();
+  await expect(popover.getByRole('status')).toHaveText('已全部標示為已讀');
+  await expect(button).toBeDisabled();
+  await expect(page.getByTestId('inbox-read-all')).toBeDisabled();
+  await expect(page.locator('[data-testid^="notification-tab-count-"]')).toHaveCount(0);
+  await expect(page.getByLabel(/則未讀通知/)).toHaveCount(0);
+  await expect(popover.locator('.notification-item small')).toHaveCount(0);
+  expect(attempts).toBe(2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+});

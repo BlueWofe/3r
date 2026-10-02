@@ -1,9 +1,16 @@
 <script setup lang="ts">
-const open = ref(false), following = ref(false);
-const { items, unreadCount: unread, loading, error, refreshNotifications: load, markNotificationRead } = useNotifications();
+const open = ref(false), following = ref(false), readingAll = ref(false), readMessage = ref("");
+const { items, unreadCount: unread, loading, error, refreshNotifications: load, markNotificationRead, markAllNotificationsRead } = useNotifications();
 const route = useRoute();
+async function readAll() {
+  if (readingAll.value || following.value || !unread.value) return;
+  readingAll.value = true; readMessage.value = ""; error.value = "";
+  try { await markAllNotificationsRead(); readMessage.value = "已全部標示為已讀"; }
+  catch (e: any) { error.value = e.message || "暫時無法標示已讀，請稍後再試。"; }
+  finally { readingAll.value = false; }
+}
 async function follow(item: any) {
-  if (following.value) return;
+    if (following.value || readingAll.value) return;
   following.value = true;
   try {
     const updated = await markNotificationRead(item);
@@ -50,6 +57,8 @@ watch(() => route.fullPath, () => { open.value = false; void load(); });
           >全部通知</NuxtLink
         >
       </div>
+      <button class="button ghost read-all" type="button" data-testid="bell-read-all" :disabled="readingAll || following || loading || !unread" @click="readAll">{{ readingAll ? "處理中…" : "全部已讀" }}</button>
+      <p v-if="readMessage" class="muted" role="status">{{ readMessage }}</p>
       <p v-if="loading" class="muted">載入中…</p>
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-else-if="!items.length" class="muted">目前沒有通知。</p>
@@ -59,7 +68,7 @@ watch(() => route.fullPath, () => { open.value = false; void load(); });
         :data-notification-id="item.id"
         class="notification-item"
         type="button"
-        :disabled="following"
+        :disabled="following || readingAll"
         @click="follow(item)"
       >
         <strong>{{
@@ -122,6 +131,7 @@ watch(() => route.fullPath, () => { open.value = false; void load(); });
   align-items: center;
   margin-bottom: 8px;
 }
+.read-all { width: 100%; min-height: 44px; margin-bottom: 8px; }
 .notification-item {
   display: block;
   width: 100%;

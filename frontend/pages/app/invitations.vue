@@ -51,7 +51,6 @@ onMounted(async () => { await refresh(); await load(); });
 <template>
   <div class="workhead inbox-head">
     <div><p class="eyebrow">INBOX</p><h1>通知收件匣</h1><p class="muted">{{ unreadCount ? `${unreadCount} 則未讀通知` : "目前沒有未讀通知" }}</p></div>
-    <button class="button ghost" type="button" :disabled="allReadPending || !unreadCount" @click="readAll">{{ allReadPending ? "處理中…" : "全部已讀" }}</button>
   </div>
   <section v-if="canRespond()" aria-labelledby="invitation-title">
     <h2 id="invitation-title" class="serif">代課邀請</h2>
@@ -69,7 +68,7 @@ onMounted(async () => { await refresh(); await load(); });
     </details>
   </section>
   <section class="section inbox-section" aria-labelledby="notification-title">
-    <h2 id="notification-title" class="serif">站內通知</h2>
+    <div class="notification-head"><h2 id="notification-title" class="serif">站內通知</h2><button class="button ghost" type="button" data-testid="inbox-read-all" :disabled="allReadPending || loading || !unreadCount" @click="readAll">{{ allReadPending ? "處理中…" : "全部已讀" }}</button></div>
     <nav class="inbox-tabs" role="tablist" aria-label="通知分類">
       <button v-for="category in categories" :key="category.id" role="tab" type="button" :aria-selected="selectedCategory === category.id" :aria-label="categoryUnreadCounts[category.id] ? `${category.label}，${categoryUnreadCounts[category.id]}則未讀` : category.label" :class="{ selected: selectedCategory === category.id }" @click="selectedCategory = category.id">
         <span>{{ category.label }}</span><span v-if="categoryUnreadCounts[category.id]" class="tab-unread-count" :data-testid="`notification-tab-count-${category.id}`" aria-hidden="true">{{ categoryUnreadCounts[category.id] }}</span>
@@ -91,6 +90,7 @@ onMounted(async () => { await refresh(); await load(); });
 
 <style scoped>
 .inbox-head { align-items: end; } .inbox-section { padding-bottom: 0; }
+.notification-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .inbox-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 12px 0 16px; }
 .inbox-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 44px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); font: 600 13px inherit; cursor: pointer; white-space: nowrap; }
 .inbox-tabs button.selected { border-color: var(--pine); background: var(--pine); color: white; }
