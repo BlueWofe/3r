@@ -11,6 +11,15 @@ const categories = [
   { id: "course", label: "課程通知" }, { id: "message", label: "小組消息" },
   { id: "contact", label: "其他聯絡" },
 ];
+const categoryUnreadCounts = computed(() => {
+  const counts: Record<string, number> = Object.fromEntries(categories.map(category => [category.id, 0]));
+  for (const item of notifications.value) {
+    if (item.read || item.read_at) continue;
+    counts.all!++;
+    if (item.category && item.category !== "all" && item.category in counts) counts[item.category]!++;
+  }
+  return counts;
+});
 const filteredNotifications = computed(() => selectedCategory.value === "all" ? notifications.value : notifications.value.filter((item) => item.category === selectedCategory.value));
 const focusedInvitationId = computed(() => Number(route.query.invitation_id) || null);
 const pendingInvitations = computed(() => invitations.value.filter((item) => !item.status || item.status === "pending"));
@@ -62,7 +71,9 @@ onMounted(async () => { await refresh(); await load(); });
   <section class="section inbox-section" aria-labelledby="notification-title">
     <h2 id="notification-title" class="serif">站內通知</h2>
     <nav class="inbox-tabs" role="tablist" aria-label="通知分類">
-      <button v-for="category in categories" :key="category.id" role="tab" type="button" :aria-selected="selectedCategory === category.id" :class="{ selected: selectedCategory === category.id }" @click="selectedCategory = category.id">{{ category.label }}</button>
+      <button v-for="category in categories" :key="category.id" role="tab" type="button" :aria-selected="selectedCategory === category.id" :aria-label="categoryUnreadCounts[category.id] ? `${category.label}，${categoryUnreadCounts[category.id]}則未讀` : category.label" :class="{ selected: selectedCategory === category.id }" @click="selectedCategory = category.id">
+        <span>{{ category.label }}</span><span v-if="categoryUnreadCounts[category.id]" class="tab-unread-count" :data-testid="`notification-tab-count-${category.id}`" aria-hidden="true">{{ categoryUnreadCounts[category.id] }}</span>
+      </button>
     </nav>
     <p v-if="loading" class="muted" role="status">載入通知中…</p>
     <div v-else-if="!filteredNotifications.length" class="card empty">這個分類目前沒有通知。</div>
@@ -81,8 +92,9 @@ onMounted(async () => { await refresh(); await load(); });
 <style scoped>
 .inbox-head { align-items: end; } .inbox-section { padding-bottom: 0; }
 .inbox-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 12px 0 16px; }
-.inbox-tabs button { min-height: 44px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); font: 600 13px inherit; cursor: pointer; white-space: nowrap; }
+.inbox-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 44px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); font: 600 13px inherit; cursor: pointer; white-space: nowrap; }
 .inbox-tabs button.selected { border-color: var(--pine); background: var(--pine); color: white; }
+.tab-unread-count { min-width: 20px; padding: 2px 5px; border-radius: 99px; background: #f1dfb8; color: #684b16; font-size: 12px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; max-width: 100%; }
 .invitation-card, .inbox-item { margin: 8px 0; } .invitation-card.focused { outline: 3px solid var(--gold); outline-offset: 2px; }
 .invitation-history { margin-top: 12px; } .invitation-history summary { cursor: pointer; font-weight: 700; }
 .inbox-item { padding: 0; overflow: hidden; } .inbox-item.unread { border-left: 5px solid var(--gold); }
