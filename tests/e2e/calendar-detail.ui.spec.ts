@@ -123,7 +123,8 @@ test('admin must enter edit mode in the same dialog to change complete session f
   expect(size!.height).toBeLessThanOrEqual(160);
   await detail.getByTestId('session-detail-edit').click();
   await expect(page.getByRole('dialog')).toHaveCount(1);
-  for (const label of ['課程主題', '班級名稱', '監所／單位', '上課位置', '參與人數', '服務日期', '開始時間', '結束時間', '異動說明']) await expect(detail.getByLabel(label, { exact: true })).toBeVisible();
+  for (const label of ['課程主題', '班級名稱', '上課位置', '參與人數', '服務日期', '開始時間', '結束時間', '異動說明']) await expect(detail.getByLabel(label, { exact: true })).toBeVisible();
+  await expect(detail.getByRole('combobox', { name: /^監所／單位/ })).toBeVisible();
   await expect(detail.getByRole('button', { name: '管理補登／更正', exact: true })).toBeVisible();
   await detail.getByTestId('session-detail-back').click();
   await expect(detail.locator('input,select,textarea')).toHaveCount(0);
