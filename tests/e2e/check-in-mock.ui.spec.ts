@@ -103,7 +103,7 @@ test('past calendar appointment requires a reason, accepts no photo, and display
   await page.getByTestId('self-attendance-submit').click();
   expect(mock.posts).toHaveLength(0);
   await expect(page.getByTestId('self-attendance-dialog')).toBeVisible();
-  await expect(page.getByTestId('self-attendance-reason')).toHaveJSProperty('validity', expect.objectContaining({ valueMissing: true }));
+  expect(await page.getByTestId('self-attendance-reason').evaluate(element => (element as HTMLTextAreaElement).validity.valueMissing)).toBe(true);
   // Whitespace passes native required validation; the application must reject it too.
   await page.getByTestId('self-attendance-reason').fill('   ');
   await page.getByTestId('self-attendance-submit').click();
