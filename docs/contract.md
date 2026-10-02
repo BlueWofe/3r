@@ -49,3 +49,5 @@ Member account: PUT /auth/password {current_password,password,password_confirmat
 Class templates may include excluded_dates: distinct YYYY-MM-DD dates, at most 366. Preview/generation skip matching dates and report the reason; updates that omit the field preserve it. Imported semester schedules remain bounded by start_date/end_date and explicit exclusions; source import identifiers are retained on template edits.
 
 通知連結只定位相關列表項目，不自動開啟明細或編輯視窗。訂單、聯絡表單以 `id`，課程以 `session_id`，小組消息以 `content_id` 指定醒目標示的項目；老師課程切換至議程列表。手動點選查看／編輯才開啟視窗。
+
+老師出勤：POST /assignments/{id}/attendance 可傳 mode=self|admin；省略時本人具 attendance.create.own 採 self（包含兼任管理員）。台北服務日期當天整日可簽到，未來日期拒絕；過日可補簽並必填原因。照片選填 JPEG/PNG/WebP ≤5 MB，私人檔案逐次授權。本人只可操作仍有效、未停課、未有出勤的自己的安排，重複操作回 409。attendance 保存 kind=check_in|late_check_in|admin_adjustment、service_date、實際操作 at（+08:00）、actor_id、reason、photo_id。admin 需 attendance.update.all 與原因，未提供新照片時保留原照片；更正保存前後值。簽到不另產生通知。
