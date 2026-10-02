@@ -229,3 +229,77 @@ test('closing the day list cancels a pending detail opening even when its respon
   await expect(sheet).toBeHidden();
   expect(mock.writes).toHaveLength(0);
 });
+
+test('teacher names and semantic status badges stay prominent without contradictory missing check-in labels', async ({ page }) => {
+  const assigned = course(36), attended = course(37, 1, true), leave = course(38), cancelled = course(39), replaced = course(40);
+  leave.assignments[0].status = 'leave';
+  cancelled.status = 'cancelled';
+  replaced.assignments[0].status = 'replaced';
+  const items = [assigned, attended, leave, cancelled, replaced];
+  const mock = await workspace(page, items, true);
+  const expected = [
+    { item: assigned, status: 'assigned', text: '已指派', secondary: '未簽到' },
+    { item: attended, status: 'assigned', text: '已指派', secondary: '已簽到' },
+    { item: leave, status: 'leave', text: '請假', secondary: '不需簽到' },
+    { item: cancelled, status: 'cancelled', text: '停課', secondary: '不需簽到' },
+    { item: replaced, status: 'replaced', text: '已替換', secondary: '不需簽到' },
+  ];
+  for (const row of expected) {
+    await dayList(page, true);
+    const detail = await choose(page, row.item.id);
+    const summary = detail.getByTestId('attendance-summary');
+    const name = summary.getByTestId('attendance-teacher-name');
+    const badge = summary.getByTestId('attendance-assignment-status');
+    const checkInBadge = summary.getByTestId('attendance-check-in-status');
+    await expect(name).toHaveText('合成本人');
+    await expect(badge).toHaveText(row.text);
+    await expect(checkInBadge).toHaveText(row.secondary);
+    const sizes = await name.evaluate(element => ({ name: parseFloat(getComputedStyle(element).fontSize), weight: Number(getComputedStyle(element).fontWeight) }));
+    expect(sizes.name).toBeGreaterThanOrEqual(18);
+    expect(sizes.weight).toBeGreaterThanOrEqual(600);
+    expect(await badge.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+    expect(await checkInBadge.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+    if (['leave', 'cancelled', 'replaced'].includes(row.status)) await expect(summary).not.toContainText('未簽到');
+    if (row.item === attended) {
+      await expect(checkInBadge).toHaveText('已簽到');
+      const photo = await summary.getByTestId('attendance-photo-thumbnail').boundingBox();
+      expect(photo!.width).toBeLessThanOrEqual(220);
+      expect(photo!.height).toBeLessThanOrEqual(160);
+    }
+    const size = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
+    expect(size.scroll).toBeLessThanOrEqual(size.width + 2);
+  }
+  expect(mock.writes).toHaveLength(0);
+});
+
+test('following an own-course bell notice resets an existing other-teacher filter without opening a popup', async ({ page }) => {
+  const own = course(41), other = course(42, 2);
+  const mock = await workspace(page, [own, other], true);
+  const notice = { id: 301, title: '合成本人課程異動', message: '合成通知：請查看本人行程', category: 'course', read: false, url: '/app/calendar?session_id=41' };
+  let reads = 0;
+  await page.route('**/api/v1/notifications', route => route.fulfill({ json: { data: [notice], unread_count: notice.read ? 0 : 1 } }));
+  await page.route('**/api/v1/notifications/301/read', route => {
+    reads++; notice.read = true;
+    return route.fulfill({ json: notice });
+  });
+  await page.goto('/app/calendar');
+  await page.getByRole('button', { name: '議程', exact: true }).click();
+  const filter = page.getByTestId('calendar-teacher-filter');
+  await filter.selectOption('2');
+  await expect(filter).toHaveValue('2');
+  await expect(page.locator('.calendar button[data-calendar-session-id="42"]')).toBeVisible();
+  await expect(page.locator('.calendar button[data-calendar-session-id="41"]')).toHaveCount(0);
+  await page.evaluate(() => { (window as any).__calendarNavigationMarker = 'synthetic-existing-document'; });
+  await page.getByRole('button', { name: '通知收件匣', exact: true }).click();
+  await page.locator('button[data-notification-id="301"]').click();
+  await expect(page).toHaveURL(/\/app\/calendar\?session_id=41$/);
+  await expect(filter).toHaveValue('mine');
+  await expect(page.locator('.calendar [data-session-id="41"]')).toHaveClass(/notification-focus/);
+  await expect(page.locator('.calendar button[data-calendar-session-id="42"]')).toHaveCount(0);
+  await expect(page.getByTestId('calendar-day-sheet')).toBeHidden();
+  await expect(page.getByTestId('calendar-session-detail')).toHaveCount(0);
+  await expect(page.locator('.modal')).toHaveCount(0);
+  expect(await page.evaluate(() => (window as any).__calendarNavigationMarker)).toBe('synthetic-existing-document');
+  expect(reads).toBe(1);
+  expect(mock.writes).toHaveLength(0);
+});
