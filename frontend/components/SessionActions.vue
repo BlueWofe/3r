@@ -4,9 +4,17 @@ const props = defineProps<{
   session: Session;
   openOnMount?: boolean;
   admin?: boolean;
+  detailFirst?: boolean;
 }>();
 const emit = defineEmits(["updated", "close"]);
 const { user, can } = useAuth();
+const detailEditing = ref(false);
+const { prisons, load: loadPrisons } = usePrisons();
+async function enterDetailEditing() {
+  detailEditing.value = true;
+  await Promise.all([loadTeachers(), canEditSession.value ? loadPrisons() : Promise.resolve()]);
+}
+function backToDetail() { detailEditing.value = false; editor.value = false; error.value = ""; }
 const selfOpen = ref(false), selfReason = ref(""), selfPhoto = ref<File | null>(null), selfError = ref(""), pending = ref(false);
 const open = ref(!!props.openOnMount),
   editor = ref(false),
@@ -224,7 +232,7 @@ async function submitTeacher() {
 watch(
   open,
   async (value) => {
-    if (value) await loadTeachers();
+    if (value && !props.detailFirst) await loadTeachers();
   },
   { immediate: true },
 );
@@ -236,8 +244,8 @@ watch(
     {{ admin ? "管理場次" : "處理服務" }}
   </button>
   </div>
-  <div v-if="open" class="modal">
-    <div class="dialog">
+  <div v-if="open && !(detailFirst && selfOpen)" class="modal" @keydown.esc="!pending && (open = false, emit('close'))">
+    <div class="dialog" role="dialog" aria-modal="true" :aria-label="session.title" :data-testid="detailFirst ? 'calendar-session-detail' : undefined">
       <div class="workhead">
         <div>
           <h2>{{ session.title }}</h2>
@@ -260,8 +268,33 @@ watch(
           關閉
         </button>
       </div>
+      <template v-if="detailFirst && !detailEditing">
+        <dl class="session-details">
+          <div><dt>日期與時段</dt><dd>{{ session.service_date }} {{ session.start_time }}–{{ session.end_time }}</dd></div>
+          <div><dt>監所／單位</dt><dd>{{ session.prison || '未提供' }}</dd></div>
+          <div v-if="session.prison_address"><dt>監所地址</dt><dd>{{ session.prison_address }}</dd></div>
+          <div><dt>上課位置</dt><dd>{{ session.location || '未提供' }}</dd></div>
+          <div><dt>班級</dt><dd>{{ session.class_name || '未提供' }}</dd></div>
+          <div><dt>參與人數</dt><dd>{{ session.participant_count }} 人</dd></div>
+          <div><dt>場次狀態</dt><dd>{{ active ? '已排定' : '已取消' }}</dd></div>
+        </dl>
+        <h3>授課老師與簽到</h3>
+        <div class="attendance-list"><div v-for="a in session.assignments" :key="a.id" :class="{ 'my-assignment': a.teacher_id === user?.id && a.status !== 'replaced' }">
+          <span v-if="a.teacher_id === user?.id && a.status !== 'replaced'" class="status scheduled">我的課程{{ a.status === 'leave' ? '／已請假' : '' }}</span>
+          <AttendanceSummary :assignment="a" inline-photo show-missing />
+        </div></div>
+        <p v-if="!session.assignments.length" class="muted">尚未指派老師。</p>
+        <div class="actions">
+          <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? '補簽' : '簽到' }}</button>
+          <button v-if="admin || attendanceAdmin" class="button ghost" data-testid="session-detail-edit" @click="enterDetailEditing">編輯</button>
+          <button v-else-if="ownMutable" class="button ghost" data-testid="session-detail-service-actions" @click="enterDetailEditing">請假／換課</button>
+        </div>
+      </template>
+      <template v-else>
+      <button v-if="detailFirst" class="button ghost" data-testid="session-detail-back" :disabled="pending" @click="backToDetail">返回詳細資料</button>
+      <SessionEditor v-if="detailFirst && detailEditing && canEditSession" :session="session" :teachers="teachers" :prisons="prisons" embedded @saved="emit('updated'); backToDetail()" />
       <fieldset :disabled="pending" class="session-fields">
-      <div class="attendance-list"><AttendanceSummary v-for="a in session.assignments" :key="a.id" :assignment="a" /></div>
+      <div class="attendance-list"><AttendanceSummary v-for="a in session.assignments" :key="a.id" :assignment="a" :inline-photo="detailFirst" /></div>
       <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? "補簽" : "簽到" }}</button>
       <label class="field"
         >異動原因／備註<textarea
@@ -310,7 +343,7 @@ watch(
         >
           邀請代課</button
         ><button
-          v-if="canEditSession"
+          v-if="canEditSession && !detailFirst"
           class="button ghost"
           @click="editor = true"
         >
@@ -353,6 +386,7 @@ watch(
       </div>
       </fieldset>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
+      </template>
     </div>
   </div>
   <div v-if="selfOpen" class="modal self-attendance-modal" @keydown.esc="!pending && (selfOpen = false)">
@@ -386,4 +420,10 @@ watch(
 .attendance-list { display: grid; gap: 12px; margin-bottom: 16px; }
 .self-attendance-modal { z-index: 101; }
 .self-attendance-modal input { max-width: 100%; }
+.session-details { display: grid; gap: 10px; }
+.session-details > div { display: grid; grid-template-columns: minmax(80px, 110px) minmax(0, 1fr); gap: 12px; }
+.session-details dt { color: var(--muted); }
+.session-details dd { margin: 0; overflow-wrap: anywhere; }
+.my-assignment { border-left: 4px solid var(--pine); padding: 10px; background: #eaf1eb; border-radius: 8px; }
+.dialog { overflow-wrap: anywhere; }
 </style>

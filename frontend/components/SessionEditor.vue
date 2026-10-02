@@ -4,6 +4,7 @@ const p = defineProps<{
   session?: Session | null;
   teachers?: any[];
   prisons?: any[];
+  embedded?: boolean;
 }>();
 const emit = defineEmits(["close", "saved"]);
 const { can } = useAuth();
@@ -57,9 +58,9 @@ async function save() {
 }
 </script>
 <template>
-  <div class="modal">
-    <form class="dialog form" @submit.prevent="save">
-      <div class="workhead">
+  <div :class="embedded ? 'embedded-editor' : 'modal'">
+    <form :class="embedded ? 'form' : 'dialog form'" @submit.prevent="save">
+      <div v-if="!embedded" class="workhead">
         <h2>{{ session ? "編輯服務場次" : "新增服務場次" }}</h2>
         <button type="button" class="button ghost" @click="emit('close')">
           關閉

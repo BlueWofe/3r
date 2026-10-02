@@ -2,7 +2,12 @@
 definePageMeta({ layout: "app" });
 import type { Session } from "~/types";
 type CalendarEntry = Session & { activity?: any };
-const { can } = useAuth();
+const { can, user } = useAuth();
+const teacherFilter = ref("mine");
+const teacherOptions = ref<{ id: number; name: string }[]>([]);
+const detailLoading = ref(false);
+function ownAssignment(session: Session) { return session.assignments.find(a => a.teacher_id === user.value?.id && a.status !== "replaced"); }
+function myCourseLabel(session: Session) { return ownAssignment(session)?.status === "leave" ? "我的課程／已請假" : "我的課程"; }
 const route = useRoute();
 const view = ref<"agenda" | "week" | "month">("month");
 const cursor = ref(new Date());
@@ -19,6 +24,7 @@ const today = taipeiDate();
 let previousOverflow = "";
 let dayTrigger: HTMLElement | null = null;
 let request = 0;
+let detailRequest = 0;
 const yyyyMMdd = (d: Date) => {
   const z = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
@@ -52,9 +58,11 @@ const load = async () => {
   loading.value = true;
   try {
     const from = yyyyMMdd(range.value.from), to = yyyyMMdd(range.value.to);
+    const teacherId = teacherFilter.value === "mine" || !can("schedule.read.all") ? user.value?.id : teacherFilter.value === "all" ? undefined : Number(teacherFilter.value);
+    const teacherQuery = teacherId ? `&teacher_id=${teacherId}` : "";
     const [courses, meetings] = await Promise.all([
       can("schedule.read.all") || can("schedule.read.own")
-        ? api<any>(`/sessions?from=${from}&to=${to}`) : Promise.resolve({ data: [] }),
+        ? api<any>(`/sessions?from=${from}&to=${to}${teacherQuery}`) : Promise.resolve({ data: [] }),
       can("meetings.read.all") || can("meetings.read.own")
         ? api<any>("/meetings") : Promise.resolve({ data: [] }),
     ]);
@@ -86,6 +94,7 @@ async function openLinkedSession() {
   if (!Number.isInteger(id) || id <= 0) { error.value = "通知指定的課程編號無效。"; return; }
   try {
     const target = await api<Session>(`/sessions/${id}`);
+    if (!target.assignments.some(a => a.teacher_id === user.value?.id) && can("schedule.read.all")) teacherFilter.value = "all";
     const date = new Date(`${target.service_date}T12:00:00`);
     if (Number.isNaN(date.getTime())) throw new Error("課程日期資料無效。");
     view.value = "agenda";
@@ -98,8 +107,19 @@ async function openLinkedSession() {
     document.querySelector(`[data-session-id="${id}"]`)?.scrollIntoView({ block: "center" });
   } catch (e: any) { focusedSessionId.value = null; error.value = e.message || "找不到指定的課程。"; }
 }
-onMounted(async () => { await load(); await openLinkedSession(); });
+onMounted(async () => {
+  await load(); await openLinkedSession();
+  if (can("schedule.read.all")) {
+    try { teacherOptions.value = (await api<{ data: { id: number; name: string }[] }>("/teachers")).data || []; }
+    catch (e: any) { error.value = e.message; }
+  }
+});
 watch([view, cursor], load);
+watch(teacherFilter, async () => {
+  detailRequest++; detailLoading.value = false;
+  selected.value = null; selectedActivity.value = null; dayDialog.value?.close(); focusedSessionId.value = null;
+  await load();
+});
 watch(() => route.query.session_id, openLinkedSession);
 const days = computed(() =>
   Array.from({ length: range.value.count }, (_, i) => {
@@ -125,6 +145,7 @@ const sessionsFor = (date: string) =>
   sessions.value.filter((session) => session.service_date === date)
     .sort((a, b) => a.start_time.localeCompare(b.start_time) || a.id - b.id);
 function openDay(date: string, event: MouseEvent) {
+  if (loading.value || refreshing.value || detailLoading.value) return;
   dayTrigger = event.currentTarget as HTMLElement;
   selectedDay.value = date;
   previousOverflow = document.body.style.overflow;
@@ -133,18 +154,32 @@ function openDay(date: string, event: MouseEvent) {
 }
 function closeDay() {
   document.body.style.overflow = previousOverflow;
+  if (!selected.value && !selectedActivity.value) { detailRequest++; detailLoading.value = false; }
   if (!selected.value && !selectedActivity.value) dayTrigger?.focus({ preventScroll: true });
 }
 onBeforeUnmount(() => {
   if (dayDialog.value?.open) closeDay();
 });
 async function openSession(session: CalendarEntry) {
-  dayDialog.value?.close();
-  if (session.activity) {
-    try {
-      selectedActivity.value = await api<any>(`/meetings/${session.activity.id}`);
-    } catch (e: any) { error.value = e.message; await load(); }
-  } else selected.value = session;
+  if (detailLoading.value) return;
+  const sequence = ++detailRequest;
+  const date = selectedDay.value, filter = teacherFilter.value;
+  const stillSelected = () => sequence === detailRequest && !!dayDialog.value?.open && selectedDay.value === date && teacherFilter.value === filter;
+  detailLoading.value = true;
+  error.value = "";
+  try {
+    if (session.activity) {
+      const fresh = await api<any>(`/meetings/${session.activity.id}`);
+      if (!stillSelected()) return;
+      selectedActivity.value = fresh;
+    } else {
+      const fresh = await api<Session>(`/sessions/${session.id}`);
+      if (!stillSelected()) return;
+      selected.value = fresh;
+    }
+    dayDialog.value?.close();
+  } catch (e: any) { if (sequence === detailRequest) error.value = e.message; }
+  finally { if (sequence === detailRequest) detailLoading.value = false; }
 }
 async function sessionUpdated() {
   refreshing.value = true;
@@ -178,6 +213,10 @@ async function sessionUpdated() {
       </button>
     </div>
   </div>
+  <label class="field calendar-filter">課程篩選<select v-model="teacherFilter" data-testid="calendar-teacher-filter">
+    <option value="mine">我的課程</option>
+    <template v-if="can('schedule.read.all')"><option value="all">全部課程</option><option v-for="teacher in teacherOptions" :key="teacher.id" :value="String(teacher.id)">{{ teacher.name }}</option></template>
+  </select></label>
   <p v-if="view !== 'agenda'" class="calendar-legend">
     顏色依班別／課程設定；<span class="legend cancelled"></span>斜線表示已取消。點選日期查看場次
   </p>
@@ -223,20 +262,22 @@ async function sessionUpdated() {
           :data-session-id="s.id"
         ><button
           class="event"
+          :data-calendar-session-id="s.id"
           :style="{ borderLeft: `5px solid ${scheduleColor(s.color)}` }"
           :disabled="refreshing || loading"
-          @click="openSession(s)"
+          @click="openDay(d, $event)"
         >
           <span :class="['status', s.status]">{{
             s.activity ? (s.activity.kind === "activity" ? "活動" : "會議") : s.status === "cancelled" ? "取消" : "排定"
           }}</span>
+          <span v-if="ownAssignment(s)" class="status my-course" data-testid="calendar-my-session">{{ myCourseLabel(s) }}</span>
           {{ s.start_time || "全天" }} {{ s.title }}
         </button><AttendanceSummary v-for="a in s.assignments" :key="a.id" :assignment="a" /></div></template
       >
     </div>
   </div>
 
-  <dialog ref="dayDialog" class="day-sheet" aria-labelledby="day-sheet-title" @close="closeDay">
+  <dialog ref="dayDialog" class="day-sheet" aria-labelledby="day-sheet-title" data-testid="calendar-day-sheet" @close="closeDay">
     <div class="workhead">
       <h2 id="day-sheet-title">{{ selectedDay }} 的行程</h2>
       <button class="button ghost" @click="dayDialog?.close()">關閉</button>
@@ -244,17 +285,21 @@ async function sessionUpdated() {
     <p v-if="!sessionsFor(selectedDay).length" class="muted">
       這一天沒有行程。
     </p>
+    <p v-if="detailLoading" role="status" class="muted">正在載入詳細資料…</p>
+    <p v-if="error" class="error" role="alert">{{ error }}</p>
     <button
       v-for="session in sessionsFor(selectedDay)"
       :key="session.id"
       class="day-session"
+      :data-session-id="session.id"
+      :disabled="detailLoading || loading || refreshing"
       :style="{ borderLeft: `5px solid ${scheduleColor(session.color)}` }"
       @click="openSession(session)"
     >
       <span :class="['status', session.status]">{{
         session.activity ? (session.activity.kind === "activity" ? "活動" : "會議") : session.status === "cancelled" ? "已取消" : "已排定"
       }}</span
-      ><b>{{ session.start_time || "全天" }} {{ session.title }}</b
+      ><span v-if="ownAssignment(session)" class="status my-course" data-testid="calendar-my-session">{{ myCourseLabel(session) }}</span><b>{{ session.start_time || "全天" }} {{ session.title }}</b
       ><small>{{ session.class_name ? `${session.class_name}・` : "" }}{{ [session.prison, session.location].filter(Boolean).join("／") }}</small>
     </button>
   </dialog>
@@ -262,6 +307,7 @@ async function sessionUpdated() {
     v-if="selected"
     :session="selected"
     open-on-mount
+    detail-first
     @updated="sessionUpdated"
     @close="selected = null"
   />
@@ -276,6 +322,8 @@ async function sessionUpdated() {
   </div>
 </template>
 <style scoped>
+.calendar-filter { max-width: 320px; }
+.my-course { background: #e1eddf; color: #244d36; font-weight: 700; }
 .activity-text { white-space: pre-wrap; }
 .notification-focus { background: #fff8e8; box-shadow: 0 0 0 3px rgba(198, 157, 77, .35); }
 .calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; padding: 8px 0; font-size: 13px; color: var(--muted); }

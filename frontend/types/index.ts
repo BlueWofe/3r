@@ -13,6 +13,7 @@ export interface Session {
   color?: string;
   prison: string;
   prison_id?: number | null;
+  prison_address?: string | null;
   location: string;
   participant_count: number;
   service_date: string;
