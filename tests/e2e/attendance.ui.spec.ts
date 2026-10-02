@@ -38,7 +38,8 @@ test('teacher can check in today without a photo and cannot check in twice', asy
     const session = Array.isArray(created) ? created[0] : created;
     expect(session, 'API should create one test session').toBeTruthy();
     sessionId = session.id;
-    expect(session.assignments.some(item => item.teacher_id === mobileTeacher!.id)).toBeTruthy();
+    const ownAssignment = session.assignments.find(item => item.teacher_id === mobileTeacher!.id);
+    expect(ownAssignment).toBeTruthy();
 
     await page.goto('/login');
     await page.getByLabel('手機號碼').fill('0900000004');
@@ -59,7 +60,21 @@ test('teacher can check in today without a photo and cannot check in twice', asy
     await expect(page.getByTestId('self-attendance-dialog')).toBeVisible();
     await expect(page.getByTestId('self-attendance-photo')).toBeVisible();
     // Deliberately leave the optional photo input empty.
+    // Opening the self dialog already hides the detail heading. Await the actual
+    // mutation response before reading persisted attendance; a hidden heading
+    // alone cannot prove that the server committed the check-in.
+    const submitted = page.waitForResponse(response =>
+      new URL(response.url()).pathname === `/api/v1/assignments/${ownAssignment!.id}/attendance` &&
+      response.request().method() === 'POST',
+    );
     await page.getByTestId('self-attendance-submit').click();
+    const submission = await submitted;
+    expect(submission.status(), `attendance POST returned ${submission.status()}: ${await submission.text()}`).toBe(200);
+    const returned = await submission.json() as { assignments: { id: number; attendance: { kind: string; present: boolean; at: string; service_date: string } | null }[] };
+    const returnedAttendance = returned.assignments.find(item => item.id === ownAssignment!.id)?.attendance;
+    expect(returnedAttendance).toMatchObject({ kind: 'check_in', present: true, service_date: taipeiToday() });
+    expect(returnedAttendance?.at).toEqual(expect.any(String));
+    await expect(page.getByTestId('self-attendance-dialog')).toBeHidden({ timeout: 15_000 });
     await expect(page.getByRole('heading', { name: title })).toBeHidden({ timeout: 15_000 });
 
     const saved = await json<{ assignments: { teacher_id: number; attendance: unknown }[] }>(
@@ -67,6 +82,7 @@ test('teacher can check in today without a photo and cannot check in twice', asy
     );
     const attendance = saved.assignments.find(item => item.teacher_id === mobileTeacher!.id)?.attendance;
     expect(attendance, 'check-in should persist without a photo').toBeTruthy();
+    expect(attendance).toEqual(returnedAttendance);
 
     await page.getByRole('button', { name: new RegExp(title) }).click();
     await page.getByTestId('calendar-day-sheet').getByRole('button', { name: new RegExp(title) }).click();
