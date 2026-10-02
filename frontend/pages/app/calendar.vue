@@ -15,8 +15,7 @@ const error = ref("");
 const dayDialog = ref<HTMLDialogElement | null>(null);
 const selectedDay = ref("");
 const focusedSessionId = ref<number | null>(null);
-const today = yyyyToday();
-function yyyyToday() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date()); }
+const today = taipeiDate();
 let previousOverflow = "";
 let dayTrigger: HTMLElement | null = null;
 let request = 0;
@@ -216,12 +215,14 @@ async function sessionUpdated() {
           >+{{ sessionsFor(d).length - 3 }}</small
         ></button
       ><template v-if="view === 'agenda'"
-        ><b class="agenda-date">{{ d }} {{ new Date(d + 'T00:00:00').toLocaleDateString('zh-TW', { weekday: 'short' }) }}</b><button
+        ><b class="agenda-date">{{ d }} {{ new Date(d + 'T00:00:00').toLocaleDateString('zh-TW', { weekday: 'short' }) }}</b><div
           v-for="s in sessionsFor(d)"
           :key="s.id"
-          class="event"
+          class="agenda-session"
           :class="{ 'notification-focus': focusedSessionId === s.id }"
           :data-session-id="s.id"
+        ><button
+          class="event"
           :style="{ borderLeft: `5px solid ${scheduleColor(s.color)}` }"
           :disabled="refreshing || loading"
           @click="openSession(s)"
@@ -230,7 +231,7 @@ async function sessionUpdated() {
             s.activity ? (s.activity.kind === "activity" ? "活動" : "會議") : s.status === "cancelled" ? "取消" : "排定"
           }}</span>
           {{ s.start_time || "全天" }} {{ s.title }}
-        </button></template
+        </button><AttendanceSummary v-for="a in s.assignments" :key="a.id" :assignment="a" /></div></template
       >
     </div>
   </div>
@@ -285,6 +286,9 @@ async function sessionUpdated() {
 .calendar-day-tap.other-month { color: #737873; background: #f2f1eb; }
 .calendar-day-tap:focus-visible, .day-session:focus-visible { outline: 2px solid var(--pine); outline-offset: -2px; }
 .agenda-date { display: block; }
+.agenda-session { margin-top: 8px; }
+.agenda-session .event { width: 100%; }
+.agenda-session :deep(.attendance-summary) { padding: 4px 12px; font-size: 14px; }
 .calendar-day-tap {
   display: block;
   width: 100%;

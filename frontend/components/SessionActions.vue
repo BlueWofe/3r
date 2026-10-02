@@ -6,7 +6,8 @@ const props = defineProps<{
   admin?: boolean;
 }>();
 const emit = defineEmits(["updated", "close"]);
-const { user, can, refresh } = useAuth();
+const { user, can } = useAuth();
+const selfOpen = ref(false), selfReason = ref(""), selfPhoto = ref<File | null>(null), selfError = ref(""), pending = ref(false);
 const open = ref(!!props.openOnMount),
   editor = ref(false),
   reason = ref(""),
@@ -55,20 +56,53 @@ const canEditSession = computed(
         props.session.assignments.filter((a) => a.status !== "replaced")
           .length) === 1),
 );
-const today = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Taipei",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-}).format(new Date());
+const today = taipeiDate();
+const lateCheckIn = computed(() => props.session.service_date < today);
 const canCheckIn = computed(
   () =>
     active.value &&
     mine.value?.status === "assigned" &&
     !mine.value.attendance &&
-    props.session.service_date === today &&
+    props.session.service_date <= today &&
     can("attendance.create.own"),
 );
+function openSelfAttendance() {
+  selfReason.value = "";
+  selfPhoto.value = null;
+  selfError.value = "";
+  selfOpen.value = true;
+}
+function selectSelfPhoto(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0] || null;
+  selfError.value = "";
+  selfPhoto.value = null;
+  if (file && (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+    selfError.value = "照片限 JPG、PNG 或 WebP，大小不可超過 5 MB。";
+    input.value = "";
+    return;
+  }
+  selfPhoto.value = file;
+}
+async function submitSelfAttendance() {
+  if (pending.value) return;
+  selfError.value = "";
+  const own = mine.value;
+  if (!canCheckIn.value || !own) { selfError.value = "目前無法簽到，請重新整理行程。"; return; }
+  if (lateCheckIn.value && !selfReason.value.trim()) { selfError.value = "請填寫補簽原因。"; return; }
+  if (selfReason.value.length > 1000) { selfError.value = "備註／原因不可超過 1000 字。"; return; }
+  const data = new FormData();
+  data.append("mode", "self");
+  if (selfReason.value.trim()) data.append("reason", selfReason.value.trim());
+  if (selfPhoto.value) data.append("photo", selfPhoto.value);
+  pending.value = true;
+  try {
+    await api(`/assignments/${own.id}/attendance`, { method: "POST", body: data });
+    selfOpen.value = false;
+    emit("updated");
+  } catch (e: any) { selfError.value = e.message || "簽到失敗，請稍後再試。"; }
+  finally { pending.value = false; }
+}
 async function loadTeachers() {
   if (editable.value)
     try {
@@ -78,6 +112,16 @@ async function loadTeachers() {
     }
 }
 async function doAssignment(
+  kind: "leave" | "withdraw-leave" | "invite" | "replace" | "attendance",
+  assignment?: any,
+) {
+  if (pending.value) return;
+  pending.value = true;
+  try { await assignmentAction(kind, assignment); }
+  catch { /* useApiError displays the server error in the dialog. */ }
+  finally { pending.value = false; }
+}
+async function assignmentAction(
   kind: "leave" | "withdraw-leave" | "invite" | "replace" | "attendance",
   assignment?: any,
 ) {
@@ -109,6 +153,7 @@ async function doAssignment(
       return;
     }
     const data = new FormData();
+    data.append("mode", "admin");
     if (reason.value.trim()) data.append("reason", reason.value);
     if (attendanceAdmin.value)
       data.append("present", present.value ? "1" : "0");
@@ -124,6 +169,13 @@ async function doAssignment(
   open.value = false;
 }
 async function setStatus(status: "cancelled" | "scheduled") {
+  if (pending.value) return;
+  pending.value = true;
+  try { await updateStatus(status); }
+  catch { /* useApiError displays the server error in the dialog. */ }
+  finally { pending.value = false; }
+}
+async function updateStatus(status: "cancelled" | "scheduled") {
   if (!reason.value.trim()) {
     error.value = "請填寫異動原因。";
     return;
@@ -144,6 +196,13 @@ async function setStatus(status: "cancelled" | "scheduled") {
   open.value = false;
 }
 async function assignTeacher() {
+  if (pending.value) return;
+  pending.value = true;
+  try { await submitTeacher(); }
+  catch { /* useApiError displays the server error in the dialog. */ }
+  finally { pending.value = false; }
+}
+async function submitTeacher() {
   if (!teacherId.value || !reason.value.trim()) {
     error.value = "請選擇老師並填寫指派原因。";
     return;
@@ -171,9 +230,12 @@ watch(
 );
 </script>
 <template>
-  <button class="button ghost" @click="open = true">
+  <div v-if="!openOnMount" class="actions session-action-buttons">
+    <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? "補簽" : "簽到" }}</button>
+  <button class="button ghost" :disabled="pending" @click="open = true">
     {{ admin ? "管理場次" : "處理服務" }}
   </button>
+  </div>
   <div v-if="open" class="modal">
     <div class="dialog">
       <div class="workhead">
@@ -189,6 +251,7 @@ watch(
         </div>
         <button
           class="button ghost"
+          :disabled="pending"
           @click="
             open = false;
             emit('close');
@@ -197,12 +260,11 @@ watch(
           關閉
         </button>
       </div>
+      <fieldset :disabled="pending" class="session-fields">
+      <div class="attendance-list"><AttendanceSummary v-for="a in session.assignments" :key="a.id" :assignment="a" /></div>
+      <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? "補簽" : "簽到" }}</button>
       <label class="field"
-        >{{
-          mine?.status === "assigned" && !admin
-            ? "簽到備註（選填）"
-            : "異動原因／備註"
-        }}<textarea
+        >異動原因／備註<textarea
           v-model="reason"
           placeholder="請說明異動原因"
         ></textarea></label
@@ -228,14 +290,6 @@ watch(
         ><input v-model="resolution" type="checkbox" />
         將既有簽到記錄作廢</label
       >
-      <label v-if="mine?.status === 'assigned' && !admin" class="field"
-        >簽到照片（選填，JPEG／PNG／WebP）<input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          @change="
-            photo = ($event.target as HTMLInputElement).files?.[0] || null
-          "
-      /></label>
       <div v-if="active" class="actions">
         <button
           v-if="ownMutable && mine?.status === 'assigned'"
@@ -283,7 +337,7 @@ watch(
           class="button gold"
           @click="doAssignment('attendance')"
         >
-          補登簽到</button
+          管理補登／更正</button
         ><button
           v-if="canEditSession"
           class="button danger"
@@ -291,21 +345,28 @@ watch(
         >
           停課
         </button>
-        <button
-          v-if="canCheckIn && !attendanceAdmin"
-          class="button gold"
-          @click="doAssignment('attendance', mine)"
-        >
-          完成簽到
-        </button>
       </div>
       <div v-else class="actions">
         <button v-if="admin" class="button" @click="setStatus('scheduled')">
           恢復場次
         </button>
       </div>
-      <p v-if="error" class="error">{{ error }}</p>
+      </fieldset>
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
     </div>
+  </div>
+  <div v-if="selfOpen" class="modal self-attendance-modal" @keydown.esc="!pending && (selfOpen = false)">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="self-attendance-title" data-testid="self-attendance-dialog">
+      <div class="workhead"><h2 id="self-attendance-title">{{ lateCheckIn ? "補簽" : "簽到" }}</h2><button class="button ghost" :disabled="pending" @click="selfOpen = false">關閉</button></div>
+      <p>{{ session.title }} · {{ session.service_date }}<br />{{ mine?.teacher?.name || user?.name }}</p>
+      <p class="muted">{{ lateCheckIn ? "補簽會保留原服務日期，並記錄現在的簽到時間。" : "簽到時間以送出時的台北時間記錄。" }}</p>
+      <form @submit.prevent="submitSelfAttendance">
+        <label class="field">{{ lateCheckIn ? "補簽原因（必填）" : "簽到備註（選填）" }}<textarea v-model="selfReason" data-testid="self-attendance-reason" :required="lateCheckIn" maxlength="1000" :disabled="pending"></textarea></label>
+        <label class="field">簽到照片（選填，JPG／PNG／WebP，最多 5 MB）<input data-testid="self-attendance-photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" :disabled="pending" @change="selectSelfPhoto" /></label>
+        <p v-if="selfError" class="error" role="alert" data-testid="self-attendance-error">{{ selfError }}</p>
+        <button class="button gold" data-testid="self-attendance-submit" type="submit" :disabled="pending">{{ pending ? "送出中…" : lateCheckIn ? "送出補簽" : "確認簽到" }}</button>
+      </form>
+    </section>
   </div>
   <SessionEditor
     v-if="editor"
@@ -319,3 +380,10 @@ watch(
     "
   />
 </template>
+<style scoped>
+.session-action-buttons { flex-wrap: wrap; }
+.session-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.attendance-list { display: grid; gap: 12px; margin-bottom: 16px; }
+.self-attendance-modal { z-index: 101; }
+.self-attendance-modal input { max-width: 100%; }
+</style>
