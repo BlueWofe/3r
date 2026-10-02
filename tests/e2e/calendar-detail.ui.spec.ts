@@ -201,3 +201,30 @@ test('ordinary teacher cannot select all or another teacher', async ({ page }) =
   await expect(page.locator('.calendar button[data-calendar-session-id="34"]')).toHaveCount(0);
   await expect(page.locator('.calendar button[data-calendar-session-id="33"]')).toBeVisible();
 });
+
+test('closing the day list cancels a pending detail opening even when its response arrives later', async ({ page }) => {
+  const item = course(35);
+  const mock = await workspace(page, [item]);
+  let release!: () => void, started!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const pending = new Promise<void>(resolve => { started = resolve; });
+  await page.route('**/api/v1/sessions/35', async route => {
+    started();
+    await gate;
+    await route.fulfill({ json: item });
+  });
+  const sheet = await dayList(page);
+  await sheet.locator('[data-session-id="35"]').click();
+  await pending;
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole('button', { name: '關閉', exact: true }).click();
+  await expect(sheet).toBeHidden();
+  const response = page.waitForResponse(result => new URL(result.url()).pathname === '/api/v1/sessions/35');
+  release();
+  await (await response).finished();
+  // Allow Vue's response handler and the following rendering frames to settle.
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await expect(page.getByTestId('calendar-session-detail')).toHaveCount(0);
+  await expect(sheet).toBeHidden();
+  expect(mock.writes).toHaveLength(0);
+});
