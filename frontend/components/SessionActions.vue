@@ -249,8 +249,8 @@ watch(
       <div class="workhead">
         <div>
           <h2>{{ session.title }}</h2>
-          <p v-if="session.class_name" class="muted">班級：{{ session.class_name }}</p>
-          <p class="muted">
+          <p v-if="!detailFirst && session.class_name" class="muted">班級：{{ session.class_name }}</p>
+          <p v-if="!detailFirst" class="muted">
             {{ session.service_date }} {{ session.start_time }}–{{
               session.end_time
             }}
