@@ -13,7 +13,7 @@ function session(id: number, date = '2026-10-02', status = 'scheduled', assignme
 }
 async function mockWorkspace(page: Page, sessions: ReturnType<typeof session>[], admin = false) {
   await page.clock.install({ time: new Date(actualAt) });
-  await page.clock.pauseAt(new Date(actualAt));
+  await page.clock.setFixedTime(new Date(actualAt));
   const posts: { path: string; body: string }[] = [];
   let lists = 0;
   // Intercept every API request; no live attendance is created or changed.
