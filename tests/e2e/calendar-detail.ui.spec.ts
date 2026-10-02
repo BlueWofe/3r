@@ -94,7 +94,7 @@ test('day list marks only own courses and teacher opens complete read-only detai
   for (const text of [own.title, own.class_name, own.prison, own.prison_address, own.location, '2026-10-02', '09:00', '10:00', '12', '合成本人']) await expect(detail).toContainText(text);
   await expect(detail).toContainText('未簽到');
   await expect(detail.locator('input,select,textarea')).toHaveCount(0);
-  await expect(detail.getByRole('button', { name: '補登簽到', exact: true })).toHaveCount(0);
+  await expect(detail.getByRole('button', { name: '管理補登／更正', exact: true })).toHaveCount(0);
   await expect(detail.getByTestId('session-detail-edit')).toHaveCount(0);
   await expect(detail.getByTestId('self-check-in')).toBeVisible();
   expect(mock.writes).toHaveLength(0);
@@ -124,7 +124,7 @@ test('admin must enter edit mode in the same dialog to change complete session f
   await detail.getByTestId('session-detail-edit').click();
   await expect(page.getByRole('dialog')).toHaveCount(1);
   for (const label of ['課程主題', '班級名稱', '監所／單位', '上課位置', '參與人數', '服務日期', '開始時間', '結束時間', '異動說明']) await expect(detail.getByLabel(label, { exact: true })).toBeVisible();
-  await expect(detail.getByRole('button', { name: '補登簽到', exact: true })).toBeVisible();
+  await expect(detail.getByRole('button', { name: '管理補登／更正', exact: true })).toBeVisible();
   await detail.getByTestId('session-detail-back').click();
   await expect(detail.locator('input,select,textarea')).toHaveCount(0);
   expect(mock.writes).toHaveLength(0);
