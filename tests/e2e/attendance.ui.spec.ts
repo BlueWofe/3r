@@ -53,10 +53,11 @@ test('teacher can check in today without a photo and cannot check in twice', asy
     await event.click();
 
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
-    await expect(page.getByText(/簽到照片（選填/)).toBeVisible();
-    await expect(page.locator('input[type="file"]')).toBeVisible();
+    await page.getByTestId('self-check-in').click();
+    await expect(page.getByTestId('self-attendance-dialog')).toBeVisible();
+    await expect(page.getByTestId('self-attendance-photo')).toBeVisible();
     // Deliberately leave the optional photo input empty.
-    await page.getByRole('button', { name: '完成簽到' }).click();
+    await page.getByTestId('self-attendance-submit').click();
     await expect(page.getByRole('heading', { name: title })).toBeHidden({ timeout: 15_000 });
 
     const saved = await json<{ assignments: { teacher_id: number; attendance: unknown }[] }>(
@@ -67,7 +68,7 @@ test('teacher can check in today without a photo and cannot check in twice', asy
 
     await page.getByRole('button', { name: new RegExp(title) }).click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
-    await expect(page.getByRole('button', { name: '完成簽到' })).toHaveCount(0);
+    await expect(page.getByTestId('self-check-in')).toHaveCount(0);
   } finally {
     await admin.dispose();
   }
