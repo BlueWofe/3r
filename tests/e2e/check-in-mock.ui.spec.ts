@@ -31,7 +31,8 @@ async function mockWorkspace(page: Page, sessions: ReturnType<typeof session>[],
     if (path === '/sessions') {
       lists++;
       const from = url.searchParams.get('from') || '', to = url.searchParams.get('to') || '9999-12-31';
-      return route.fulfill({ json: { data: sessions.filter(item => item.service_date >= from && item.service_date <= to) } });
+      const teacher = url.searchParams.get('teacher_id');
+      return route.fulfill({ json: { data: sessions.filter(item => item.service_date >= from && item.service_date <= to && (!teacher || item.assignments.some(a => a.teacher_id === Number(teacher)))) } });
     }
     if (/^\/sessions\/\d+$/.test(path)) return route.fulfill({ json: sessions.find(item => item.id === Number(path.split('/').pop())) });
     if (/^\/assignments\/\d+\/attendance$/.test(path) && request.method() === 'POST') {
@@ -59,6 +60,8 @@ async function openCalendarSession(page: Page, item: ReturnType<typeof session>,
   await page.locator(`[data-date="${item.service_date}"] .calendar-day-tap`).click();
   await expect(page.getByRole('dialog')).toContainText(`${item.service_date} 的行程`);
   await page.getByRole('button', { name: new RegExp(item.title) }).click();
+  await expect(page.getByTestId('calendar-day-sheet')).toBeHidden();
+  await expect(page.getByTestId('calendar-session-detail')).toBeVisible();
   await expect(page.getByRole('heading', { name: item.title, exact: true })).toBeVisible();
 }
 function expectSelfPost(post: { path: string; body: string }, assignmentId: number, photo = false) {

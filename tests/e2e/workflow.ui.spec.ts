@@ -54,6 +54,8 @@ test("teacher can leave a future calendar session and invite a substitute from m
     await page.goto("/app/calendar");
     await page.getByRole("button", { name: "議程", exact: true }).click();
     await page.getByRole("button", { name: new RegExp(title) }).click();
+    await page.getByTestId("calendar-day-sheet").getByRole("button", { name: new RegExp(title) }).click();
+    await page.getByTestId("session-detail-service-actions").click();
     await page.getByPlaceholder("請說明異動原因").fill("臨時有事，請假測試");
     const leave = page.waitForResponse(
       (r) =>
@@ -66,6 +68,8 @@ test("teacher can leave a future calendar session and invite a substitute from m
       page.getByRole("heading", { name: title, exact: true }),
     ).toBeHidden();
     await page.getByRole("button", { name: new RegExp(title) }).click();
+    await page.getByTestId("calendar-day-sheet").getByRole("button", { name: new RegExp(title) }).click();
+    await page.getByTestId("session-detail-service-actions").click();
     await page.getByPlaceholder("請說明異動原因").fill("邀請同工協助代課");
     await page
       .getByLabel("選擇同工／指派對象")

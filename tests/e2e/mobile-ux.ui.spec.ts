@@ -138,7 +138,9 @@ test('volunteer can submit leave from the calendar at 320px and 390px', async ({
       await expectNoHorizontalOverflow(page, `calendar at ${width}px`);
 
       await event.click();
+      await page.getByTestId('calendar-day-sheet').getByRole('button', { name: new RegExp(fixture.title) }).click();
       await expect(page.getByRole('heading', { name: fixture.title, exact: true })).toBeVisible();
+      await page.getByTestId('session-detail-service-actions').click();
       const reason = page.getByPlaceholder('請說明異動原因');
       await expect(reason).toBeVisible();
       await reason.fill(`行動寬度 ${width}px 請假驗收`);

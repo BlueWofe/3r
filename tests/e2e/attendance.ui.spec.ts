@@ -51,6 +51,8 @@ test('teacher can check in today without a photo and cannot check in twice', asy
     const event = page.getByRole('button', { name: new RegExp(title) });
     await expect(event).toBeVisible({ timeout: 15_000 });
     await event.click();
+    await expect(page.getByTestId('calendar-day-sheet')).toBeVisible();
+    await page.getByTestId('calendar-day-sheet').getByRole('button', { name: new RegExp(title) }).click();
 
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
     await page.getByTestId('self-check-in').click();
@@ -67,6 +69,7 @@ test('teacher can check in today without a photo and cannot check in twice', asy
     expect(attendance, 'check-in should persist without a photo').toBeTruthy();
 
     await page.getByRole('button', { name: new RegExp(title) }).click();
+    await page.getByTestId('calendar-day-sheet').getByRole('button', { name: new RegExp(title) }).click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
     await expect(page.getByTestId('self-check-in')).toHaveCount(0);
   } finally {
