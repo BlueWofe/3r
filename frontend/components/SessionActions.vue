@@ -268,6 +268,12 @@ watch(
           關閉
         </button>
       </div>
+      <h3>授課老師與簽到</h3>
+      <div class="attendance-list"><div v-for="a in session.assignments" :key="a.id" :class="{ 'my-assignment': a.teacher_id === user?.id && a.status !== 'replaced' }">
+        <span v-if="a.teacher_id === user?.id && a.status !== 'replaced'" class="status scheduled">我的課程{{ a.status === 'leave' ? '／已請假' : '' }}</span>
+        <AttendanceSummary :assignment="a" :session-status="session.status" :inline-photo="detailFirst" show-missing />
+      </div></div>
+      <p v-if="!session.assignments.length" class="vacant-badge"><NavIcon name="person" />缺額：尚未指派老師。</p>
       <template v-if="detailFirst && !detailEditing">
         <dl class="session-details">
           <div><dt>日期與時段</dt><dd>{{ session.service_date }} {{ session.start_time }}–{{ session.end_time }}</dd></div>
@@ -278,12 +284,6 @@ watch(
           <div><dt>參與人數</dt><dd>{{ session.participant_count }} 人</dd></div>
           <div><dt>場次狀態</dt><dd>{{ active ? '已排定' : '停課' }}</dd></div>
         </dl>
-        <h3>授課老師與簽到</h3>
-        <div class="attendance-list"><div v-for="a in session.assignments" :key="a.id" :class="{ 'my-assignment': a.teacher_id === user?.id && a.status !== 'replaced' }">
-          <span v-if="a.teacher_id === user?.id && a.status !== 'replaced'" class="status scheduled">我的課程{{ a.status === 'leave' ? '／已請假' : '' }}</span>
-          <AttendanceSummary :assignment="a" :session-status="session.status" inline-photo show-missing />
-        </div></div>
-        <p v-if="!session.assignments.length" class="vacant-badge"><NavIcon name="person" />缺額：尚未指派老師。</p>
         <div class="actions">
           <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? '補簽' : '簽到' }}</button>
           <button v-if="admin || attendanceAdmin" class="button ghost" data-testid="session-detail-edit" @click="enterDetailEditing">編輯</button>
@@ -294,7 +294,6 @@ watch(
       <button v-if="detailFirst" class="button ghost" data-testid="session-detail-back" :disabled="pending" @click="backToDetail">返回詳細資料</button>
       <SessionEditor v-if="detailFirst && detailEditing && canEditSession" :session="session" :teachers="teachers" :prisons="prisons" embedded @saved="emit('updated'); backToDetail()" />
       <fieldset :disabled="pending" class="session-fields">
-      <div class="attendance-list"><AttendanceSummary v-for="a in session.assignments" :key="a.id" :assignment="a" :session-status="session.status" :inline-photo="detailFirst" /></div>
       <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? "補簽" : "簽到" }}</button>
       <label class="field"
         >異動原因／備註<textarea
