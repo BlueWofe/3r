@@ -337,26 +337,35 @@ class ScheduleController extends ApiController
 
     private function attendance(Request $r, int $id)
     {
-        $v = $r->validate(['photo' => 'nullable|image|mimes:jpeg,png,webp|max:5120', 'present' => 'sometimes|boolean', 'reason' => 'nullable|string|max:1000']);
+        $v = $r->validate(['mode' => 'sometimes|in:self,admin', 'photo' => 'nullable|image|mimes:jpeg,png,webp|max:5120', 'present' => 'sometimes|boolean', 'reason' => 'nullable|string|max:1000']);
 
         return DB::transaction(function () use ($r, $id, $v) {
             $a = Assignment::findOrFail($id);
             $s = ServiceSession::lockForUpdate()->findOrFail($a->session_id);
             $before = $this->snapshot($s);
             $a->refresh();
-            $admin = $r->user()->canDo('attendance.update.all');
-            abort_unless($admin || ($a->teacher_id === $r->user()->id && $r->user()->canDo('attendance.create.own')), 403);
+            $own = $a->teacher_id === $r->user()->id && $r->user()->canDo('attendance.create.own');
+            $admin = ($v['mode'] ?? ($own ? 'self' : 'admin')) === 'admin';
+            abort_unless($admin ? $r->user()->canDo('attendance.update.all') : $own, 403);
             abort_unless($s->data['status'] === 'scheduled' && $a->status === 'assigned', 409);
+            $at = now('Asia/Taipei');
+            $serviceDate = $s->data['service_date'];
+            $reason = trim($v['reason'] ?? '');
             if (! $admin) {
-                abort_unless(now('Asia/Taipei')->format('Y-m-d') === $s->data['service_date'], 422, '僅服務當日可簽到');
+                abort_if($serviceDate > $at->format('Y-m-d'), 422, '尚未到服務日期');
                 abort_if($a->attendance, 409, '已簽到');
+                abort_if(array_key_exists('present', $v) && ! $v['present'], 422, '本人簽到不可登記未出席');
+                abort_if($serviceDate < $at->format('Y-m-d') && $reason === '', 422, '補簽需要原因');
             } else {
-                abort_unless(! empty($v['reason']), 422, '更正需要原因');
-            }$photo = null;
+                abort_unless($reason !== '', 422, '更正需要原因');
+            }
+            $photo = $admin ? ($a->attendance['photo_id'] ?? null) : null;
             if ($r->hasFile('photo')) {
                 $file = Entity::create(['type' => 'files', 'owner_id' => $r->user()->id, 'data' => ['path' => $r->file('photo')->store('private'), 'name' => 'attendance-photo', 'visibility' => 'private', 'assignment_id' => $a->id]]);
                 $photo = $file->id;
-            }$a->update(['attendance' => ['present' => $admin ? ($v['present'] ?? true) : true, 'photo_id' => $photo, 'at' => now()->toIso8601String(), 'reason' => $v['reason'] ?? null, 'actor_id' => $r->user()->id]]);
+            }
+            $kind = $admin ? 'admin_adjustment' : ($serviceDate < $at->format('Y-m-d') ? 'late_check_in' : 'check_in');
+            $a->update(['attendance' => ['present' => $admin ? ($v['present'] ?? true) : true, 'photo_id' => $photo, 'at' => $at->toIso8601String(), 'service_date' => $serviceDate, 'kind' => $kind, 'reason' => $reason !== '' ? $reason : null, 'actor_id' => $r->user()->id]]);
             $s->increment('version');
             $this->event($r, $s, '簽到', $v['reason'] ?? '教師簽到', $before);
 

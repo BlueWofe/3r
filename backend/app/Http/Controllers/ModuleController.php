@@ -36,7 +36,7 @@ class ModuleController extends ApiController
                 }
                 if (isset($d['assignment_id'])) {
                     $a = Assignment::find($d['assignment_id']);
-                    $allowed = $allowed || ($a && (($a->teacher_id === $r->user()->id && $r->user()->canDo('attendance.create.own')) || $r->user()->canDo('attendance.update.all')));
+                    $allowed = $a && (($a->teacher_id === $r->user()->id && $r->user()->canDo('attendance.create.own')) || $r->user()->canDo('attendance.update.all'));
                 }
                 if (isset($d['form_id'])) {
                     try {
