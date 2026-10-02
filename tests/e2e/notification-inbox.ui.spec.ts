@@ -6,6 +6,7 @@ type Notice = {
   message: string;
   category: 'product' | 'course' | 'message' | 'contact';
   read: boolean;
+  read_at?: string;
   url: string;
 };
 
@@ -15,7 +16,7 @@ test('notification inbox filters categories, follows safe links, and refreshes u
   const rows: Notice[] = [
     { id: 101, category: 'product', title: '商品訂單通知', message: '收到新的商品訂單。', read: false, url: '/app/admin/orders?id=7' },
     { id: 102, category: 'course', title: '課程時間異動', message: '您負責的課程有異動。', read: false, url: '/app/calendar?session_id=12' },
-    { id: 103, category: 'message', title: '新的小組消息', message: '您有新的小組消息。', read: true, url: '/app/group-news/13' },
+    { id: 103, category: 'message', title: '新的小組消息', message: '您有新的小組消息。', read: false, read_at: '2026-10-01T12:00:00+08:00', url: '/app/group-news/13' },
     { id: 104, category: 'contact', title: '新的聯絡訊息', message: '收到新的聯絡表單，請查看並處理。', read: false, url: '/app/admin/contact-inquiries?id=14' },
   ];
   let readAllCalls = 0;
@@ -33,7 +34,7 @@ test('notification inbox filters categories, follows safe links, and refreshes u
     row.read = true;
     await route.fulfill({ json: row });
   });
-  await page.route('**/api/v1/notifications', route => route.fulfill({ json: { data: rows, unread_count: rows.filter(row => !row.read).length } }));
+  await page.route('**/api/v1/notifications', route => route.fulfill({ json: { data: rows, unread_count: rows.filter(row => !row.read && !row.read_at).length } }));
   await page.route('**/api/v1/invitations', route => route.fulfill({ json: { data: [] } }));
   await page.route('**/api/v1/sessions**', route => {
     const path = new URL(route.request().url()).pathname;
@@ -47,6 +48,11 @@ test('notification inbox filters categories, follows safe links, and refreshes u
   const tabs = page.getByRole('tablist', { name: '通知分類' });
   await expect(tabs).toBeVisible();
   await expect(tabs.getByRole('tab')).toHaveCount(5);
+  await expect(page.getByTestId('notification-tab-count-all')).toHaveText('3');
+  for (const category of ['product', 'course', 'contact']) {
+    await expect(page.getByTestId(`notification-tab-count-${category}`)).toHaveText('1');
+  }
+  await expect(page.getByTestId('notification-tab-count-message')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: '通知收件匣', exact: true })).toBeVisible();
 
   const bell = page.getByRole('button', { name: '通知收件匣' });
@@ -63,9 +69,14 @@ test('notification inbox filters categories, follows safe links, and refreshes u
   await expect(page.locator('[data-session-id="12"]')).toHaveClass(/notification-focus/);
   await expect(page.locator('.modal')).toHaveCount(0);
   await page.goto('/app/invitations');
+  await expect(page.getByTestId('notification-tab-count-all')).toHaveText('2');
+  await expect(page.getByTestId('notification-tab-count-course')).toHaveCount(0);
+  await expect(page.getByTestId('notification-tab-count-product')).toHaveText('1');
+  await expect(page.getByTestId('notification-tab-count-contact')).toHaveText('1');
   await page.getByRole('button', { name: '全部已讀' }).click();
   await expect.poll(() => readAllCalls).toBe(1);
   await expect(page.getByLabel(/則未讀通知/)).toHaveCount(0);
+  await expect(page.locator('[data-testid^="notification-tab-count-"]')).toHaveCount(0);
   await expect(bell).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
   if (testInfo.project.name === 'mobile') {
