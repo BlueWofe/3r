@@ -94,7 +94,8 @@ async function openLinkedSession() {
   if (!Number.isInteger(id) || id <= 0) { error.value = "通知指定的課程編號無效。"; return; }
   try {
     const target = await api<Session>(`/sessions/${id}`);
-    if (!target.assignments.some(a => a.teacher_id === user.value?.id) && can("schedule.read.all")) teacherFilter.value = "all";
+    teacherFilter.value = target.assignments.some(a => a.teacher_id === user.value?.id)
+      ? "mine" : can("schedule.read.all") ? "all" : "mine";
     const date = new Date(`${target.service_date}T12:00:00`);
     if (Number.isNaN(date.getTime())) throw new Error("課程日期資料無效。");
     view.value = "agenda";
