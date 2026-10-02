@@ -53,7 +53,7 @@ onMounted(async () => {
       <div class="workhead">
         <div>
           <span :class="['status', s.status]">{{
-            s.status === "cancelled" ? "已取消" : "已排定"
+            s.status === "cancelled" ? "停課" : "已排定"
           }}</span>
           <h3>{{ s.title }}</h3>
           <p class="muted">
@@ -74,7 +74,7 @@ onMounted(async () => {
         class="notice"
         style="margin-top: 8px"
       >
-        <AttendanceSummary :assignment="a" />
+        <AttendanceSummary :assignment="a" :session-status="s.status" />
       </div>
     </article>
   </div>

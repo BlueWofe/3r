@@ -276,14 +276,14 @@ watch(
           <div><dt>上課位置</dt><dd>{{ session.location || '未提供' }}</dd></div>
           <div><dt>班級</dt><dd>{{ session.class_name || '未提供' }}</dd></div>
           <div><dt>參與人數</dt><dd>{{ session.participant_count }} 人</dd></div>
-          <div><dt>場次狀態</dt><dd>{{ active ? '已排定' : '已取消' }}</dd></div>
+          <div><dt>場次狀態</dt><dd>{{ active ? '已排定' : '停課' }}</dd></div>
         </dl>
         <h3>授課老師與簽到</h3>
         <div class="attendance-list"><div v-for="a in session.assignments" :key="a.id" :class="{ 'my-assignment': a.teacher_id === user?.id && a.status !== 'replaced' }">
           <span v-if="a.teacher_id === user?.id && a.status !== 'replaced'" class="status scheduled">我的課程{{ a.status === 'leave' ? '／已請假' : '' }}</span>
-          <AttendanceSummary :assignment="a" inline-photo show-missing />
+          <AttendanceSummary :assignment="a" :session-status="session.status" inline-photo show-missing />
         </div></div>
-        <p v-if="!session.assignments.length" class="muted">尚未指派老師。</p>
+        <p v-if="!session.assignments.length" class="vacant-badge"><NavIcon name="person" />缺額：尚未指派老師。</p>
         <div class="actions">
           <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? '補簽' : '簽到' }}</button>
           <button v-if="admin || attendanceAdmin" class="button ghost" data-testid="session-detail-edit" @click="enterDetailEditing">編輯</button>
@@ -294,7 +294,7 @@ watch(
       <button v-if="detailFirst" class="button ghost" data-testid="session-detail-back" :disabled="pending" @click="backToDetail">返回詳細資料</button>
       <SessionEditor v-if="detailFirst && detailEditing && canEditSession" :session="session" :teachers="teachers" :prisons="prisons" embedded @saved="emit('updated'); backToDetail()" />
       <fieldset :disabled="pending" class="session-fields">
-      <div class="attendance-list"><AttendanceSummary v-for="a in session.assignments" :key="a.id" :assignment="a" :inline-photo="detailFirst" /></div>
+      <div class="attendance-list"><AttendanceSummary v-for="a in session.assignments" :key="a.id" :assignment="a" :session-status="session.status" :inline-photo="detailFirst" /></div>
       <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? "補簽" : "簽到" }}</button>
       <label class="field"
         >異動原因／備註<textarea
@@ -418,6 +418,7 @@ watch(
 .session-action-buttons { flex-wrap: wrap; }
 .session-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .attendance-list { display: grid; gap: 12px; margin-bottom: 16px; }
+.attendance-list > div { padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
 .self-attendance-modal { z-index: 101; }
 .self-attendance-modal input { max-width: 100%; }
 .session-details { display: grid; gap: 10px; }
@@ -425,5 +426,6 @@ watch(
 .session-details dt { color: var(--muted); }
 .session-details dd { margin: 0; overflow-wrap: anywhere; }
 .my-assignment { border-left: 4px solid var(--pine); padding: 10px; background: #eaf1eb; border-radius: 8px; }
+.vacant-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: #e9ecee; color: #4b5660; border-radius: 8px; font-size: 16px; font-weight: 700; }
 .dialog { overflow-wrap: anywhere; }
 </style>

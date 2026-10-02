@@ -269,11 +269,11 @@ async function sessionUpdated() {
           @click="openDay(d, $event)"
         >
           <span :class="['status', s.status]">{{
-            s.activity ? (s.activity.kind === "activity" ? "活動" : "會議") : s.status === "cancelled" ? "取消" : "排定"
+            s.activity ? (s.activity.kind === "activity" ? "活動" : "會議") : s.status === "cancelled" ? "停課" : "排定"
           }}</span>
           <span v-if="ownAssignment(s)" class="status my-course" data-testid="calendar-my-session">{{ myCourseLabel(s) }}</span>
           {{ s.start_time || "全天" }} {{ s.title }}
-        </button><AttendanceSummary v-for="a in s.assignments" :key="a.id" :assignment="a" /></div></template
+        </button><AttendanceSummary v-for="a in s.assignments" :key="a.id" :assignment="a" :session-status="s.status" /></div></template
       >
     </div>
   </div>
@@ -298,10 +298,12 @@ async function sessionUpdated() {
       @click="openSession(session)"
     >
       <span :class="['status', session.status]">{{
-        session.activity ? (session.activity.kind === "activity" ? "活動" : "會議") : session.status === "cancelled" ? "已取消" : "已排定"
+        session.activity ? (session.activity.kind === "activity" ? "活動" : "會議") : session.status === "cancelled" ? "停課" : "已排定"
       }}</span
       ><span v-if="ownAssignment(session)" class="status my-course" data-testid="calendar-my-session">{{ myCourseLabel(session) }}</span><b>{{ session.start_time || "全天" }} {{ session.title }}</b
       ><small>{{ session.class_name ? `${session.class_name}・` : "" }}{{ [session.prison, session.location].filter(Boolean).join("／") }}</small>
+      <span v-for="assignment in session.assignments" :key="assignment.id" class="day-teacher"><NavIcon name="person" /><strong>{{ assignment.teacher?.name || '尚未指派老師' }}</strong><span :class="['day-teacher-status', session.status === 'cancelled' ? 'cancelled' : assignment.status]">{{ session.status === 'cancelled' ? '停課' : assignment.status === 'leave' ? '請假' : assignment.status === 'replaced' ? '已替換' : '已指派' }}</span></span>
+      <span v-if="!session.activity && !session.assignments.length" class="day-teacher-status vacant"><NavIcon name="person" />缺額：尚未指派老師</span>
     </button>
   </dialog>
   <SessionActions
@@ -324,7 +326,7 @@ async function sessionUpdated() {
 </template>
 <style scoped>
 .calendar-filter { max-width: 320px; }
-.my-course { background: #e1eddf; color: #244d36; font-weight: 700; }
+.my-course { background: #e1eddf; color: #244d36; font-size: 16px; font-weight: 700; }
 .activity-text { white-space: pre-wrap; }
 .notification-focus { background: #fff8e8; box-shadow: 0 0 0 3px rgba(198, 157, 77, .35); }
 .calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; padding: 8px 0; font-size: 13px; color: var(--muted); }
@@ -429,7 +431,15 @@ async function sessionUpdated() {
 .day-session small {
   color: var(--muted);
 }
+.day-session > b, .agenda-session .event { font-size: 18px; line-height: 1.5; }
+.day-session > .status, .agenda-session .event .status { font-size: 16px; font-weight: 700; }
+.day-teacher { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 18px; line-height: 1.45; }
+.day-teacher-status { display: inline-flex; align-items: center; gap: 5px; border-radius: 8px; padding: 4px 8px; font-size: 16px; font-weight: 700; line-height: 1.4; background: #eaf1eb; color: #244d36; }
+.day-teacher-status.leave { background: #fff0cc; color: #77521a; }
+.day-teacher-status.replaced, .day-teacher-status.vacant { background: #e9ecee; color: #4b5660; }
+.day-teacher-status.cancelled { background: #f6ded9; color: #8e3327; }
 @media (max-width: 760px) {
+  .day-session > b, .agenda-session .event { font-size: 16px; }
   .workhead .toolbar {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
