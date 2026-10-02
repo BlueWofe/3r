@@ -303,3 +303,43 @@ test('following an own-course bell notice resets an existing other-teacher filte
   expect(reads).toBe(1);
   expect(mock.writes).toHaveLength(0);
 });
+
+test('day course buttons show large teacher names and attendance states without editable or photo controls', async ({ page }) => {
+  const assigned = course(44), attended = course(45, 1, true), leave = course(46), cancelled = course(47), replaced = course(48);
+  attended.assignments[0].attendance.kind = 'late_check_in';
+  leave.assignments[0].status = 'leave';
+  cancelled.status = 'cancelled';
+  replaced.assignments[0].status = 'replaced';
+  const mock = await workspace(page, [assigned, attended, leave, cancelled, replaced], true);
+  const sheet = await dayList(page, true);
+  await expect(sheet.locator('.day-session')).toHaveCount(5);
+  const states = [
+    { item: assigned, assignment: '已指派', attendance: '未簽到' },
+    { item: attended, assignment: '已指派', attendance: '已補簽' },
+    { item: leave, assignment: '請假', attendance: '不需簽到' },
+    { item: cancelled, assignment: '停課', attendance: '不需簽到' },
+    { item: replaced, assignment: '已替換', attendance: '不需簽到' },
+  ];
+  for (const state of states) {
+    const button = sheet.locator(`button.day-session[data-session-id="${state.item.id}"]`);
+    const assignment = button.locator(`[data-assignment-id="${state.item.assignments[0].id}"]`);
+    const name = assignment.locator('strong');
+    await expect(name).toHaveText('合成本人');
+    expect(await name.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(18);
+    await expect(assignment).toContainText(state.assignment);
+    const attendance = assignment.getByTestId(`day-attendance-${state.item.assignments[0].id}`);
+    await expect(attendance).toHaveText(state.attendance);
+    for (const badge of await assignment.locator('.day-teacher-status').all()) {
+      expect(await badge.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+    }
+    expect(await attendance.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+    if (state.attendance === '不需簽到') await expect(button).not.toContainText('未簽到');
+    await expect(button.locator('input,select,textarea,button,img')).toHaveCount(0);
+  }
+  const dimensions = await sheet.evaluate(element => ({ width: element.clientWidth, scroll: element.scrollWidth }));
+  expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width + 2);
+  const pageSize = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
+  expect(pageSize.scroll).toBeLessThanOrEqual(pageSize.width + 2);
+  expect(mock.files).toHaveLength(0);
+  expect(mock.writes).toHaveLength(0);
+});
