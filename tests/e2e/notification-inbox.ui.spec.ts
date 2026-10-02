@@ -119,3 +119,45 @@ test('bell inbox offers mark all read, preserves unread on failure, and synchron
   expect(attempts).toBe(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
 });
+
+test('teacher inbox separates invitations and notices and invitation links select the correct pane', async ({ page }, testInfo) => {
+  if (testInfo.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 800 });
+  let status = 'pending';
+  const responses: string[] = [];
+  await page.route('**/api/v1/auth/me', route => route.fulfill({ json: { user: { id: 1, name: '合成老師', permissions: ['schedule.read.own', 'schedule.update.own'] } } }));
+  await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { csrf_token: 'mock-csrf' } }));
+  await page.route('**/api/v1/notifications', route => route.fulfill({ json: { data: [{ id: 501, title: '合成通知內容', category: 'course', read: false }], unread_count: 1 } }));
+  await page.route('**/api/v1/invitations', route => route.fulfill({ json: { data: [{ id: 51, status, reason: '合成代課邀請內容', session: { title: '合成代課場次', service_date: '2035-01-01' } }] } }));
+  await page.route('**/api/v1/invitations/51/respond', async route => {
+    const action = route.request().postDataJSON().action;
+    responses.push(action); status = action === 'accept' ? 'accepted' : 'declined';
+    await route.fulfill({ json: { id: 51, status } });
+  });
+  await page.goto('/app/invitations');
+  const tabs = page.getByRole('tablist', { name: '收件匣主要分類' });
+  const notices = tabs.getByRole('tab', { name: /站內通知/ });
+  const invites = tabs.getByRole('tab', { name: /代課邀請/ });
+  await expect(notices).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByText('合成通知內容')).toBeVisible();
+  await expect(page.locator('#invitations-panel')).toHaveCount(0);
+  await expect(invites.getByLabel('1 則待回覆邀請')).toBeVisible();
+  await invites.click();
+  await expect(page).toHaveURL(/tab=invitations/);
+  await expect(page.getByText('合成代課邀請內容')).toBeVisible();
+  await expect(page.getByRole('tablist', { name: '通知分類' })).toHaveCount(0);
+  await notices.click();
+  await expect(page.getByRole('tablist', { name: '通知分類' })).toBeVisible();
+  await page.goto('/app/invitations?invitation_id=51');
+  await expect(invites).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#invitation-51')).toHaveClass(/focused/);
+  await page.getByRole('button', { name: '接受', exact: true }).click();
+  await expect(page.getByText('目前沒有待回覆的邀請。')).toBeVisible();
+  await expect(page.getByText('已接受', { exact: false })).toBeVisible();
+  await expect(invites.getByLabel(/待回覆邀請/)).toHaveCount(0);
+  expect(responses).toEqual(['accept']);
+  await notices.click();
+  await expect(page).not.toHaveURL(/invitation_id/);
+  await expect(page.getByTestId('inbox-read-all')).toBeVisible();
+  await expect(notices.getByLabel('1 則未讀')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+});

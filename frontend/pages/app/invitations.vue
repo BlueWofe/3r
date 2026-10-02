@@ -22,6 +22,12 @@ const categoryUnreadCounts = computed(() => {
 });
 const filteredNotifications = computed(() => selectedCategory.value === "all" ? notifications.value : notifications.value.filter((item) => item.category === selectedCategory.value));
 const focusedInvitationId = computed(() => Number(route.query.invitation_id) || null);
+const activePane = computed(() => canRespond() && (route.query.tab === "invitations" || (focusedInvitationId.value && route.query.tab !== "notifications")) ? "invitations" : "notifications");
+async function selectPane(pane: "invitations" | "notifications") {
+  const query: typeof route.query = { ...route.query, tab: pane };
+  if (pane === "notifications") delete query.invitation_id;
+  await navigateTo({ path: route.path, query });
+}
 const pendingInvitations = computed(() => invitations.value.filter((item) => !item.status || item.status === "pending"));
 const invitationHistory = computed(() => invitations.value.filter((item) => item.status && item.status !== "pending"));
 const invitationStatus: Record<string, string> = { accepted: "已接受", declined: "已婉拒", cancelled: "已取消" };
@@ -46,13 +52,22 @@ async function openNotification(item: any) {
 }
 async function readAll() { allReadPending.value = true; try { await run(markAllNotificationsRead); } finally { allReadPending.value = false; } }
 onMounted(async () => { await refresh(); await load(); });
+watch(() => route.query.invitation_id, async () => {
+  await nextTick();
+  if (focusedInvitationId.value) document.getElementById(`invitation-${focusedInvitationId.value}`)?.scrollIntoView({ block: "center" });
+});
 </script>
 
 <template>
   <div class="workhead inbox-head">
     <div><p class="eyebrow">INBOX</p><h1>通知收件匣</h1><p class="muted">{{ unreadCount ? `${unreadCount} 則未讀通知` : "目前沒有未讀通知" }}</p></div>
   </div>
-  <section v-if="canRespond()" aria-labelledby="invitation-title">
+  <nav v-if="canRespond()" class="inbox-main-tabs" role="tablist" aria-label="收件匣主要分類">
+    <button id="invitations-tab" type="button" role="tab" :aria-selected="activePane === 'invitations'" aria-controls="invitations-panel" :class="{ selected: activePane === 'invitations' }" @click="selectPane('invitations')"><NavIcon name="calendar" /><span>代課邀請</span><span v-if="pendingInvitations.length" class="tab-unread-count" :aria-label="`${pendingInvitations.length} 則待回覆邀請`">{{ pendingInvitations.length }}</span></button>
+    <button id="notifications-tab" type="button" role="tab" :aria-selected="activePane === 'notifications'" aria-controls="notifications-panel" :class="{ selected: activePane === 'notifications' }" @click="selectPane('notifications')"><NavIcon name="bell" /><span>站內通知</span><span v-if="unreadCount" class="tab-unread-count" :aria-label="`${unreadCount} 則未讀`">{{ unreadCount }}</span></button>
+  </nav>
+  <p v-if="actionError" class="error" role="alert">{{ actionError }}</p>
+  <section v-if="canRespond() && activePane === 'invitations'" id="invitations-panel" role="tabpanel" aria-labelledby="invitations-tab">
     <h2 id="invitation-title" class="serif">代課邀請</h2>
     <div v-if="!pendingInvitations.length" class="card empty">目前沒有待回覆的邀請。</div>
     <article v-for="invitation in pendingInvitations" :id="`invitation-${invitation.id}`" :key="invitation.id" class="card invitation-card" :class="{ focused: focusedInvitationId === invitation.id }">
@@ -67,7 +82,7 @@ onMounted(async () => { await refresh(); await load(); });
       </article>
     </details>
   </section>
-  <section class="section inbox-section" aria-labelledby="notification-title">
+  <section v-if="activePane === 'notifications'" id="notifications-panel" class="section inbox-section" :role="canRespond() ? 'tabpanel' : undefined" :aria-labelledby="canRespond() ? 'notifications-tab' : 'notification-title'">
     <div class="notification-head"><h2 id="notification-title" class="serif">站內通知</h2><button class="button ghost" type="button" data-testid="inbox-read-all" :disabled="allReadPending || loading || !unreadCount" @click="readAll">{{ allReadPending ? "處理中…" : "全部已讀" }}</button></div>
     <nav class="inbox-tabs" role="tablist" aria-label="通知分類">
       <button v-for="category in categories" :key="category.id" role="tab" type="button" :aria-selected="selectedCategory === category.id" :aria-label="categoryUnreadCounts[category.id] ? `${category.label}，${categoryUnreadCounts[category.id]}則未讀` : category.label" :class="{ selected: selectedCategory === category.id }" @click="selectedCategory = category.id">
@@ -84,13 +99,18 @@ onMounted(async () => { await refresh(); await load(); });
         <small v-if="notificationDestination(item.url)" class="open-hint">開啟相關內容</small>
       </button>
     </article>
-    <p v-if="notificationError || actionError" class="error" role="alert">{{ actionError || notificationError }}</p>
+    <p v-if="notificationError" class="error" role="alert">{{ notificationError }}</p>
   </section>
 </template>
 
 <style scoped>
 .inbox-head { align-items: end; } .inbox-section { padding-bottom: 0; }
 .notification-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.inbox-main-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 16px 0 24px; }
+.inbox-main-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; min-height: 56px; min-width: 0; padding: 12px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+.inbox-main-tabs button.selected { background: var(--pine); border-color: var(--pine); color: #fff; }
+.inbox-main-tabs button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.inbox-main-tabs :deep(svg) { width: 22px; height: 22px; flex: none; }
 .inbox-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 12px 0 16px; }
 .inbox-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 44px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); font: 600 13px inherit; cursor: pointer; white-space: nowrap; }
 .inbox-tabs button.selected { border-color: var(--pine); background: var(--pine); color: white; }
