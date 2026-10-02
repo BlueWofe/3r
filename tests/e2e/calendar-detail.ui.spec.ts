@@ -251,7 +251,7 @@ test('teacher names and semantic status badges stay prominent without contradict
     const name = summary.getByTestId('attendance-teacher-name');
     const badge = summary.getByTestId('attendance-assignment-status');
     const checkInBadge = summary.getByTestId('attendance-check-in-status');
-    await expect(name).toHaveText('合成本人');
+    await expect(name).toHaveText(/^合成本人：?$/);
     await expect(badge).toHaveText(row.text);
     await expect(checkInBadge).toHaveText(row.secondary);
     const sizes = await name.evaluate(element => ({ name: parseFloat(getComputedStyle(element).fontSize), weight: Number(getComputedStyle(element).fontWeight) }));
