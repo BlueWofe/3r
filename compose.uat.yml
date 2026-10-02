@@ -1,0 +1,35 @@
+services:
+  web:
+    mem_limit: 64m
+    cpus: 0.05
+  frontend:
+    mem_limit: 384m
+    cpus: 0.20
+    environment:
+      NODE_OPTIONS: --max-old-space-size=256
+  backend:
+    mem_limit: 384m
+    cpus: 0.35
+    volumes:
+      - /srv/3r/uat/storage:/app/storage
+  worker:
+    mem_limit: 128m
+    cpus: 0.10
+    volumes:
+      - /srv/3r/uat/storage:/app/storage
+  scheduler:
+    mem_limit: 128m
+    cpus: 0.05
+    volumes:
+      - /srv/3r/uat/storage:/app/storage
+  postgres:
+    mem_limit: 384m
+    cpus: 0.20
+    volumes:
+      - /srv/3r/uat/postgres:/var/lib/postgresql/data
+  redis:
+    mem_limit: 128m
+    cpus: 0.05
+    command: [redis-server, --appendonly, "yes", --maxmemory, 80mb, --maxmemory-policy, noeviction]
+    volumes:
+      - /srv/3r/uat/redis:/data

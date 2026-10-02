@@ -1,0 +1,86 @@
+<script setup lang="ts">
+definePageMeta({ layout: "app" });
+const route = useRoute();
+const form = ref<any>(null),
+  answers = reactive<any>({}),
+  files = reactive<Record<string, File | null>>({}),
+  done = ref(false);
+const { error, run } = useApiError();
+onMounted(async () => {
+  form.value = await api(`/forms/${route.params.id}`);
+});
+async function upload(key: string) {
+  const file = files[key];
+  if (!file) return null;
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("form_id", String(route.params.id));
+  fd.append("field_key", key);
+  fd.append("visibility", "private");
+  const r: any = await run(() => api("/files", { method: "POST", body: fd }));
+  return r.id;
+}
+async function submit() {
+  const payload: any = { ...answers };
+  for (const f of form.value.fields || [])
+    if (f.type === "file") payload[f.key] = await upload(f.key);
+  await run(() =>
+    api(`/forms/${route.params.id}/responses`, {
+      method: "POST",
+      body: { answers: payload },
+    }),
+  );
+  done.value = true;
+}
+</script>
+<template>
+  <div class="workhead">
+    <div>
+      <p class="eyebrow">ASSIGNED FORM</p>
+      <h1>{{ form?.title || "載入表單" }}</h1>
+      <p class="muted">{{ form?.description }}</p>
+    </div>
+  </div>
+  <form
+    v-if="form && !done"
+    class="card form"
+    style="max-width: 760px"
+    @submit.prevent="submit"
+  >
+    <label v-for="f in form.fields" :key="f.key" class="field"
+      >{{ f.label }} <small v-if="f.required">（必填）</small
+      ><textarea
+        v-if="f.type === 'textarea'"
+        v-model="answers[f.key]"
+        :required="f.required"
+      ></textarea
+      ><select
+        v-else-if="f.type === 'select' || f.type === 'multiselect'"
+        v-model="answers[f.key]"
+        :multiple="f.type === 'multiselect'"
+        :required="f.required"
+      >
+        <option v-for="o in f.options" :key="o" :value="o">
+          {{ o }}
+        </option></select
+      ><input
+        v-else-if="f.type === 'file'"
+        type="file"
+        :required="f.required"
+        @change="
+          files[f.key] = ($event.target as HTMLInputElement).files?.[0] || null
+        " /><input
+        v-else
+        v-model="answers[f.key]"
+        :type="
+          f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'
+        "
+        :required="f.required"
+    /></label>
+    <p v-if="error" class="error">{{ error }}</p>
+    <button class="button">送出表單</button>
+  </form>
+  <div v-if="done" class="notice">
+    已完成送出。上傳檔案將依表單權限以私有方式保存。
+  </div>
+</template>
