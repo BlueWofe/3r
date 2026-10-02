@@ -8,6 +8,15 @@ const teacherOptions = ref<{ id: number; name: string }[]>([]);
 const detailLoading = ref(false);
 function ownAssignment(session: Session) { return session.assignments.find(a => a.teacher_id === user.value?.id && a.status !== "replaced"); }
 function myCourseLabel(session: Session) { return ownAssignment(session)?.status === "leave" ? "我的課程／已請假" : "我的課程"; }
+function dayAttendanceLabel(session: Session, assignment: any) {
+  const attendance = assignment.attendance;
+  if (attendance) return attendance.present === false ? "未出席" : attendance.kind === "late_check_in" ? "已補簽" : attendance.kind === "admin_adjustment" ? "管理補登" : "已簽到";
+  return session.status !== "cancelled" && assignment.status === "assigned" ? "未簽到" : "不需簽到";
+}
+function dayAttendanceTone(session: Session, assignment: any) {
+  if (assignment.attendance) return assignment.attendance.present === false ? "inactive" : "attended";
+  return session.status !== "cancelled" && assignment.status === "assigned" ? "pending" : "inactive";
+}
 const route = useRoute();
 const view = ref<"agenda" | "week" | "month">("month");
 const cursor = ref(new Date());
@@ -302,7 +311,7 @@ async function sessionUpdated() {
       }}</span
       ><span v-if="ownAssignment(session)" class="status my-course" data-testid="calendar-my-session">{{ myCourseLabel(session) }}</span><b>{{ session.start_time || "全天" }} {{ session.title }}</b
       ><small>{{ session.class_name ? `${session.class_name}・` : "" }}{{ [session.prison, session.location].filter(Boolean).join("／") }}</small>
-      <span v-for="assignment in session.assignments" :key="assignment.id" class="day-teacher"><NavIcon name="person" /><strong>{{ assignment.teacher?.name || '尚未指派老師' }}</strong><span :class="['day-teacher-status', session.status === 'cancelled' ? 'cancelled' : assignment.status]">{{ session.status === 'cancelled' ? '停課' : assignment.status === 'leave' ? '請假' : assignment.status === 'replaced' ? '已替換' : '已指派' }}</span></span>
+      <span v-for="assignment in session.assignments" :key="assignment.id" class="day-teacher" :data-assignment-id="assignment.id"><NavIcon name="person" /><strong>{{ assignment.teacher?.name || '尚未指派老師' }}</strong><span :class="['day-teacher-status', session.status === 'cancelled' ? 'cancelled' : assignment.status]"><NavIcon :name="assignment.status === 'replaced' ? 'logout' : assignment.status === 'leave' ? 'history' : 'calendar'" />{{ session.status === 'cancelled' ? '停課' : assignment.status === 'leave' ? '請假' : assignment.status === 'replaced' ? '已替換' : '已指派' }}</span><span :class="['day-teacher-status', 'day-teacher-attendance', dayAttendanceTone(session, assignment)]" :data-testid="`day-attendance-${assignment.id}`"><NavIcon :name="assignment.attendance ? 'shield' : dayAttendanceTone(session, assignment) === 'pending' ? 'history' : 'calendar'" />{{ dayAttendanceLabel(session, assignment) }}</span></span>
       <span v-if="!session.activity && !session.assignments.length" class="day-teacher-status vacant"><NavIcon name="person" />缺額：尚未指派老師</span>
     </button>
   </dialog>
@@ -438,6 +447,9 @@ async function sessionUpdated() {
 .day-teacher-status.leave { background: #fff0cc; color: #77521a; }
 .day-teacher-status.replaced, .day-teacher-status.vacant { background: #e9ecee; color: #4b5660; }
 .day-teacher-status.cancelled { background: #f6ded9; color: #8e3327; }
+.day-teacher-attendance.attended { background: #d9ecdf; color: #205c37; }
+.day-teacher-attendance.pending { background: #fff0cc; color: #77521a; }
+.day-teacher-attendance.inactive { background: #e9ecee; color: #4b5660; }
 @media (max-width: 760px) {
   .day-session > b, .agenda-session .event { font-size: 16px; }
   .workhead .toolbar {
