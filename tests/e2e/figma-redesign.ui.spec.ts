@@ -116,7 +116,7 @@ test('multi-role volunteer gets service navigation, inbox focus links and read-o
   await expect(serviceMenu).toBeFocused();
 
   await clientNavigate(page, '/app/invitations?tab=notifications');
-  await page.getByRole('button', { name: /站內通知/ }).click();
+  await page.getByRole('tab', { name: /站內通知/ }).click();
   await expect(page.locator('[data-testid="notification-tab-count-all"]')).toHaveText('2');
   await page.getByRole('tab', { name: /課程通知/ }).click();
   await expect(page.locator('[data-notification-id="701"]')).toBeVisible();
