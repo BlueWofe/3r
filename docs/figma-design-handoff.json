@@ -4,7 +4,7 @@
   "figmaFileKey": "UOLMCw50qbCQFpLVG66f2L",
   "figmaUrl": "https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L",
   "approvalStatus": "user_approved_2026-10-15",
-  "integrationStatus": "Approved UI integrated; local typecheck, Docker build, 46 mocked UI tests and isolated backend suite passed; GCP release verification pending",
+  "integrationStatus": "Approved UI integrated into the existing application; local typecheck, Docker build, complete isolated E2E and backend suites passed. Deployment uses the documented r3-uat release process.",
   "structuralValidation": [
     {
       "page": "02 Public · 品牌與內容",

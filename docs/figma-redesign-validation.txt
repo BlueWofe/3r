@@ -97,3 +97,15 @@ returned healthy, homepage rendered without JavaScript errors, and the configure
 login logo loaded successfully.
 Backups and fingerprint manifests contain private data and remain under ignored
 runtime/gcp-to-local-backups; none are committed or sent to Figma.
+
+Complete integration regression
+The final full Playwright suite passed against a separate synthetic Compose project
+r3-figma-ci at 127.0.0.1:3190, after updating stale selectors to the approved
+headings/cards and restoring mobile image height limits. Command:
+BASE_URL=http://localhost:3190 DEMO_PASSWORD=<synthetic-only> npx playwright test
+--workers=2 --reporter=line --output=runtime/figma-ci-final-results
+Result: 144 passed, 1 intentionally skipped mobile-only exclusion of a desktop
+navigation scenario, 0 failed; 3.6 minutes. All 27 API scenarios and all desktop /
+mobile UI scenarios ran against the isolated synthetic database. Main local and
+GCP data were not test targets. The final combined frontend typecheck and Docker
+build passed. No backend source or migrations differ from the prior UAT release.
