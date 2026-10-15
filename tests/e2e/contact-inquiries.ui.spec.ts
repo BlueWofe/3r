@@ -6,13 +6,20 @@ test('visitor submits a categorized contact message and an authorized admin find
   const name = `E2E 聯絡人 ${marker}`;
   const message = `需要同工了解的合成聯絡訊息 ${marker}`;
   await page.goto('/contact');
-  await expect(page.getByRole('heading', { name: '與我們聯絡' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '我們願意，聽見你' })).toBeVisible();
   await page.getByLabel('姓名').fill(name);
   await page.getByLabel('電話').fill('0900000000');
   await page.getByLabel('電子郵件').fill(`${marker}@example.test`);
   await page.getByLabel('諮詢分類').selectOption('監所探訪與代禱');
   await page.getByLabel('想說的話').fill(message);
+  const submission = page.waitForRequest(request =>
+    request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/api/v1/public/contact'),
+  );
   await page.getByRole('button', { name: '送出訊息' }).click();
+  const submissionRequest = await submission;
+  const payload = submissionRequest.postDataJSON() as { website: string; submission_token: string };
+  expect(payload.website).toBe('');
+  expect(payload.submission_token).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
   await expect(page.getByText('已收到您的訊息', { exact: true })).toBeVisible();
   await expect(page.getByLabel('姓名')).toHaveValue('');
 

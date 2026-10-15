@@ -6,12 +6,15 @@ test.use({ timezoneId: 'Asia/Taipei' });
 
 test('homepage shows the ministry and hope timelines without mobile horizontal overflow', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /陪伴旅程/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '把陪伴，走成一條路', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: /更新的足跡/ })).toBeVisible();
-  const ministryTimeline = page.locator('ol, ul').filter({ hasText: /走進高牆/ });
+  const ministryTimeline = page.locator('.renewal-ministry-grid');
   await expect(ministryTimeline).toContainText('建立信任');
   await expect(ministryTimeline).toContainText('預備復歸');
   await expect(ministryTimeline).toContainText('社區同行');
+  await expect(ministryTimeline.locator(':scope > li')).toHaveCount(4);
+  const ministryDirections = await ministryTimeline.locator('a').evaluateAll(links => links.map(link => (link as HTMLAnchorElement).getAttribute('href')));
+  expect(ministryDirections).toEqual(['/about', '/contact', '/news', '/donate']);
   await expect(page.locator('body')).not.toContainText('示範統計資料');
 
   const storySection = page.locator('section').filter({ has: page.getByRole('heading', { name: '更新的足跡' }) }).first();
@@ -23,7 +26,7 @@ test('homepage shows the ministry and hope timelines without mobile horizontal o
     const link = storyLinks.nth(index);
     await expect(link).toBeVisible();
     await expect(link).toHaveAttribute('href', /^\/news\/\d+$/);
-    await expect(link).toContainText(/\d{4}年\d{1,2}月\d{1,2}日/);
+    await expect(link).toContainText(/\d{4}(?:年\d{1,2}月\d{1,2}日|\/\d{1,2}\/\d{1,2})/);
   }
 
   const widths = await page.evaluate(() => ({
@@ -49,20 +52,20 @@ test('產品與班別有各自的管理導覽入口', async ({ page }) => {
 
   await productsLink.click();
   await expect(page).toHaveURL(/\/app\/admin\/products$/);
-  await expect(page.getByRole('heading', { name: '產品管理' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '產品與運費' })).toBeVisible();
   await page.goto('/app');
   await page.getByRole('button', { name: '管理工作台', exact: true }).click();
   await page.locator('summary').filter({ hasText: '課務與關懷' }).click();
   await expect(classesLink).toBeVisible();
   await classesLink.click();
   await expect(page).toHaveURL(/\/app\/admin\/classes$/);
-  await expect(page.getByRole('heading', { name: /班別/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '班別管理', exact: true, level: 1 })).toBeVisible();
 });
 
 test('admin saves, reselects and previews bounded main and gallery product images', async ({ page }, testInfo) => {
   await loginAsAdmin(page);
   await page.goto('/app/admin/products');
-  await expect(page.getByRole('heading', { name: '產品管理' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '產品與運費' })).toBeVisible();
   await page.getByRole('button', { name: /新增產品|新增食品/ }).click();
 
   const productName = `E2E 商品 ${Date.now()}`;
@@ -70,7 +73,7 @@ test('admin saves, reselects and previews bounded main and gallery product image
   const slug = `e2e-product-${Date.now()}`;
   await page.getByLabel('名稱', { exact: true }).fill(productName);
   await page.getByLabel('網址代稱').fill(slug);
-  await page.getByLabel('分類').fill('UI 驗收');
+  await page.getByLabel('分類', { exact: true }).fill('UI 驗收');
   await page.getByLabel('摘要').fill('建立含多規格與數量階梯的合成商品');
   await page.getByLabel('介紹').fill('E2E 測試用資料');
   await page.getByLabel('狀態').selectOption('published');
@@ -115,10 +118,10 @@ test('admin saves, reselects and previews bounded main and gallery product image
   expect(created.image_id).toBeTruthy();
   expect(created.metadata.gallery_ids).toHaveLength(1);
 
-  const productRow = page.getByRole('row').filter({ hasText: productName });
-  await expect(productRow).toBeVisible();
-  await productRow.getByRole('button', { name: '編輯' }).click();
-  await expect(page.getByRole('heading', { name: /編輯/ })).toBeVisible();
+  const productCard = page.locator('.product-admin-card').filter({ has: page.getByRole('heading', { name: productName, exact: true }) });
+  await expect(productCard).toBeVisible();
+  await productCard.getByRole('button', { name: '編輯產品' }).click();
+  await expect(page.getByRole('heading', { name: '編輯食品展示', exact: true, level: 2 })).toBeVisible();
   const savedMainPreview = page.locator('.product-editor-primary img');
   await expect(savedMainPreview).toHaveAttribute('src', new RegExp(`/api/v1/files/${created.image_id}/download`));
   await expectTallImageWithin(savedMainPreview, 240);
@@ -144,10 +147,10 @@ test('admin saves, reselects and previews bounded main and gallery product image
   expect(updateResponse.ok()).toBeTruthy();
   const updated = await updateResponse.json() as { image_id: number };
   expect(updated.image_id).not.toBe(oldImageId);
-  await expect(page.getByRole('row').filter({ hasText: editedName })).toBeVisible();
+  const editedCard = page.locator('.product-admin-card').filter({ has: page.getByRole('heading', { name: editedName, exact: true }) });
+  await expect(editedCard).toBeVisible();
 
-  const editedRow = page.getByRole('row').filter({ hasText: editedName });
-  await editedRow.getByRole('button', { name: '編輯' }).click();
+  await editedCard.getByRole('button', { name: '編輯產品' }).click();
   const finalMainPreview = page.locator('.product-editor-primary img');
   await expect(finalMainPreview).toHaveAttribute('src', new RegExp(`/api/v1/files/${updated.image_id}/download`));
   await expectTallImageWithin(finalMainPreview, 240);
@@ -158,7 +161,7 @@ test('admin saves, reselects and previews bounded main and gallery product image
   await expect(publicMainImage).toBeVisible();
   await expect(publicMainImage).toHaveAttribute('src', new RegExp(`/api/v1/files/${updated.image_id}/download`));
   await expectTallImageWithin(publicMainImage, await page.evaluate(() => window.innerWidth <= 760 ? 280 : 420));
-  await expectTallImageWithin(page.locator('.product-gallery-image').first(), 110);
+  await expectTallImageWithin(page.locator('.product-gallery-image').first(), await page.evaluate(() => window.innerWidth <= 760 ? 80 : 120));
   await expect(page.locator('a[href*="/files/"]')).toHaveCount(0);
   await publicMainImage.click();
   await expect(page).toHaveURL(new RegExp(`/food/${created.id}$`));
