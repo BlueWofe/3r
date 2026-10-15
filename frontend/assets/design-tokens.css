@@ -130,3 +130,8 @@ img {
     scroll-behavior: auto !important;
   }
 }
+
+.tabs button.selected {
+  box-shadow: none;
+  border-color: var(--r3-primary);
+}

@@ -1276,3 +1276,13 @@
   max-width: 100%;
   overflow-x: auto;
 }
+
+.public-shell input,
+.public-shell select,
+.public-shell textarea {
+  border-color: var(--r3-border);
+}
+.article-sidebar-title {
+  font-size: 18px;
+  font-weight: 700;
+}
