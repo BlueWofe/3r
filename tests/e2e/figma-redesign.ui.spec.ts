@@ -76,11 +76,12 @@ test('public story, article, food and guest order remain usable at desktop and p
     await expectNoOverflow(page, `public home at ${width}px`);
   }
 
-  await page.goto('/news/301');
+  await page.locator('a[href="/news"]:visible').first().click();
+  await page.getByRole('link', { name: /合成消息：同行近況/ }).click();
   await expect(page.getByRole('heading', { name: '合成消息：同行近況' })).toBeVisible();
   await expect(page.getByText('這是可供 UI 測試的虛構文章內容。')).toBeVisible();
 
-  await page.goto('/food');
+  await page.locator('a[href="/food"]:visible').first().click();
   await expect(page.getByRole('heading', { name: /愛心好食|好食/ })).toBeVisible();
   await page.getByRole('link', { name: /合成愛心餅乾/ }).click();
   await expect(page.getByRole('heading', { name: '合成愛心餅乾' })).toBeVisible();
@@ -114,7 +115,7 @@ test('multi-role volunteer gets service navigation, inbox focus links and read-o
   await expect(serviceMenu).toHaveAttribute('aria-expanded', 'false');
   await expect(serviceMenu).toBeFocused();
 
-  await page.goto('/app/invitations?tab=notifications');
+  await clientNavigate(page, '/app/invitations?tab=notifications');
   await page.getByRole('button', { name: /站內通知/ }).click();
   await expect(page.locator('[data-testid="notification-tab-count-all"]')).toHaveText('2');
   await page.getByRole('tab', { name: /課程通知/ }).click();
@@ -149,12 +150,12 @@ test('admin cards, permission labels and form responses retain reviewable work w
   await page.setViewportSize({ width: 390, height: 900 });
   await loginWithSyntheticAccount(page, 'admin');
 
-  await page.goto('/app/admin/users');
+  await clientNavigate(page, '/app/admin/users');
   await expect(page.getByRole('heading', { name: '人員與角色' })).toBeVisible();
   await expect(page.getByText('合成志工甲')).toBeVisible();
   await expectNoOverflow(page, 'admin people list at 390px');
 
-  await page.goto('/app/admin/roles');
+  await clientNavigate(page, '/app/admin/roles');
   await page.getByRole('button', { name: '設定權限' }).click();
   await expect(page.getByText('查看自己的課程')).toBeVisible();
   await expect(page.getByText('為自己的課程打卡')).toBeVisible();
@@ -163,7 +164,7 @@ test('admin cards, permission labels and form responses retain reviewable work w
   await page.getByRole('button', { name: '儲存角色' }).click();
   await expect(page.getByText('此角色已有新版本')).toBeVisible();
 
-  await page.goto('/app/admin/forms');
+  await clientNavigate(page, '/app/admin/forms');
   await expect(page.getByRole('heading', { name: '表單中心' })).toBeVisible();
   await page.getByRole('button', { name: /回覆與版本/ }).click();
   await expect(page.getByRole('heading', { name: '讀懂每一份回覆' })).toBeVisible();
@@ -177,13 +178,13 @@ test('admin cards, permission labels and form responses retain reviewable work w
 test('admin schedule conflict and server permission denial stay visible to the operator', async ({ page }) => {
   await mockApi(page, 'admin');
   await loginWithSyntheticAccount(page, 'admin');
-  await page.goto('/app/admin/schedule');
+  await clientNavigate(page, '/app/admin/schedule');
   await page.getByRole('button', { name: '管理場次' }).click();
   await page.getByLabel('異動原因／備註').fill('合成驗收的衝突處理');
   await page.getByRole('button', { name: '停課' }).click();
   await expect(page.getByRole('alert')).toContainText('課程已有新異動');
 
-  await page.goto('/app/admin/contact-inquiries');
+  await clientNavigate(page, '/app/admin/contact-inquiries');
   await page.getByRole('button', { name: '查看' }).click();
   await page.getByLabel('同工備註').fill('合成回覆，未送出外部聯絡。');
   await page.getByRole('button', { name: '儲存處理狀態' }).click();
@@ -194,6 +195,7 @@ test('the 38 Figma route screens still resolve for their intended audience', asy
   test.setTimeout(120_000);
   await mockApi(page, 'admin');
   await page.setViewportSize({ width: 390, height: 844 });
+  await loginWithSyntheticAccount(page, 'admin');
   const routes = [
     '/', '/about', '/news', '/news/301', '/search', '/food', '/food/31', '/cart',
     '/donate', '/contact', '/login', '/change-password',
@@ -209,7 +211,7 @@ test('the 38 Figma route screens still resolve for their intended audience', asy
   expect(routes).toHaveLength(38);
 
   for (const path of routes) {
-    await page.goto(path);
+    await clientNavigate(page, path);
     if (path === '/change-password') {
       await expect(page).not.toHaveURL(/\/change-password/);
       continue;
@@ -299,8 +301,15 @@ async function loginWithSyntheticAccount(page: Page, persona: 'member-teacher' |
   await page.getByLabel('密碼', { exact: true }).fill('synthetic-mock-only');
   await page.locator('form').getByRole('button', { name: '登入', exact: true }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
-  if (persona === 'member-teacher') await page.goto('/app');
-  else await page.goto('/app/admin/users');
+}
+
+async function clientNavigate(page: Page, path: string) {
+  await page.evaluate(async target => {
+    const nuxt = (window as any).$nuxt;
+    if (!nuxt?.$router) throw new Error('Nuxt client router is not available.');
+    await nuxt.$router.push(target);
+  }, path);
+  await expect(page).toHaveURL(new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 }
 
 async function fulfill(route: Route, data: unknown, status = 200) {
