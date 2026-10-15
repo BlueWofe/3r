@@ -19,8 +19,10 @@ const { error, run } = useApiError();
 function attendanceState(s: Session) {
   if (s.status === 'cancelled') return { label: '停課', tone: 'cancelled' };
   const assigned = s.assignments.filter(a => a.status === 'assigned');
-  if (!assigned.length || s.assignments.some(a => a.status === 'leave')) return { label: '請假缺額', tone: 'warning' };
+  if (assigned.length < (s.original_teacher_count || 1)) return { label: '待補老師', tone: 'warning' };
+  if (assigned.some(a => a.attendance?.present === false)) return { label: '有未出席', tone: 'warning' };
   if (assigned.every(a => a.attendance)) return { label: '已簽到', tone: 'scheduled' };
+  if (assigned.some(a => a.attendance)) return { label: '部分簽到', tone: 'warning' };
   return { label: '未簽到', tone: 'scheduled' };
 }
 
@@ -53,7 +55,7 @@ function assignmentSummary(s: Session) {
     s.assignments
       .map(
         (a: any) =>
-          `${a.teacher?.name || "待指派"}：${a.status === "leave" ? "請假" : a.status === "replaced" ? "已換師" : "已指派"}${a.attendance ? "（已簽到）" : ""}`,
+          `${a.teacher?.name || "待指派"}：${a.status === "leave" ? "請假" : a.status === "replaced" ? "已換師" : "已指派"}${a.attendance ? a.attendance.present === false ? "（未出席）" : "（已簽到）" : ""}`,
       )
       .join("、") || "缺額"
   );
