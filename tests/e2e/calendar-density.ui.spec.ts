@@ -119,7 +119,7 @@ async function navigateToMonth(page: Page, date: string) {
   for (let attempt = 0; attempt < 19; attempt++) {
     const label = (await monthLabel.textContent())?.trim();
     if (label === expected) return;
-    await page.getByRole('button', { name: '→', exact: true }).click();
+    await page.getByRole('button', { name: '下一期', exact: true }).click();
   }
   await expect(monthLabel).toHaveText(expected);
 }

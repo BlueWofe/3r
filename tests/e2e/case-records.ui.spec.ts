@@ -13,7 +13,7 @@ test('case records survive page reloads and tab switches preserve selectable cas
 
     await signInAsAdmin(page);
     await page.goto('/app/admin/cases');
-    await expect(page.getByRole('heading', { name: '個案紀錄', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '個案與服務紀錄', exact: true })).toBeVisible();
     await page.getByRole('button', { name: '服務紀錄', exact: true }).click();
     const casePicker = page.getByRole('combobox', { name: /^個案/ });
     await expect(casePicker.locator(`option[value="${caseId}"]`)).toContainText(caseRow.name);
@@ -71,7 +71,7 @@ test('meeting administration displays role names while keeping the role selectio
     await signInAsAdmin(page);
     await page.goto('/app/admin/meetings');
     await expect(page.getByRole('heading', { name: '會議／活動管理', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: '新增', exact: true }).click();
+    await page.getByRole('button', { name: '新增會議／活動', exact: true }).click();
     const title = unique('Role label UI meeting');
     await page.getByLabel('名稱', { exact: true }).fill(title);
     await page.getByLabel('日期').fill(new Date().toISOString().slice(0, 10));
@@ -89,7 +89,7 @@ test('meeting administration displays role names while keeping the role selectio
     meetingId = responseBody.id;
     expect(responseBody.role_names).toContain(role!.name);
 
-    const row = page.getByRole('row').filter({ hasText: title });
+    const row = page.getByRole('article').filter({ hasText: title });
     await expect(row).toBeVisible();
     await row.getByRole('button', { name: '編輯', exact: true }).click();
     await expect(page.getByLabel('可查看角色')).toHaveValues([String(role!.id)]);

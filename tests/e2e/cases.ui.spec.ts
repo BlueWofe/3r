@@ -16,7 +16,7 @@ test('admin creates a case and sees its owner, prison, and refreshed service-rec
     await loginAsAdmin(page);
     await page.goto('/app/admin/prisons');
     await expect(page.getByRole('heading', { name: '監所管理', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: '新增', exact: true }).click();
+    await page.getByRole('button', { name: '新增監所', exact: true }).click();
     await page.getByLabel('監所名稱').fill(prisonName);
     await page.getByLabel('地址').fill('UI 合成地址');
     await page.getByLabel('狀態').selectOption({ label: '啟用' });
@@ -50,12 +50,12 @@ test('admin creates a case and sees its owner, prison, and refreshed service-rec
     }));
 
     await page.goto('/app/admin/cases');
-    await expect(page.getByRole('heading', { name: '個案紀錄', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '個案與服務紀錄', exact: true })).toBeVisible();
     await expect(page.getByRole('row').filter({ hasText: otherCode })).toContainText(volunteer!.name);
 
     const caseCode = unique('CASE');
     const caseName = unique('立即可見個案');
-    await page.getByRole('button', { name: '新增', exact: true }).click();
+    await page.getByRole('button', { name: '新增個案', exact: true }).click();
     await page.getByLabel('個案代碼').fill(caseCode);
     await page.getByLabel('姓名').fill(caseName);
     await page.getByLabel('狀態').fill('在案');

@@ -12,11 +12,11 @@ test('month and week calendars begin Sunday and month navigation crosses Februar
 
   await page.clock.setFixedTime(new Date('2026-01-31T12:00:00+08:00'));
   await page.goto('/app/calendar');
-  await expect(page.getByRole('heading', { name: '行事曆', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '我的行事曆', exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: '月', exact: true }).click();
   const monthLabel = page.locator('.workhead .muted').first();
-  const nextMonth = page.getByRole('button', { name: '→', exact: true });
+  const nextMonth = page.getByRole('button', { name: '下一期', exact: true });
   await expect(monthLabel).toHaveText('2026 年 1 月');
   await expect(page.locator('.calendar .day')).toHaveCount(42);
   await expectFirstCalendarDateIsSunday(page);
