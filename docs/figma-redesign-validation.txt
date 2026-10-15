@@ -69,3 +69,31 @@ Result: 10 passed in 23.8 seconds. The desktop and mobile projects each passed a
 
 Regression boundaries
 This spec does not replace existing notification or calendar suites. Keep the existing 6 notification and 20 calendar checks in the normal mocked Playwright run. Do not use the live API/e2e suite against a local or GCP database as part of this validation.
+
+Coordinator integration verification — 2026-10-15
+- npm run typecheck: passed for the combined source.
+- docker compose -p r3-dev build frontend: passed.
+- Existing calendar-detail, notification-inbox and check-in-mock suites:
+  36 desktop/mobile tests passed (46.4 seconds), entirely intercepted API fixtures.
+- Public home/about/news/food/contact/donate/login/cart/search at widths
+  320, 390, 768 and 1440: 36 route/viewport combinations; no document overflow
+  or browser JavaScript errors after the rich-text wrapping correction.
+- Complete Laravel suite: 140 tests / 1,355 assertions passed in forced
+  in-memory SQLite. Backend source and database migrations remain unchanged.
+- Before the separately requested restore, all 19 local application table hashes
+  were identical to the pre-integration backup.
+
+User-requested GCP-to-local restore — 2026-10-15
+The user subsequently explicitly requested downloading the GCP database backup
+and installing it locally. A new local database and file-storage backup was kept.
+The GCP dump was downloaded with pinned SSH authentication, SHA256-verified,
+and restored to a disposable database before the real local restore. The restore
+used a single transaction, with only the local r3-dev application workers stopped.
+All 19 application-table hashes match the verified source dump. 169 GCP uploaded
+files were downloaded and hash-verified, including 26 previously missing locally.
+The local environment, application key/configuration and program source were
+retained; no seed, migration, role or password reset was performed. Local services
+returned healthy, homepage rendered without JavaScript errors, and the configured
+login logo loaded successfully.
+Backups and fingerprint manifests contain private data and remain under ignored
+runtime/gcp-to-local-backups; none are committed or sent to Figma.
