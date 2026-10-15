@@ -81,7 +81,7 @@ function changeView(next: View, item?: FormRecord | null) {
 }
 function edit(item?: FormRecord) {
   Object.assign(editor, { title: item?.title || "", description: item?.description || "", status: item?.status || "draft",
-    deadline: item?.deadline?.slice(0, 10) || "", role_ids: [...(item?.role_ids || [])], fields: structuredClone(item?.fields || []) });
+    deadline: item?.deadline?.slice(0, 10) || "", role_ids: [...(item?.role_ids || [])], fields: JSON.parse(JSON.stringify(item?.fields || [])) });
   error.value = "";
   changeView("design", item);
 }
