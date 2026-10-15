@@ -10,6 +10,7 @@ const sessionFixture = (serviceDate = taipeiDate()) => ({
   prison_address: '合成地址，不對應真實監所',
   location: '合成教室 A',
   participant_count: 12,
+  original_teacher_count: 1,
   service_date: serviceDate,
   start_time: '14:00',
   end_time: '15:30',
@@ -87,7 +88,7 @@ test('public story, article, food and guest order remain usable at desktop and p
   await expect(page.getByRole('heading', { name: '合成愛心餅乾' })).toBeVisible();
   await page.getByLabel('數量').fill('2');
   await page.getByRole('button', { name: '加入購物車' }).click();
-  await expect(page.getByRole('status')).toContainText('已加入購物車');
+  await expect(page.locator('p[role="status"].notice')).toContainText('已加入購物車');
   await page.getByRole('link', { name: '前往購物車' }).click();
 
   await expect(page.getByRole('heading', { name: '購物車' })).toBeVisible();
@@ -123,6 +124,9 @@ test('multi-role volunteer gets service navigation, inbox focus links and read-o
   await page.getByRole('button', { name: /課程異動：生命教育班/ }).click();
   await expect(page).toHaveURL(/\/app\/calendar\?session_id=410/);
   await page.locator('[data-calendar-session-id="410"]').click();
+  const agenda = page.getByTestId('calendar-day-sheet');
+  await expect(agenda).toBeVisible();
+  await agenda.locator('[data-session-id="410"]').click();
   const details = page.getByTestId('calendar-session-detail');
   await expect(details).toBeVisible();
   await expect(details).toContainText('合成志工甲');
@@ -148,6 +152,8 @@ test('multi-role volunteer gets service navigation, inbox focus links and read-o
 test('admin cards, permission labels and form responses retain reviewable work without raw JSON', async ({ page }) => {
   await mockApi(page, 'admin');
   await page.setViewportSize({ width: 390, height: 900 });
+  const pageErrors: string[] = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
   await loginWithSyntheticAccount(page, 'admin');
 
   await clientNavigate(page, '/app/admin/users');
@@ -166,6 +172,15 @@ test('admin cards, permission labels and form responses retain reviewable work w
 
   await clientNavigate(page, '/app/admin/forms');
   await expect(page.getByRole('heading', { name: '表單中心' })).toBeVisible();
+  await page.locator('.forms-more-actions summary').click();
+  await page.getByRole('button', { name: '設計表單' }).click();
+  await expect(page.getByRole('heading', { name: '設計表單與版本' })).toBeVisible();
+  await expect(page.getByLabel('表單標題')).toHaveValue('合成服務回饋');
+  await expect(page.getByLabel('欄位鍵值').first()).toHaveValue('service_date');
+  await expect(page.getByLabel('題目名稱').first()).toHaveValue('服務日期');
+  expect(pageErrors).toEqual([]);
+  await page.getByRole('button', { name: '取消' }).click();
+  await expect(page.getByRole('heading', { name: '表單中心' })).toBeVisible();
   await page.getByRole('button', { name: /回覆與版本/ }).click();
   await expect(page.getByRole('heading', { name: '讀懂每一份回覆' })).toBeVisible();
   await page.getByRole('button', { name: '附件與欄位答案' }).click();
@@ -179,13 +194,23 @@ test('admin schedule conflict and server permission denial stay visible to the o
   await mockApi(page, 'admin');
   await loginWithSyntheticAccount(page, 'admin');
   await clientNavigate(page, '/app/admin/schedule');
-  await page.getByRole('button', { name: '管理場次' }).click();
+  const coveredTeacherRow = page.locator('[data-session-id="411"]');
+  await expect(coveredTeacherRow.locator('.status')).toHaveText('未簽到');
+  await expect(coveredTeacherRow).not.toContainText('待補老師');
+  const absentRow = page.locator('[data-session-id="412"]');
+  await expect(absentRow.locator('.status')).toHaveText('有未出席');
+  await expect(absentRow).toContainText('合成志工乙：已指派（未出席）');
+  await page.locator('[data-session-id="410"]').getByRole('button', { name: '查看內容' }).click();
+  const detail = page.getByTestId('calendar-session-detail');
+  await expect(detail).toBeVisible();
+  await detail.getByTestId('session-detail-edit').click();
+  await expect(detail.getByLabel('異動原因／備註')).toBeVisible();
   await page.getByLabel('異動原因／備註').fill('合成驗收的衝突處理');
-  await page.getByRole('button', { name: '停課' }).click();
+  await detail.getByRole('button', { name: '停課' }).click();
   await expect(page.getByRole('alert')).toContainText('課程已有新異動');
 
   await clientNavigate(page, '/app/admin/contact-inquiries');
-  await page.getByRole('button', { name: '查看' }).click();
+  await page.getByRole('button', { name: '查看與處理', exact: true }).click();
   await page.getByLabel('同工備註').fill('合成回覆，未送出外部聯絡。');
   await page.getByRole('button', { name: '儲存處理狀態' }).click();
   await expect(page.getByText('目前沒有處理這筆訊息的權限')).toBeVisible();
@@ -211,11 +236,12 @@ test('the 38 Figma route screens still resolve for their intended audience', asy
   expect(routes).toHaveLength(38);
 
   for (const path of routes) {
-    await clientNavigate(page, path);
     if (path === '/change-password') {
+      await clientNavigate(page, path, false);
       await expect(page).not.toHaveURL(/\/change-password/);
       continue;
     }
+    await clientNavigate(page, path);
     await expect(page.locator('main, .workspace').first(), `${path} should render a page shell`).toBeVisible();
     await expectNoOverflow(page, `${path} at 390px`);
   }
@@ -254,8 +280,12 @@ async function mockApi(page: Page, persona: 'guest' | 'member-teacher' | 'admin'
         { id: 702, owner_id: 22, title: '訂單更新', message: '這是合成商品通知。', category: 'product', read: false, url: '/app/admin/orders?order_id=1', created_at: '2026-10-15T08:10:00+08:00' },
       ], unread_count: 2,
     });
-    if (/\/notifications\/\d+\/read$/.test(path) || path === '/notifications/read-all') return fulfill(route, { message: '已更新', unread_count: 1 });
-    if (path === '/sessions' && method === 'GET') return fulfill(route, { data: [sessionFixture()] });
+    if (/\/notifications\/\d+\/read$/.test(path)) return fulfill(route, { id: 701, owner_id: 22, title: '課程異動：生命教育班', message: '請查看合成課程安排。', category: 'course', read: true, url: '/app/calendar?session_id=410', created_at: '2026-10-15T08:00:00+08:00', unread_count: 1 });
+    if (path === '/notifications/read-all') return fulfill(route, { message: '已更新', unread_count: 0 });
+    if (path === '/sessions' && method === 'GET') {
+      const scheduleRows = url.searchParams.has('from') ? [sessionFixture(), ...scheduleSummaryFixtures()] : [sessionFixture()];
+      return fulfill(route, { data: scheduleRows });
+    }
     if (path === '/sessions/410' && method === 'GET') return fulfill(route, sessionFixture());
     if (path === '/meetings') return fulfill(route, { data: [] });
     if (path === '/teachers' || path === '/prisons/options') return fulfill(route, { data: [{ id: 22, name: '合成志工甲' }] });
@@ -266,7 +296,8 @@ async function mockApi(page: Page, persona: 'guest' | 'member-teacher' | 'admin'
     if (path === '/roles' && method === 'GET') return fulfill(route, { data: [{ id: 3, name: '志工老師', slug: 'synthetic-teacher', active: true, permissions: ['schedule.read.own', 'attendance.create.own'] }] });
     if (path === '/permissions') return fulfill(route, { data: adminPermissions });
     if (path === '/roles/3' && method === 'PUT') return fulfill(route, { message: '此角色已有新版本，請重新載入後再儲存。' }, 409);
-    if (path === '/forms' && method === 'GET') return fulfill(route, { data: [{ id: 77, title: '合成服務回饋', description: '合成表單', status: 'published', version: 2, fields: [{ key: 'service_date', label: '服務日期', type: 'date' }, { key: 'reflection', label: '心得', type: 'textarea' }], snapshots: [{ version: 2, fields: [{ key: 'service_date', label: '服務日期', type: 'date' }, { key: 'reflection', label: '心得', type: 'textarea' }] }] }] });
+    if (path === '/forms' && method === 'GET') return fulfill(route, { data: [formFixture()] });
+    if (path === '/forms/77' && method === 'GET') return fulfill(route, formFixture());
     if (path === '/role-options') return fulfill(route, { data: [{ id: 3, name: '志工老師' }] });
     if (path === '/forms/77/responses') return fulfill(route, { data: [{ id: 1, owner_id: 22, version: 2, answers: { service_date: '2026-10-15', reflection: '希望增加共同備課時間。' }, created_at: '2026-10-15T15:20:00+08:00' }] });
     if (path.startsWith('/sessions/410') && method === 'PUT') return fulfill(route, { message: '這筆課程已有新異動，請重新載入。' }, 409);
@@ -295,6 +326,53 @@ function newsFixture() {
   return { id: 301, title: '合成消息：同行近況', article_type: 'news', category: '合成分類', summary: '合成摘要', body: '這是可供 UI 測試的虛構文章內容。', body_html: '<p>這是可供 UI 測試的虛構文章內容。</p>', author_name: '合成編輯', published_at: '2026-10-15T09:00:00+08:00', status: 'published' };
 }
 
+function formFixture() {
+  return {
+    id: 77,
+    title: '合成服務回饋',
+    description: '合成表單',
+    status: 'published',
+    version: 2,
+    fields: [
+      { key: 'service_date', label: '服務日期', type: 'date', required: true },
+      { key: 'reflection', label: '心得', type: 'textarea', required: false },
+    ],
+    snapshots: [{
+      version: 2,
+      fields: [
+        { key: 'service_date', label: '服務日期', type: 'date', required: true },
+        { key: 'reflection', label: '心得', type: 'textarea', required: false },
+      ],
+    }],
+  };
+}
+
+function scheduleSummaryFixtures() {
+  return [
+    {
+      ...sessionFixture(),
+      id: 411,
+      title: '合成替補完成的課程',
+      assignments: [
+        { id: 511, teacher_id: 23, status: 'leave', attendance: null, teacher: { id: 23, name: '合成志工丙' } },
+        { id: 512, teacher_id: 24, status: 'assigned', attendance: null, teacher: { id: 24, name: '合成志工甲' } },
+      ],
+    },
+    {
+      ...sessionFixture(),
+      id: 412,
+      title: '合成未出席課程',
+      assignments: [{
+        id: 513,
+        teacher_id: 25,
+        status: 'assigned',
+        attendance: { present: false, check_in_at: null, check_out_at: null },
+        teacher: { id: 25, name: '合成志工乙' },
+      }],
+    },
+  ];
+}
+
 async function loginWithSyntheticAccount(page: Page, persona: 'member-teacher' | 'admin') {
   await page.goto('/login');
   await page.getByLabel('手機號碼').fill('0900000098');
@@ -303,13 +381,13 @@ async function loginWithSyntheticAccount(page: Page, persona: 'member-teacher' |
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
-async function clientNavigate(page: Page, path: string) {
-  await page.evaluate(async target => {
-    const nuxt = (window as any).$nuxt;
-    if (!nuxt?.$router) throw new Error('Nuxt client router is not available.');
-    await nuxt.$router.push(target);
+async function clientNavigate(page: Page, path: string, expectPath = true) {
+  await page.evaluate(target => {
+    const destination = new URL(target, window.location.href);
+    window.history.pushState(window.history.state, '', `${destination.pathname}${destination.search}${destination.hash}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }, path);
-  await expect(page).toHaveURL(new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  if (expectPath) await expect(page).toHaveURL(new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 }
 
 async function fulfill(route: Route, data: unknown, status = 200) {
