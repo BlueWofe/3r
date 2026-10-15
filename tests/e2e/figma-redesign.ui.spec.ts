@@ -82,7 +82,7 @@ test('public story, article, food and guest order remain usable at desktop and p
   await expect(page.getByText('這是可供 UI 測試的虛構文章內容。')).toBeVisible();
 
   await page.locator('a[href="/food"]:visible').first().click();
-  await expect(page.getByRole('heading', { name: /愛心好食|好食/ })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /愛心好食|好食/ })).toBeVisible();
   await page.getByRole('link', { name: /合成愛心餅乾/ }).click();
   await expect(page.getByRole('heading', { name: '合成愛心餅乾' })).toBeVisible();
   await page.getByLabel('數量').fill('2');
