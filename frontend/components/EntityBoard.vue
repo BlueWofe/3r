@@ -14,6 +14,8 @@ const p = defineProps<{
     hideInList?: boolean;
   }[];
   description?: string;
+  embedded?: boolean;
+  cards?: boolean;
   canCreate?: boolean;
   canUpdate?: boolean;
   excludeKinds?: string[];
@@ -27,6 +29,8 @@ const files = reactive<Record<string, File | null>>({});
 const { error, run } = useApiError();
 const saved = ref("");
 const pending = ref(false);
+const query = ref("");
+const visibleRows = computed(() => rows.value.filter(row => !query.value || listFields.value.some(field => String(displayValue(row, field)).toLocaleLowerCase().includes(query.value.toLocaleLowerCase()))));
 const listFields = computed(() => p.fields.filter((field) => !field.hideInList));
 function displayValue(row: any, field: any) {
   const named = field.displayKey ? row[field.displayKey] : undefined;
@@ -119,16 +123,18 @@ onMounted(load);
 <template>
   <div class="workhead">
     <div>
-      <p class="eyebrow">WORKBENCH</p>
-      <h1>{{ title }}</h1>
+      <p v-if="!embedded" class="eyebrow">管理工作台</p>
+      <component :is="embedded ? 'h2' : 'h1'">{{ title }}</component>
       <p v-if="description" class="muted">{{ description }}</p>
     </div>
     <button v-if="canCreate !== false" class="button" @click="newRow">
-      新增
+      新增{{ title.replace(/管理|名冊/g, '') }}
     </button>
   </div>
+  <label class="field entity-search">搜尋{{ title }}<input v-model="query" :placeholder="`搜尋${title}中的資料`" type="search" /></label>
   <div class="tablewrap">
-    <table class="table">
+    <div class="workspace-section-head"><div><h2>{{ title }}列表</h2><p>依目前授權範圍顯示</p></div><span class="muted">{{ visibleRows.length }} 筆</span></div>
+    <table v-if="!cards" class="table">
       <thead>
         <tr>
           <th v-for="f in listFields" :key="f.key">{{ f.label }}</th>
@@ -136,7 +142,7 @@ onMounted(load);
         </tr>
       </thead>
       <tbody>
-        <tr v-for="r in rows" :key="r.id">
+        <tr v-for="r in visibleRows" :key="r.id">
           <td v-for="f in listFields" :key="f.key" :data-label="f.label">
             {{ displayValue(r, f) }}
           </td>
@@ -150,23 +156,26 @@ onMounted(load);
             </button>
           </td>
         </tr>
-        <tr v-if="!rows.length">
-          <td :colspan="listFields.length + 1" class="empty">尚無資料</td>
+        <tr v-if="!visibleRows.length">
+          <td :colspan="listFields.length + 1" class="empty">目前沒有符合條件的資料</td>
         </tr>
       </tbody>
     </table>
+    <div v-else class="entity-card-list"><article v-for="row in visibleRows" :key="row.id" class="card"><div class="workhead"><h3>{{ listFields[0] ? displayValue(row, listFields[0]) : title }}</h3><button v-if="canUpdate !== false" class="button ghost" @click="edit(row)">編輯</button></div><dl class="entity-card-fields"><div v-for="field in listFields.slice(1)" :key="field.key"><dt>{{ field.label }}</dt><dd>{{ displayValue(row,field) }}</dd></div></dl></article><div v-if="!visibleRows.length" class="empty">目前沒有符合條件的資料</div></div>
+    <footer class="workspace-list-footer">共 {{ visibleRows.length }} 筆{{ title }}</footer>
   </div>
   <p v-if="error && !open" class="notice">{{ error }}</p>
   <p v-if="saved" class="notice">{{ saved }}</p>
-  <div v-if="open" class="modal">
-    <form class="dialog form" @submit.prevent="save">
+  <div v-if="open" class="modal" @keydown.esc="!pending && (open = false)">
+    <form class="dialog form entity-dialog" role="dialog" aria-modal="true" :aria-label="`${editing ? '編輯' : '新增'}${title}`" @submit.prevent="save">
       <div class="workhead">
         <h2>{{ editing ? "編輯" : "新增" }}{{ title }}</h2>
         <button type="button" class="button ghost" @click="open = false">
           關閉
         </button>
       </div>
-      <label v-for="f in fields" :key="f.key" class="field"
+      <div class="entity-form-grid">
+      <label v-for="f in fields" :key="f.key" :class="['field', { 'entity-field-wide': ['textarea', 'multiselect', 'file'].includes(f.type || '') }]"
         >{{ f.label
         }}<textarea
           v-if="f.type === 'textarea'"
@@ -205,10 +214,16 @@ onMounted(load);
           :required="!f.optional"
           :disabled="f.readonly"
       /></label>
-      <p v-if="error" class="error">{{ error }}</p>
+      </div>
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
       <button class="button" :disabled="pending">
         {{ pending ? "儲存中…" : "儲存" }}
       </button>
     </form>
   </div>
 </template>
+
+<style scoped>
+.entity-card-list { padding:0 24px 24px; display:grid; gap:16px; } .entity-card-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:0; } .entity-card-fields dt { font-size:13px; color:var(--r3-muted); } .entity-card-fields dd { margin:4px 0 0; } .entity-card-list .workhead h3 { margin:0; } @media(max-width:760px) { .entity-card-list { padding:0; } .entity-card-fields { grid-template-columns:minmax(0,1fr); } }
+.entity-search { max-width:480px; margin-bottom:24px; } .entity-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; } .entity-field-wide { grid-column:1/-1; } @media(max-width:760px) { .entity-form-grid { grid-template-columns:minmax(0,1fr); } }
+</style>

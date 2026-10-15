@@ -53,13 +53,9 @@ onMounted(async () => {
 });
 </script>
 <template>
-  <div class="workhead">
-    <div>
-      <p class="eyebrow">CARE</p>
-      <h1>個案紀錄</h1>
-      <p class="muted">個案資料依權限顯示；請避免在摘要中放入敏感資訊。</p>
-    </div>
-  </div>
+  <WorkspaceHero title="個案與服務紀錄" eyebrow="管理工作台" subtitle="以清晰的工作流程與狀態視覺，快速掌握個案名冊與服務紀錄。個案資料僅顯示目前授權範圍。" light>
+    <template #summary><dl><div><dt>目前頁籤</dt><dd>{{ activeTab === 'records' ? '服務紀錄' : '個案名冊' }}</dd></div><div><dt>可查看個案</dt><dd>{{ caseRowsLoaded ? `${caseRows.length} 筆` : '載入中…' }}</dd></div></dl></template>
+  </WorkspaceHero>
   <nav class="case-tabs" aria-label="個案紀錄分類">
     <button
       type="button"
@@ -80,6 +76,7 @@ onMounted(async () => {
   <section v-show="activeTab === 'directory'">
     <EntityBoard
       title="個案名冊"
+      embedded
       endpoint="/cases"
       :fields="fields"
       :can-create="canCreate()"

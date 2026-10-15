@@ -94,6 +94,7 @@ onMounted(load);
 <template>
   <EntityBoard
     title="會議／活動管理"
+    cards
     :endpoint="meetingEndpoint"
     :fields="fields"
     :can-create="can('meetings.create.all')"
@@ -131,7 +132,7 @@ onMounted(load);
       /><button class="button">上傳資源</button>
     </form>
     <div class="tablewrap" style="margin-top: 12px">
-      <table class="table">
+      <table class="table"><tbody>
         <tr v-for="r in resources" :key="r.id">
           <td data-label="名稱">{{ r.title }}</td>
           <td data-label="分類">{{ r.category }}</td>
@@ -151,7 +152,7 @@ onMounted(load);
             </button>
           </td>
         </tr>
-      </table>
+      </tbody></table>
     </div>
     <p v-if="error" class="error">{{ error }}</p>
   </section>

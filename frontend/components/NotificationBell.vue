@@ -43,7 +43,7 @@ watch(() => route.fullPath, () => { open.value = false; void load(); });
         open && load();
       "
     >
-      <NavIcon name="bell" /><span
+      <NavIcon name="bell" /><span class="bell-label">通知</span><span
         v-if="unread"
         class="badge"
         :aria-label="`${unread} 則未讀通知`"
@@ -88,26 +88,28 @@ watch(() => route.fullPath, () => { open.value = false; void load(); });
 }
 .bell {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font: inherit;
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid #ffffff66;
-  border-radius: 999px;
-  background: #ffffff12;
+  border: 1px solid var(--r3-border);
+  border-radius: 8px;
+  background: var(--r3-sage);
   color: inherit;
   cursor: pointer;
 }
 .badge {
-  position: absolute;
-  top: -5px;
-  right: -4px;
+  position: static;
   min-width: 18px;
   padding: 1px 4px;
   border-radius: 99px;
-  background: #c33;
+  background: var(--r3-primary);
   color: #fff;
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 700;
 }
 .notification-popover {
@@ -121,9 +123,9 @@ watch(() => route.fullPath, () => { open.value = false; void load(); });
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: var(--paper);
+  background: var(--r3-surface);
   color: var(--ink);
-  box-shadow: 0 16px 36px #0003;
+  box-shadow: 0 16px 40px #193e3426;
 }
 .popover-head {
   display: flex;
@@ -152,7 +154,7 @@ watch(() => route.fullPath, () => { open.value = false; void load(); });
 .notification-item span {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
 }
 .notification-item small {
   color: var(--pine);

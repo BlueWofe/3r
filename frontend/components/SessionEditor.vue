@@ -17,7 +17,7 @@ const form = reactive<any>({
   location: p.session?.location || "",
   participant_count: p.session?.participant_count || 0,
   service_date:
-    p.session?.service_date || new Date().toISOString().slice(0, 10),
+    p.session?.service_date || taipeiDate(),
   start_time: p.session?.start_time || "09:00",
   end_time: p.session?.end_time || "11:00",
   teacher_ids: p.session?.assignments?.map((a: any) => a.teacher_id) || [],
@@ -59,13 +59,15 @@ async function save() {
 </script>
 <template>
   <div :class="embedded ? 'embedded-editor' : 'modal'">
-    <form :class="embedded ? 'form' : 'dialog form'" @submit.prevent="save">
+    <form :class="embedded ? 'form' : 'dialog form'" :role="embedded ? undefined : 'dialog'" :aria-modal="embedded ? undefined : true" aria-label="課程場次編輯" @submit.prevent="save">
       <div v-if="!embedded" class="workhead">
         <h2>{{ session ? "編輯服務場次" : "新增服務場次" }}</h2>
         <button type="button" class="button ghost" @click="emit('close')">
           關閉
         </button>
       </div>
+      <div v-if="session" class="notice editor-guidance"><strong>修改前請先確認</strong><p>填寫異動原因；若涉及老師時間衝突或既有出勤紀錄，請確認後再儲存。</p></div>
+      <div class="editor-section-heading"><h3>基本資訊</h3><p class="muted">填寫課程主題、上課地點、人數與服務日期。</p></div>
       <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
         <label class="field"
           >課程主題<input
@@ -121,6 +123,7 @@ async function save() {
         /></label>
       </div>
       <ScheduleColorPicker v-model="form.color" label="課程顯示顏色" :disabled="!!session && !manager" />
+      <h3>老師與安排</h3>
       <label v-if="!session" class="field"
         >授課／服務同工<select v-model="form.teacher_ids" multiple>
           <option v-for="t in teachers" :key="t.id" :value="t.id">
@@ -148,3 +151,5 @@ async function save() {
     </form>
   </div>
 </template>
+
+<style scoped>.editor-guidance p { margin:8px 0 0; } .editor-section-heading h3 { margin:0; } .editor-section-heading p { margin:4px 0 0; font-size:13px; } .embedded-editor { margin:24px 0; padding:24px; border:1px solid var(--r3-border); border-radius:16px; background:var(--r3-paper); } @media(max-width:760px) { .embedded-editor { padding:16px; } }</style>

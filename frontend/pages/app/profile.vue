@@ -89,7 +89,10 @@ watch(selected, () => { saved.value = ""; error.value = ""; });
 onMounted(load);
 </script>
 <template>
-  <div class="workhead"><div><p class="eyebrow">MY ACCOUNT</p><h1>我的帳戶</h1><p class="muted">管理個人資料、密碼與通知，查看自己的奉獻紀錄。</p></div></div>
+  <WorkspaceHero title="我的帳戶" eyebrow="會員中心" subtitle="管理個人資料、更新聯絡方式、追蹤奉獻紀錄與重要通知。">
+    <template #actions><button type="button" class="button" @click="selected = 'profile'">個人資料</button><NuxtLink class="button ghost" to="/app/invitations">查看通知</NuxtLink></template>
+    <template #summary><dl><div><dt>會員姓名</dt><dd class="workspace-teacher">{{ user?.name }}</dd></div><div><dt>目前手機</dt><dd>{{ phone }}</dd></div><div><dt>換號驗證</dt><dd>新手機與 OTP</dd></div></dl></template>
+  </WorkspaceHero>
   <nav class="tabs account-tabs" aria-label="帳戶功能">
     <button v-for="tab in tabs" :key="tab.id" type="button" :class="{ selected: selected === tab.id }" :aria-current="selected === tab.id ? 'page' : undefined" @click="selected = tab.id">{{ tab.label }}</button>
   </nav>

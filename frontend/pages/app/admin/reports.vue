@@ -49,14 +49,7 @@ onMounted(async () => {
       <p class="muted">依日期與授權範圍彙整完成服務、出席、請假與代課情形。</p>
     </div>
     <form class="toolbar" @submit.prevent="load">
-      <input v-model="from" type="date" /><input
-        v-model="to"
-        type="date"
-      /><select v-if="teachers.length" v-model="teacherId">
-        <option value="">所有可查看同工</option>
-        <option v-for="t in teachers" :key="t.id" :value="t.id">
-          {{ t.name }}
-        </option></select
+      <label class="field">開始日期<input v-model="from" type="date" /></label><label class="field">結束日期<input v-model="to" type="date" /></label><label v-if="teachers.length" class="field">老師<select v-model="teacherId"><option value="">所有可查看同工</option><option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.name }}</option></select></label
       ><button class="button">更新報表</button>
     </form>
   </div>

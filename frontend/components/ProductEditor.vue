@@ -164,8 +164,8 @@ async function save() {
           >排序<input v-model.number="form.sort_order" type="number" /></label
         ><label class="field"
           >狀態<select v-model="form.status">
-            <option>draft</option>
-            <option>published</option>
+            <option value="draft">草稿</option>
+            <option value="published">已發布</option>
           </select></label
         ><label class="field"
           >主圖片<input type="file" accept="image/*" @change="selectMainImage"

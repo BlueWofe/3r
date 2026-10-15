@@ -203,19 +203,21 @@ onMounted(load);
   <div class="workhead">
     <div>
       <p class="eyebrow">ROLE POLICY</p>
-      <h1>角色與權限</h1>
+      <h1>角色與權限</h1><p class="muted">管理角色、中文分類權限與資料範圍；多角色權限取聯集，並保留最後有效管理員保護。</p>
     </div>
     <button class="button" @click="edit()">新增角色</button>
   </div>
-  <div class="grid cards">
-    <article v-for="r in roles" :key="r.id" class="card">
-      <span class="status">{{ r.active ? "啟用" : "停用" }}</span>
-      <h3>{{ r.name }}</h3>
-      <p class="muted">
-        {{ r.slug }}<br />{{ r.permissions?.length || 0 }} 項權限
-      </p>
-      <button class="button ghost" @click="edit(r)">設定權限</button>
-    </article>
+  <div class="workspace-summary-grid"><article class="card"><p>角色總數</p><strong>{{ roles.length }} 種</strong></article><article class="card"><p>啟用角色</p><strong>{{ roles.filter(r => r.active).length }} 種</strong></article><article class="card"><p>權限分類</p><strong>{{ permissionGroups.length }} 類</strong></article><article class="card"><p>可配置權限</p><strong>{{ permissions.length }} 項</strong></article></div>
+  <div class="workspace-columns roles-layout">
+    <section class="card workspace-stack"><div><h2>角色清單</h2><p class="muted">依角色職責與資料範圍配置授權。</p></div>
+      <article v-for="r in roles" :key="r.id" :class="['role-overview-card', { 'role-overview-admin': r.slug === 'system-admin' }]">
+        <div class="role-overview-heading"><h3>{{ r.name }}</h3><span class="status">{{ r.active ? '啟用' : '停用' }}</span></div>
+        <p>{{ r.slug }}</p><p>{{ r.permissions?.length || 0 }} 項權限</p>
+        <div class="role-module-tags"><span v-for="group in permissionGroups.filter(g => r.permissions?.some((key: string) => key.startsWith(`${g.module}.`)))" :key="group.module">{{ group.title }}</span></div>
+        <button class="button ghost" @click="edit(r)">設定權限</button>
+      </article>
+    </section>
+    <aside class="workspace-stack"><section class="card"><h3>分類權限</h3><dl class="workspace-facts"><div v-for="group in permissionGroups" :key="group.module"><dt>{{ group.title }}</dt><dd>{{ group.items.length }} 項</dd></div></dl></section><section class="card"><h3>資料範圍</h3><p class="muted">同時擁有多個啟用角色時，伺服器會合併授權。個案、資源、會議與小組消息仍依各自的資料範圍驗證。</p></section><section class="card role-protection"><h3>最後管理員保護</h3><p>系統保留最後一位有效管理員；停用或移除管理角色時，由伺服器重新確認。</p></section></aside>
   </div>
   <div v-if="open" class="modal">
     <form class="dialog form" @submit.prevent="save">
@@ -316,6 +318,8 @@ onMounted(load);
   </div>
 </template>
 <style scoped>
+.roles-layout h2 { margin:0; } .role-overview-card { border:1px solid var(--r3-border); border-radius:16px; padding:24px; background:var(--r3-paper); } .role-overview-card p { margin:8px 0; } .role-overview-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; } .role-overview-heading h3 { margin:0; } .role-module-tags { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0; } .role-module-tags span { font-size:13px; background:var(--r3-sage); color:var(--r3-primary); padding:4px 8px; border-radius:8px; } .role-overview-admin,.card.role-protection { background:var(--r3-primary); color:#fff; } .role-overview-admin .role-module-tags span { background:#ffffff20; color:#fff; } .role-overview-admin .button { background:#fff; color:var(--r3-primary); }
+
 .permission-heading {
   display: flex;
   flex-wrap: wrap;

@@ -101,19 +101,19 @@ watch(() => route.query.id, () => { if (!pending.value) void focusLinkedInquiry(
     </div>
   </div>
   <form class="toolbar" @submit.prevent="load">
-    <label
+    <label class="field"
       >分類<select v-model="category">
         <option value="">全部分類</option>
         <option v-for="item in categories" :key="item">{{ item }}</option>
       </select></label
-    ><label
+    ><label class="field"
       >狀態<select v-model="status" aria-label="狀態">
         <option value="">全部狀態</option>
         <option v-for="item in statuses" :key="item" :value="item">
           {{ labels[item] }}
         </option>
       </select></label
-    ><input v-model="q" placeholder="搜尋姓名、電話或訊息" /><button
+    ><label class="field">搜尋訊息<input v-model="q" placeholder="搜尋姓名、電話或訊息" /></label><button
       class="button"
     >
       篩選
@@ -144,7 +144,7 @@ watch(() => route.query.id, () => { if (!pending.value) void focusLinkedInquiry(
           <td data-label="訊息摘要">
             <span class="inquiry-preview">{{ row.message }}</span>
           </td>
-          <td data-label="狀態">{{ labels[row.status] }}</td>
+          <td data-label="狀態"><span :class="['status', { warning: row.status === 'new' }]">{{ labels[row.status] }}</span></td>
           <td data-label="建立時間">
             {{
               new Intl.DateTimeFormat("zh-TW", {

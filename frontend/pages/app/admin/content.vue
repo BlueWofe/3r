@@ -250,7 +250,7 @@ onMounted(load);
       }}</b>
     </button>
   </nav>
-  <h2 class="content-list-title">{{ sectionTitle }}</h2>
+  <div class="workhead content-list-heading"><h2 class="content-list-title">{{ sectionTitle }}</h2><span class="muted">{{ rows.length }} 筆內容</span></div>
   <p v-if="success && !open" class="notice">{{ success }}</p>
   <p v-if="error && !open" class="notice">{{ error }}</p>
   <div class="tablewrap">

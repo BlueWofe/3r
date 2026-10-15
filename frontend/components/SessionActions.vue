@@ -241,7 +241,7 @@ watch(
   <div v-if="!openOnMount" class="actions session-action-buttons">
     <button v-if="canCheckIn" class="button gold" :data-testid="lateCheckIn ? 'self-late-check-in' : 'self-check-in'" :disabled="pending" @click="openSelfAttendance">{{ lateCheckIn ? "補簽" : "簽到" }}</button>
   <button class="button ghost" :disabled="pending" @click="open = true">
-    {{ admin ? "管理場次" : "處理服務" }}
+    {{ detailFirst ? "查看內容" : admin ? "管理場次" : "處理服務" }}
   </button>
   </div>
   <div v-if="open && !(detailFirst && selfOpen)" class="modal" @keydown.esc="!pending && (open = false, emit('close'))">
@@ -306,7 +306,7 @@ watch(
         >目前指派<select v-model="assignmentId">
           <option :value="undefined">請選擇目前同工</option>
           <option v-for="a in session.assignments" :key="a.id" :value="a.id">
-            {{ a.teacher?.name || "缺額" }} · {{ a.status }}
+            {{ a.teacher?.name || "缺額" }} · {{ a.status === "leave" ? "請假" : a.status === "replaced" ? "已替換" : "已指派" }}
           </option>
         </select></label
       ><label v-if="admin || ownMutable" class="field"
@@ -390,7 +390,7 @@ watch(
   </div>
   <div v-if="selfOpen" class="modal self-attendance-modal" @keydown.esc="!pending && (selfOpen = false)">
     <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="self-attendance-title" data-testid="self-attendance-dialog">
-      <div class="workhead"><h2 id="self-attendance-title">{{ lateCheckIn ? "補簽" : "簽到" }}</h2><button class="button ghost" :disabled="pending" @click="selfOpen = false">關閉</button></div>
+      <div class="workhead"><h2 id="self-attendance-title">{{ lateCheckIn ? "補上這次服務紀錄" : "記錄今天的同行" }}</h2><button class="button ghost" :disabled="pending" @click="selfOpen = false">關閉</button></div>
       <p>{{ session.title }} · {{ session.service_date }}<br />{{ mine?.teacher?.name || user?.name }}</p>
       <p class="muted">{{ lateCheckIn ? "補簽會保留原服務日期，並記錄現在的簽到時間。" : "簽到時間以送出時的台北時間記錄。" }}</p>
       <form @submit.prevent="submitSelfAttendance">
@@ -417,14 +417,15 @@ watch(
 .session-action-buttons { flex-wrap: wrap; }
 .session-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .attendance-list { display: grid; gap: 12px; margin-bottom: 16px; }
-.attendance-list > div { padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.attendance-list > div { padding: 20px; border: 1px solid var(--line); border-radius: 8px; }
 .self-attendance-modal { z-index: 101; }
 .self-attendance-modal input { max-width: 100%; }
-.session-details { display: grid; gap: 10px; }
-.session-details > div { display: grid; grid-template-columns: minmax(80px, 110px) minmax(0, 1fr); gap: 12px; }
+.session-details { display: grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap: 20px 24px; padding:24px 0; border-top:1px solid var(--r3-border); margin:24px 0; }
+.session-details > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .session-details dt { color: var(--muted); }
 .session-details dd { margin: 0; overflow-wrap: anywhere; }
-.my-assignment { border-left: 4px solid var(--pine); padding: 10px; background: #eaf1eb; border-radius: 8px; }
+.my-assignment { border-left: 4px solid var(--pine); padding: 10px; background: var(--r3-sage); border-radius: 8px; }
 .vacant-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: #e9ecee; color: #4b5660; border-radius: 8px; font-size: 16px; font-weight: 700; }
 .dialog { overflow-wrap: anywhere; }
+@media(max-width:760px) { .session-details { grid-template-columns:minmax(0,1fr); } .attendance-list > div { padding:16px; } }
 </style>

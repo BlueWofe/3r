@@ -59,9 +59,9 @@ watch(() => route.query.invitation_id, async () => {
 </script>
 
 <template>
-  <div class="workhead inbox-head">
-    <div><p class="eyebrow">INBOX</p><h1>通知收件匣</h1><p class="muted">{{ unreadCount ? `${unreadCount} 則未讀通知` : "目前沒有未讀通知" }}</p></div>
-  </div>
+  <WorkspaceHero :title="canRespond() ? '邀請與通知' : '通知收件匣'" eyebrow="站內消息" subtitle="管理您的邀請與站內通知，快速查看未讀狀態並前往相關列表。">
+    <template #summary><dl><div><dt>目前分頁</dt><dd>{{ activePane === 'invitations' ? '代課邀請' : '站內通知' }}</dd></div><div><dt>未讀總數</dt><dd>{{ unreadCount }} 筆</dd></div><div v-if="canRespond()"><dt>待回覆邀請</dt><dd>{{ pendingInvitations.length }} 筆</dd></div></dl></template>
+  </WorkspaceHero>
   <nav v-if="canRespond()" class="inbox-main-tabs" role="tablist" aria-label="收件匣主要分類">
     <button id="invitations-tab" type="button" role="tab" :aria-selected="activePane === 'invitations'" aria-controls="invitations-panel" :class="{ selected: activePane === 'invitations' }" @click="selectPane('invitations')"><NavIcon name="calendar" /><span>代課邀請</span><span v-if="pendingInvitations.length" class="tab-unread-count" :aria-label="`${pendingInvitations.length} 則待回覆邀請`">{{ pendingInvitations.length }}</span></button>
     <button id="notifications-tab" type="button" role="tab" :aria-selected="activePane === 'notifications'" aria-controls="notifications-panel" :class="{ selected: activePane === 'notifications' }" @click="selectPane('notifications')"><NavIcon name="bell" /><span>站內通知</span><span v-if="unreadCount" class="tab-unread-count" :aria-label="`${unreadCount} 則未讀`">{{ unreadCount }}</span></button>
@@ -82,8 +82,8 @@ watch(() => route.query.invitation_id, async () => {
       </article>
     </details>
   </section>
-  <section v-if="activePane === 'notifications'" id="notifications-panel" class="section inbox-section" :role="canRespond() ? 'tabpanel' : undefined" :aria-labelledby="canRespond() ? 'notifications-tab' : 'notification-title'">
-    <div class="notification-head"><h2 id="notification-title" class="serif">站內通知</h2><button class="button ghost" type="button" data-testid="inbox-read-all" :disabled="allReadPending || loading || !unreadCount" @click="readAll">{{ allReadPending ? "處理中…" : "全部已讀" }}</button></div>
+  <section v-if="activePane === 'notifications'" id="notifications-panel" class="section inbox-section card" :role="canRespond() ? 'tabpanel' : undefined" :aria-labelledby="canRespond() ? 'notifications-tab' : 'notification-title'">
+    <div class="notification-head"><div><h2 id="notification-title">通知列表</h2><p class="muted">共 {{ filteredNotifications.length }} 筆 · {{ unreadCount }} 筆未讀</p></div><button class="button ghost" type="button" data-testid="inbox-read-all" :disabled="allReadPending || loading || !unreadCount" @click="readAll">{{ allReadPending ? "處理中…" : "全部已讀" }}</button></div>
     <nav class="inbox-tabs" role="tablist" aria-label="通知分類">
       <button v-for="category in categories" :key="category.id" role="tab" type="button" :aria-selected="selectedCategory === category.id" :aria-label="categoryUnreadCounts[category.id] ? `${category.label}，${categoryUnreadCounts[category.id]}則未讀` : category.label" :class="{ selected: selectedCategory === category.id }" @click="selectedCategory = category.id">
         <span>{{ category.label }}</span><span v-if="categoryUnreadCounts[category.id]" class="tab-unread-count" :data-testid="`notification-tab-count-${category.id}`" aria-hidden="true">{{ categoryUnreadCounts[category.id] }}</span>
@@ -96,7 +96,7 @@ watch(() => route.query.invitation_id, async () => {
         <span class="inbox-item-title"><b>{{ notificationTitle(item) }}</b><span v-if="!item.read && !item.read_at" class="unread-dot">未讀</span></span>
         <span v-if="item.type !== 'group_news' && (item.body || item.message)" class="muted">{{ item.body || item.message }}</span>
         <small v-if="createdLabel(item.created_at)" class="muted">{{ createdLabel(item.created_at) }}</small>
-        <small v-if="notificationDestination(item.url)" class="open-hint">開啟相關內容</small>
+        <small v-if="notificationDestination(item.url)" class="open-hint">前往相關列表</small>
       </button>
     </article>
     <p v-if="notificationError" class="error" role="alert">{{ notificationError }}</p>
@@ -104,23 +104,23 @@ watch(() => route.query.invitation_id, async () => {
 </template>
 
 <style scoped>
-.inbox-head { align-items: end; } .inbox-section { padding-bottom: 0; }
+.inbox-head { align-items: end; } .inbox-section { padding: 24px; } .notification-head h2 { margin: 0; } .notification-head p { margin: 4px 0 0; font-size: 13px; }
 .notification-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .inbox-main-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 16px 0 24px; }
-.inbox-main-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; min-height: 56px; min-width: 0; padding: 12px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+.inbox-main-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; min-height: 64px; min-width: 0; padding: 12px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--r3-sage); color: var(--ink); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
 .inbox-main-tabs button.selected { background: var(--pine); border-color: var(--pine); color: #fff; }
 .inbox-main-tabs button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .inbox-main-tabs :deep(svg) { width: 22px; height: 22px; flex: none; }
 .inbox-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 12px 0 16px; }
-.inbox-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 44px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); font: 600 13px inherit; cursor: pointer; white-space: nowrap; }
+.inbox-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 44px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--r3-sage); color: var(--ink); font: 600 13px inherit; cursor: pointer; white-space: nowrap; }
 .inbox-tabs button.selected { border-color: var(--pine); background: var(--pine); color: white; }
-.tab-unread-count { min-width: 20px; padding: 2px 5px; border-radius: 99px; background: #f1dfb8; color: #684b16; font-size: 12px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; max-width: 100%; }
+.tab-unread-count { min-width: 20px; padding: 2px 5px; border-radius: 99px; background: #f1dfb8; color: #684b16; font-size: 16px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; max-width: 100%; }
 .invitation-card, .inbox-item { margin: 8px 0; } .invitation-card.focused { outline: 3px solid var(--gold); outline-offset: 2px; }
 .invitation-history { margin-top: 12px; } .invitation-history summary { cursor: pointer; font-weight: 700; }
-.inbox-item { padding: 0; overflow: hidden; } .inbox-item.unread { border-left: 5px solid var(--gold); }
+.inbox-item { padding: 0; overflow: hidden; } .inbox-item.unread { border-left: 4px solid var(--r3-gold); }
 .inbox-item-button { display: grid; gap: 5px; width: 100%; padding: 16px; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
-.inbox-item-button:hover { background: #f7f2e8; } .inbox-item-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.unread-dot { flex: none; padding: 2px 8px; border-radius: 99px; background: #f1dfb8; color: #684b16; font-size: 12px; font-weight: 700; }
+.inbox-item-button:hover { background: var(--r3-sage); } .inbox-item-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.unread-dot { flex: none; padding: 2px 8px; border-radius: 99px; background: #f1dfb8; color: #684b16; font-size: 16px; font-weight: 700; }
 .open-hint { color: var(--pine); font-weight: 700; }
 @media (max-width: 620px) { .inbox-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } .inbox-tabs button { white-space: normal; line-height: 1.25; } .inbox-head { align-items: start; } }
 </style>

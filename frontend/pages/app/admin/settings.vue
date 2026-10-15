@@ -87,10 +87,10 @@ async function drive(action: string) {
   <div class="workhead">
     <div>
       <p class="eyebrow">SETTINGS</p>
-      <h1>整合與設定</h1>
+      <h1>協會設定</h1><p class="muted">維護基本資料、品牌標誌與整合設定。</p>
     </div>
   </div>
-  <div class="grid responsive-two" style="grid-template-columns: 1fr 1fr">
+  <div class="workspace-columns settings-layout"><div class="workspace-stack">
     <form class="card form" @submit.prevent="save">
       <h3>協會資料</h3>
       <label class="field"
@@ -148,6 +148,10 @@ async function drive(action: string) {
       </form>
     </div>
   </div>
+  <aside class="workspace-stack"><section class="card settings-summary"><p class="eyebrow">設定摘要</p><h3>協會設定概覽</h3><dl class="workspace-facts"><div><dt>協會名稱</dt><dd>{{ settings.association_name || '尚未填寫' }}</dd></div><div><dt>電話</dt><dd>{{ settings.contact_phone || '尚未填寫' }}</dd></div><div><dt>Email</dt><dd>{{ settings.contact_email || '尚未填寫' }}</dd></div><div><dt>地址</dt><dd>{{ settings.address || '尚未填寫' }}</dd></div></dl></section><section class="card"><h3>操作關係</h3><p class="muted">協會資料與 Logo 會套用於品牌識別與聯絡資訊。LINE／Drive 目前提供內部模擬，不對外發送或同步。</p></section></aside>
+  </div>
   <p v-if="saved" class="notice">{{ saved }}</p>
   <p v-if="error" class="error">{{ error }}</p>
 </template>
+
+<style scoped>.settings-layout { align-items:start; } .card.settings-summary { background:var(--r3-primary); color:#fff; } .settings-summary .workspace-facts dt { color:#dce8e0; } .settings-summary .workspace-facts > div { display:block; } .settings-summary dd { margin-top:6px; text-align:left; overflow-wrap:anywhere; } .settings-summary .eyebrow { color:#dce8e0; } </style>

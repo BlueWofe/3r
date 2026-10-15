@@ -73,7 +73,7 @@ watch(() => route.query.content_id, focusLinkedContent);
   <div v-else-if="!rows.length" class="card empty">
     目前沒有可閱讀的小組消息。
   </div>
-  <div v-else class="grid cards">
+  <div v-else class="grid cards group-news-list">
     <NuxtLink
       v-for="item in rows"
       :key="item.id"
@@ -92,5 +92,7 @@ watch(() => route.query.content_id, focusLinkedContent);
   </div>
 </template>
 <style scoped>
+.group-news-list .card { display:flex; flex-direction:column; gap:12px; } .group-news-list h3,.group-news-list p { margin:0; } .group-news-list .card > small:last-child { color:var(--r3-primary); font-weight:700; padding-top:12px; border-top:1px solid var(--r3-border); margin-top:auto; }
+
 .notification-focus { border-color: #c69d4d; background: #fff8e8; box-shadow: 0 0 0 3px rgba(198, 157, 77, .25); }
 </style>

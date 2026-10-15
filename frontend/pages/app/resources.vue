@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
 const { can } = useAuth();
+const showUpload = ref(false), showDrive = ref(false);
 const rows = ref<any[]>([]),
   roles = ref<any[]>([]),
   groups = ref<any[]>([]),
@@ -104,28 +105,29 @@ async function drive(action: "upload" | "download") {
 onMounted(load);
 </script>
 <template>
+  <section class="resources-banner"><div><p>RENEWAL · RESTORATION · HOPE</p><h2>讓每一段生命，<br />都能重新被看見。</h2><p>我們走進高牆，也陪伴走出高牆的人與家庭。<br />從信仰與關係開始，讓更新成為可能。</p><div class="actions"><NuxtLink class="button" to="/about">認識我們 →</NuxtLink><NuxtLink class="button ghost" to="/about#mission">了解事工</NuxtLink></div></div></section>
+  <div class="resources-values"><span>盼望</span><span>尊嚴</span><span>同行</span><span>更新</span></div>
+  <nav class="workspace-breadcrumb" aria-label="資源所在位置"><NuxtLink to="/app">我的服務</NuxtLink><span>/</span><span>需要的資源，都在這裡</span></nav>
   <div class="workhead">
     <div>
       <p class="eyebrow">PRIVATE RESOURCES</p>
-      <h1>資源中心</h1>
+      <h1>需要的資源，都在這裡</h1>
       <p class="muted">
         分享角色與小組採聯集；兩者都不設定時，維持原有可讀範圍。上傳與雲端操作皆為示範模式。
       </p>
     </div>
     <form class="toolbar" @submit.prevent="load">
-      <input v-model="q" placeholder="搜尋資源" /><input
-        v-model="category"
-        placeholder="分類"
-      /><select v-model="filterGroupId" aria-label="篩選小組">
+      <label class="field">搜尋資源<input v-model="q" placeholder="搜尋資源標題" /></label><label class="field">分類<input v-model="category" placeholder="全部分類" /></label><label class="field">篩選小組<select v-model="filterGroupId" aria-label="篩選小組">
         <option value="">全部小組</option>
         <option v-for="group in groups" :key="group.id" :value="group.id">
           {{ group.name }}
         </option></select
-      ><button class="button">篩選</button>
+      ></label><button class="button">篩選</button>
     </form>
   </div>
+  <div v-if="canCreate()" class="actions resource-tools"><button class="button" type="button" :aria-expanded="showUpload" @click="showUpload = !showUpload">{{ showUpload ? '收起上傳表單' : '上傳授權資源' }}</button><button type="button" class="button ghost" :aria-expanded="showDrive" @click="showDrive = !showDrive">雲端硬碟（模擬）</button></div>
   <form
-    v-if="canCreate()"
+    v-if="canCreate() && showUpload"
     class="card form"
     style="margin-bottom: 18px"
     @submit.prevent="upload"
@@ -183,7 +185,7 @@ onMounted(load);
       ><button class="button">儲存變更</button>
     </form>
   </div>
-  <div v-if="canCreate()" class="card form" style="margin-bottom: 18px">
+  <div v-if="canCreate() && showDrive" class="card form" style="margin-bottom: 18px">
     <h3>雲端硬碟（模擬）</h3>
     <input v-model="driveName" placeholder="檔案名稱" />
     <div class="actions">
@@ -195,40 +197,18 @@ onMounted(load);
   <div v-if="loading" class="empty">載入資源中…</div>
   <div v-else-if="error" class="notice">{{ error }}</div>
   <div v-else-if="!rows.length" class="card empty">目前沒有可下載的資源。</div>
-  <div v-else class="tablewrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>名稱</th>
-          <th>分類</th>
-          <th>小組</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="r in rows" :key="r.id">
-          <td data-label="名稱">{{ r.title }}</td>
-          <td data-label="分類">{{ r.category }}</td>
-          <td data-label="小組">{{ r.group_names?.join("、") || "—" }}</td>
-          <td data-label="操作">
-            <a
-              class="button"
-              :href="`/api/v1/files/${r.file_id || r.id}/download`"
-              >下載</a
-            >
-            <button
-              v-if="can('resources.update.all')"
-              class="button ghost"
-              @click="beginEdit(r)"
-            >
-              編輯分享範圍
-            </button>
-            <button v-if="canManage()" class="button danger" @click="remove(r)">
-              刪除
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div v-else class="workspace-stack resource-list">
+    <article v-for="r in rows" :key="r.id" class="card resource-card"><div><div class="actions"><span class="status">{{ r.category || '一般資源' }}</span><span v-if="r.mime_type" class="resource-file-type">{{ r.mime_type }}</span></div><h3>{{ r.title }}</h3><p class="muted">小組：{{ r.group_names?.join('、') || '依授權範圍顯示' }}</p></div><div class="actions"><a class="button" :href="`/api/v1/files/${r.file_id || r.id}/download`">下載</a><button v-if="can('resources.update.all')" class="button ghost" @click="beginEdit(r)">編輯分享範圍</button><button v-if="canManage()" class="button danger" @click="remove(r)">刪除</button></div></article>
+    <footer class="workspace-list-footer">共 {{ rows.length }} 筆可查看的資源</footer>
   </div>
 </template>
+
+<style scoped>
+.resources-banner { width:100vw; margin:0 calc((1200px - 100vw)/2) 0; padding:64px max(48px,calc((100vw - 1200px)/2)); min-height:420px; background:linear-gradient(90deg,#10291ede,#10291e20),url('/images/redesign/imgHeroSection.png') center/cover; color:#fff; }
+.resources-banner > div { max-width:760px; } .resources-banner h2 { font:500 48px/1.45 'Noto Serif TC',serif; margin:20px 0; } .resources-banner p { font-size:16px; } .resources-banner > div > p:first-child { font-size:13px; letter-spacing:.08em; } .resources-banner .button { background:#fff; color:var(--r3-primary); } .resources-banner .button.ghost { background:transparent; color:#fff; border-color:#ffffff80; }
+.resources-values { display:flex; gap:40px; padding:20px 0; margin-bottom:48px; color:var(--r3-primary); font-family:'Noto Serif TC',serif; font-size:24px; border-bottom:1px solid var(--r3-border); } .resource-tools { margin-bottom:24px; } .resource-card { display:flex; align-items:center; justify-content:space-between; gap:24px; } .resource-card h3 { margin:16px 0 8px; } .resource-card p { margin:0; } .resource-file-type { font-size:13px; color:var(--r3-muted); }
+@media(max-width:1295px) { .resources-banner { margin-left:-48px; margin-right:-48px; } }
+@media(max-width:1000px) { .resources-banner { margin-left:-32px; margin-right:-32px; } }
+@media(max-width:760px) { .resources-banner { min-height:400px; margin-left:-24px; margin-right:-24px; padding:48px 24px; } .resources-banner h2 { font-size:32px; } .resources-values { gap:24px; font-size:20px; justify-content:space-between; } .resource-card { flex-direction:column; align-items:stretch; } .resource-card > .actions { padding-top:16px; border-top:1px solid var(--r3-border); } }
+@media(max-width:350px) { .resources-banner { margin-left:-16px; margin-right:-16px; } }
+</style>

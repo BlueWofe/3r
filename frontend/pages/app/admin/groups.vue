@@ -92,6 +92,7 @@ onMounted(load);
   </div>
   <p v-if="success" class="notice">{{ success }}</p>
   <p v-if="error && !open" class="error">{{ error }}</p>
+  <div class="workspace-summary-grid"><article class="card"><p>小組總數</p><strong>{{ rows.length }} 組</strong></article><article class="card"><p>啟用小組</p><strong>{{ rows.filter(row => row.active).length }} 組</strong></article></div>
   <div class="tablewrap">
     <table class="table">
       <thead>
@@ -112,7 +113,7 @@ onMounted(load);
           <td data-label="成員">
             {{ row.member_count ?? row.members?.length ?? 0 }} 人
           </td>
-          <td data-label="狀態">{{ row.active ? "啟用" : "已停用" }}</td>
+          <td data-label="狀態"><span :class="['status', {draft: !row.active}]">{{ row.active ? "啟用" : "已停用" }}</span></td>
           <td data-label="操作">
             <button class="button ghost" @click="reset(row)">編輯</button>
           </td>

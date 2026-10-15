@@ -51,11 +51,11 @@ const canViewPhoto = computed(() => can("attendance.update.all") || (props.assig
 .teacher-name { font-size: 18px; font-weight: 700; line-height: 1.45; }
 .attendance-badge { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; border-radius: 8px; padding: 4px 8px; font-size: 16px; font-weight: 700; line-height: 1.4; }
 .attendance-badge svg { width: 18px; height: 18px; flex: 0 0 18px; }
-.assigned { background: #eaf1eb; color: #244d36; }
+.assigned { background: var(--r3-sage); color: var(--r3-primary); }
 .attended { background: #d9ecdf; color: #205c37; }
-.pending { background: #fff0cc; color: #77521a; }
+.pending { background: #fff1d1; color: #8a5e1b; }
 .inactive { background: #e9ecee; color: #4b5660; }
-.cancelled { background: #f6ded9; color: #8e3327; }
+.cancelled { background: #fbeae6; color: #a33f3b; }
 .attendance-time { display: block; color: var(--muted); margin-top: 4px; }
 .attendance-summary > .button { margin-top: 8px; }
 img { display: block; max-width: 100%; height: auto; max-height: 70dvh; object-fit: contain; margin: auto; }

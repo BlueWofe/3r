@@ -122,20 +122,21 @@ onMounted(() => load(1));
 
 <style scoped>
 .record-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 20px; }
-.record-tabs button { min-height: 44px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: 700 14px inherit; cursor: pointer; }
+.record-tabs button { min-height: 44px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
 .record-tabs button.selected { border-color: var(--pine); background: var(--pine); color: #fff; }
 .record-filters { display: grid; grid-template-columns: minmax(180px, 1fr) 180px 180px auto; gap: 12px; align-items: end; margin-bottom: 20px; }
 .filter-actions { display: flex; gap: 8px; padding-bottom: 1px; }
-.login-result { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.login-result { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 16px; font-weight: 700; white-space: normal; }
 .login-result.success { background: #dceee5; color: #185b3d; } .login-result.failure { background: #f7dfda; color: #8b3025; }
 .agent summary { color: var(--pine); cursor: pointer; font-weight: 700; } .agent p { max-width: 420px; margin: 8px 0 0; overflow-wrap: anywhere; color: var(--muted); }
 .mobile-records { display: none; } .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 20px; text-align: center; }
 @media (max-width: 760px) {
   .record-tabs { gap: 5px; } .record-tabs button { padding: 6px; font-size: 13px; }
-  .record-filters { grid-template-columns: 1fr 1fr; } .record-filters .field:first-child, .filter-actions { grid-column: 1 / -1; }
+  .record-filters { grid-template-columns: repeat(2,minmax(0,1fr)); } .record-filters .field:first-child, .filter-actions { grid-column: 1 / -1; }
   .filter-actions .button { flex: 1; } .desktop-records { display: none; } .mobile-records { display: grid; gap: 12px; }
   .record-card { padding: 18px; } .record-title { display: flex; align-items: start; justify-content: space-between; gap: 12px; } .record-title h2 { margin: 0; font-size: 18px; }
   .record-card dl { margin: 14px 0; } .record-card dl div { display: grid; grid-template-columns: 72px 1fr; gap: 8px; margin: 7px 0; } .record-card dt { font-weight: 700; } .record-card dd { margin: 0; overflow-wrap: anywhere; }
-  .pagination { gap: 8px; } .pagination .button { padding-inline: 12px; }
+  .pagination { gap: 8px; flex-wrap: wrap; } .pagination .button { padding-inline: 12px; }
 }
+@media(max-width:350px) { .record-filters { grid-template-columns:minmax(0,1fr); } .record-filters .field:first-child,.filter-actions { grid-column:auto; } .record-title { flex-wrap:wrap; } }
 </style>

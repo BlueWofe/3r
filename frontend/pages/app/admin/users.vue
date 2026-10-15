@@ -75,6 +75,7 @@ onMounted(load);
     </div>
   </div>
   <div v-if="error" class="notice">{{ error }}</div>
+  <div class="workspace-summary-grid"><article class="card"><p>人員總數</p><strong>{{ users.length }} 位</strong></article><article class="card"><p>啟用帳戶</p><strong>{{ users.filter(u => u.active).length }} 位</strong></article><article class="card"><p>已停用</p><strong>{{ users.filter(u => !u.active).length }} 位</strong></article></div>
   <div class="tablewrap">
     <table class="table">
       <thead>
@@ -93,7 +94,7 @@ onMounted(load);
           <td data-label="角色">
             {{ u.roles?.map((r: any) => r.name).join("、") }}
           </td>
-          <td data-label="啟用">{{ u.active ? "是" : "否" }}</td>
+          <td data-label="啟用"><span :class="['status', { draft: !u.active }]">{{ u.active ? "啟用" : "已停用" }}</span></td>
           <td data-label="操作">
             <button class="button ghost" @click="edit(u)">編輯</button>
           </td>

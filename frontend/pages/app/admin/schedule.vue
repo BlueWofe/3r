@@ -6,7 +6,7 @@ const rows = ref<Session[]>([]),
   prisons = ref<any[]>([]),
   modal = ref(false),
   edit = ref<Session | null>(null),
-  from = ref(new Date().toISOString().slice(0, 10)),
+  from = ref(taipeiDate()),
   prison = ref<number | "">(""),
   teacher = ref(""),
   status = ref(""),
@@ -16,6 +16,14 @@ const rows = ref<Session[]>([]),
   actionsKey = ref(0);
 const route = useRoute();
 const { error, run } = useApiError();
+function attendanceState(s: Session) {
+  if (s.status === 'cancelled') return { label: '停課', tone: 'cancelled' };
+  const assigned = s.assignments.filter(a => a.status === 'assigned');
+  if (!assigned.length || s.assignments.some(a => a.status === 'leave')) return { label: '請假缺額', tone: 'warning' };
+  if (assigned.every(a => a.attendance)) return { label: '已簽到', tone: 'scheduled' };
+  return { label: '未簽到', tone: 'scheduled' };
+}
+
 async function load() {
   const end = new Date(from.value);
   end.setDate(end.getDate() + 60);
@@ -87,51 +95,21 @@ onMounted(async () => {
 watch(() => route.query.session_id, openLinkedSession);
 </script>
 <template>
-  <div class="workhead">
-    <div>
-      <p class="eyebrow">ADMIN SCHEDULE</p>
-      <h1>排程管理</h1>
-    </div>
-    <div class="toolbar">
-      <NuxtLink class="button ghost" to="/app/admin/classes">班別管理</NuxtLink>
-      <input v-model="from" type="date" @change="load" />
-      <select v-model="prison" @change="load">
-        <option value="">全部監所</option>
-        <option v-for="item in prisons" :key="item.id" :value="item.id">
-          {{ item.name }}{{ item.active === false ? "（已停用）" : "" }}
-        </option>
-      </select>
-      <select v-model="teacher" @change="load">
-        <option value="">全部同工</option>
-        <option v-for="t in teachers" :key="t.id" :value="t.id">
-          {{ t.name }}
-        </option>
-      </select>
-      <select v-model="status" @change="load">
-        <option value="">全部狀態</option>
-        <option value="scheduled">已排定</option>
-        <option value="cancelled">已取消</option>
-      </select>
-      <input
-        v-model="query"
-        placeholder="搜尋主題"
-        @keyup.enter="load"
-      /><button
-        class="button"
-        @click="
-          edit = null;
-          modal = true;
-        "
-      >
-        建立場次
-      </button>
-    </div>
+  <div class="workhead"><div><p class="eyebrow">課務管理</p><h1>排程管理</h1><p class="muted">依日期、監所與老師快速篩選課程，同時一目了然課程狀態、時段與缺額。</p></div></div>
+  <div class="schedule-filters">
+    <label class="field">日期<input v-model="from" type="date" @change="load" /></label>
+    <label class="field">監所<select v-model="prison" @change="load"><option value="">全部監所</option><option v-for="item in prisons" :key="item.id" :value="item.id">{{ item.name }}{{ item.active === false ? '（已停用）' : '' }}</option></select></label>
+    <label class="field">老師<select v-model="teacher" @change="load"><option value="">全部老師</option><option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.name }}</option></select></label>
+    <details class="schedule-extra-filters"><summary>更多篩選條件</summary><div class="schedule-extra-fields">
+    <label class="field">場次狀態<select v-model="status" @change="load"><option value="">全部狀態</option><option value="scheduled">已排定</option><option value="cancelled">已取消</option></select></label>
+    <label class="field schedule-search">搜尋課程<input v-model="query" placeholder="課程主題、班級或上課位置" @keyup.enter="load" /></label>
+    <button class="button ghost" @click="load">搜尋</button>
+    </div></details>
   </div>
-  <div class="notice">
-    支援建立重複場次、教師指派與版本衝突保護；衝突可由後端回傳後重新調整。
-  </div>
+  <div class="actions schedule-create"><button class="button" @click="edit = null; modal = true">新增課程</button><NuxtLink class="button ghost" to="/app/admin/classes">管理班別</NuxtLink></div>
   <div class="tablewrap" style="margin-top: 16px">
-    <table class="table">
+    <div class="workspace-section-head"><div><h2>排課總覽</h2><p>依課程狀態與時段快速判讀</p></div><span class="muted">{{ rows.length }} 筆課程</span></div>
+    <table class="table schedule-table">
       <thead>
         <tr>
           <th>日期時間</th>
@@ -151,26 +129,29 @@ watch(() => route.query.session_id, openLinkedSession);
           </td>
           <td data-label="班級名稱">{{ s.class_name || "—" }}</td>
           <td data-label="上課位置">{{ s.location }}</td>
-          <td data-label="同工">
+          <td data-label="老師" class="workspace-teacher">
             {{ assignmentSummary(s) }}<br /><small v-if="s.invitations?.length"
               >邀請中 {{ s.invitations.length }} 位同工</small
             >
           </td>
           <td data-label="狀態">
-            <span :class="['status', s.status]">{{ s.status }}</span>
+            <span :class="['status', attendanceState(s).tone]">{{ attendanceState(s).label }}</span><small class="schedule-state-caption">{{ s.status === 'cancelled' ? '此場次已取消' : '課程已排定' }}</small>
           </td>
           <td data-label="操作">
             <SessionActions
               v-if="!refreshing"
               :key="`${s.id}-${actionsKey}`"
               :session="s"
+              detail-first
               admin
               @updated="scheduleUpdated"
             /><span v-else class="muted">更新中…</span>
           </td>
         </tr>
+        <tr v-if="!rows.length"><td colspan="7" class="empty">此區間沒有符合條件的課程。</td></tr>
       </tbody>
     </table>
+    <footer class="workspace-list-footer">共 {{ rows.length }} 筆課程 · 依目前篩選條件顯示</footer>
   </div>
   <p v-if="error" class="error">{{ error }}</p>
   <SessionEditor
@@ -183,5 +164,12 @@ watch(() => route.query.session_id, openLinkedSession);
   />
 </template>
 <style scoped>
+.schedule-filters { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; align-items:end; }
+.schedule-search { grid-column:span 1; }
+.schedule-extra-filters { grid-column:1/-1; } .schedule-extra-filters summary { cursor:pointer; color:var(--r3-primary); font-weight:500; padding:8px 0; } .schedule-extra-fields { display:grid; grid-template-columns:1fr 2fr auto; gap:16px; align-items:end; padding-top:16px; }
+.schedule-create { margin:24px 0 32px; }
+.schedule-state-caption { display:block; margin-top:8px; }
+@media(max-width:760px) { .schedule-filters,.schedule-extra-fields { grid-template-columns:minmax(0,1fr); } .schedule-create { flex-direction:column; align-items:stretch; } }
+
 .linked-session { outline: 3px solid rgba(198, 157, 77, .55); outline-offset: -3px; background: #fff8e8; }
 </style>

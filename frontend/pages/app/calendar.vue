@@ -205,13 +205,13 @@ async function sessionUpdated() {
   <div class="workhead">
     <div>
       <p class="eyebrow">SCHEDULE</p>
-      <h1>行事曆</h1>
+      <h1>我的行事曆</h1>
       <p class="muted">{{ label }}</p>
     </div>
     <div class="toolbar">
-      <button class="button ghost" @click="shift(-1)">←</button
+      <button class="button ghost" aria-label="上一期" @click="shift(-1)">‹</button
       ><button class="button ghost" @click="cursor = new Date()">今天</button
-      ><button class="button ghost" @click="shift(1)">→</button
+      ><button class="button ghost" aria-label="下一期" @click="shift(1)">›</button
       ><button
         v-for="v in ['agenda', 'week', 'month']"
         :key="v"
@@ -232,6 +232,8 @@ async function sessionUpdated() {
   </p>
   <div v-if="error" class="notice">{{ error }}</div>
   <p v-if="loading" role="status" class="muted">正在載入課程…</p>
+  <section class="calendar-panel card">
+  <div class="calendar-panel-heading"><h2>{{ label }}</h2><span class="muted">{{ view === 'month' ? '星期日起始 · 六週月曆' : '點選行程查看詳情' }}</span></div>
   <div v-if="view !== 'agenda'" class="calendar-weekdays" aria-hidden="true">
     <span v-for="weekday in ['日', '一', '二', '三', '四', '五', '六']" :key="weekday">{{ weekday }}</span>
   </div>
@@ -260,7 +262,7 @@ async function sessionUpdated() {
             :class="s.status"
             :style="{ backgroundColor: scheduleColor(s.color) }"
           ></i></span
-        ><small v-if="sessionsFor(d).length > 3"
+        ><span class="calendar-event-titles" aria-hidden="true"><span v-for="s in sessionsFor(d).slice(0, 2)" :key="s.id" :class="{ cancelled: s.status === 'cancelled' }">{{ s.start_time || '全天' }} {{ s.title }}</span></span><small v-if="sessionsFor(d).length > 3"
           >+{{ sessionsFor(d).length - 3 }}</small
         ></button
       ><template v-if="view === 'agenda'"
@@ -287,6 +289,7 @@ async function sessionUpdated() {
     </div>
   </div>
 
+  </section>
   <dialog ref="dayDialog" class="day-sheet" aria-labelledby="day-sheet-title" data-testid="calendar-day-sheet" @close="closeDay">
     <div class="workhead">
       <h2 id="day-sheet-title">{{ selectedDay }} 的行程</h2>
@@ -334,6 +337,21 @@ async function sessionUpdated() {
   </div>
 </template>
 <style scoped>
+.calendar-panel { max-width:900px; padding:24px; }
+.calendar-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.calendar-panel-heading h2 { font-size:20px; margin:0; }
+.calendar-panel-heading > span { font-size:13px; }
+.calendar-event-titles { display:grid; gap:4px; margin-top:4px; font-size:11px; line-height:1.4; text-align:left; }
+.calendar-event-titles > span { display:block; background:var(--r3-sage); color:var(--r3-primary); padding:4px; border-radius:4px; }
+.calendar-event-titles .cancelled { text-decoration:line-through; }
+.calendar-panel .calendar { border:0; gap:8px; overflow:visible; }
+.calendar-panel .iphone-calendar:not(.agenda) .day { height:120px; border:1px solid var(--r3-border); border-radius:12px; background:#fff; }
+.calendar-panel .calendar-day-tap { text-align:left; padding:4px; }
+.calendar-panel .event-bars { min-height:0; gap:2px; margin:2px 0; }
+.calendar-panel .event-bars i { height:3px; flex-basis:3px; }
+.calendar-panel .calendar-day-tap.other-month { background:var(--r3-paper); }
+@media(max-width:760px) { .calendar-panel { padding:16px; } .calendar-panel-heading { flex-wrap:wrap; gap:4px; } .calendar-panel .calendar { gap:4px; } .calendar-panel .iphone-calendar:not(.agenda) .day { height:88px; padding:2px; border-radius:8px; } .calendar-event-titles { display:none; } .calendar-panel .event-bars { margin-top:8px; gap:3px; } .calendar-panel .event-bars i { height:5px; flex-basis:5px; } .calendar-panel .calendar-day-tap { text-align:center; } }
+
 .calendar-filter { max-width: 320px; }
 .my-course { background: #e1eddf; color: #244d36; font-size: 16px; font-weight: 700; }
 .activity-text { white-space: pre-wrap; }
@@ -401,7 +419,7 @@ async function sessionUpdated() {
   border-radius: 16px 16px 0 0;
   padding: 18px;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--r3-surface);
   overflow-y: auto;
   margin: auto auto 0;
 }
@@ -415,7 +433,7 @@ async function sessionUpdated() {
   gap: 12px;
   position: sticky;
   top: -18px;
-  background: var(--paper);
+  background: var(--r3-surface);
   padding: 12px 0;
   margin: 0;
   z-index: 1;

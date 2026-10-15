@@ -153,6 +153,7 @@ onMounted(load);
   </div>
   <div v-if="error" class="notice">{{ error }}</div>
   <div class="tablewrap">
+    <div class="workspace-section-head"><div><h2>班別列表</h2><p>固定規則、監所位置與生成狀態</p></div><span class="muted">{{ templates.length }} 筆班別</span></div>
     <table class="table">
       <thead>
         <tr>
