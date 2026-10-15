@@ -1,0 +1,41 @@
+中華復甦更新發展協會｜全站改版設計審閱與整合說明
+2026-10-15
+
+設計檔：https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L?node-id=11-2
+核心手機原型：https://www.figma.com/proto/UOLMCw50qbCQFpLVG66f2L?node-id=8-921&scaling=scale-down&content-scaling=fixed
+
+本次交付
+1. figma-ai-redesign-prompt.txt：可直接貼給 Figma AI／Figma Make 的完整主 prompt，涵蓋目前所有公開、會員、志工、管理頁面、後端規則及權限。
+2. figma-screen-inventory.json：頁面、功能與主要編輯狀態的結構化規格。
+3. figma-design-handoff.json：route／screen ID／device／Figma node ID、原型對照與檢查紀錄，供後續整合定位。
+4. Figma 可編輯初稿：38 個實際可呈現路由全部覆蓋，174 張桌面／手機頁面與狀態稿，另有 45 張手機流程原型、176 條點擊連線。公開 /calendar 只有跳轉，不新增公開監所課表。
+
+建議先審四處
+官網首頁：https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L?node-id=5-201
+志工手機今日行程：https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L?node-id=5-3399
+管理手機排課列表：https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L?node-id=5-4837
+角色中文權限：https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L?node-id=5-8933
+
+設計決策
+米白、深綠、鼠尾草與暖金；沿用 Logo，字體為 Noto Sans TC／Noto Serif TC。
+官網以敘事與短 CTA 呈現；工作台以實際工作、出勤、待處理狀態為主。
+手機管理列表用卡片，不縮小表格。一般會員不提供管理導覽；多角色權限仍由後端判斷。
+行事曆星期日起始、等高六週月格、有色事件條、單列手機 toolbar；先當日清單，再唯讀詳情。
+老師與簽到清單位於詳情上方。當日簽到及過日補簽分開；請假保留缺額，不自動停課；代課接受立即生效。
+邀請與通知分成大頁籤，保留分類未讀數及全部已讀。通知只定位列表，不自動開編輯。
+產品支援訪客訂購及運費，沒有線上付款。奉獻、LINE、Drive 不冒稱真實交易／同步。
+
+驗證與界線
+以 Vue、Laravel 原始碼及文件交叉盤點；本次 Docker 未啟動，沒有操作真實登入或資料庫。
+38 個實際頁面路由均有 desktop/mobile 對照。使用可編輯文字、元件及向量，沒有整頁截圖偽裝設計。
+抽查首頁、手機行事曆、詳情、管理列表及權限矩陣，修復文字高度與月曆日期；全頁面組結構檢查無橫向溢出，字體符合品牌。
+核心原型沒有未解的目的頁。原型是靜態演示，不代表 API 真的送出；不是每個欄位或篩選器都已互動化。
+主畫板為 1440px／390px；768px／320px 響應規則寫入 prompt，未算成已完成獨立畫板。
+照片、正式文案、沿革及商業服務承諾仍須授權核實。設計範例不可當真實紀錄，方向及細節尚待使用者審稿。
+
+確認後整合
+鎖定通過審稿的 Figma node／版本，使用 get_design_context 及 get_screenshot 讀取。
+沿用 Nuxt／Vue 元件、路由、API、session、權限及 Tiptap；先導入核准的 tokens／共用元件，再逐頁替換。
+順序：導覽／表單 → 官網 → 志工課表／簽到 → 通知 → 管理列表與編輯器。每批驗證手機／桌面、權限及原有流程。
+Figma Make 若產出 React，僅作互動規格參考，不整包取代現有程式，也不建立另一套登入／資料庫。
+使用者確認前不替換本機或 GCP UI，不同步或重設資料庫，不部署此次設計文件。

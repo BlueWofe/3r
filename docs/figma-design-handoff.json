@@ -1,0 +1,1712 @@
+{
+  "date": "2026-10-15",
+  "sourceCommit": "248daaf",
+  "figmaFileKey": "UOLMCw50qbCQFpLVG66f2L",
+  "figmaUrl": "https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L",
+  "approvalStatus": "awaiting_user_design_review",
+  "integrationStatus": "No website UI or database changed",
+  "structuralValidation": [
+    {
+      "page": "02 Public · 品牌與內容",
+      "frames": 10,
+      "texts": 252,
+      "instances": 120,
+      "images": 10,
+      "fonts": [
+        "Noto Sans TC",
+        "Noto Serif TC"
+      ],
+      "overflow": [],
+      "overflowCount": 0
+    },
+    {
+      "page": "03 Public · 食品與支持",
+      "frames": 10,
+      "texts": 230,
+      "instances": 112,
+      "images": 10,
+      "fonts": [
+        "Noto Sans TC"
+      ],
+      "overflow": [],
+      "overflowCount": 0
+    },
+    {
+      "page": "04 Auth & Member",
+      "frames": 22,
+      "texts": 386,
+      "instances": 194,
+      "images": 22,
+      "fonts": [
+        "Noto Sans TC"
+      ],
+      "overflow": [],
+      "overflowCount": 0
+    },
+    {
+      "page": "05 Volunteer",
+      "frames": 22,
+      "texts": 447,
+      "instances": 155,
+      "images": 22,
+      "fonts": [
+        "Noto Sans TC"
+      ],
+      "overflow": [],
+      "overflowCount": 0
+    },
+    {
+      "page": "06 Admin · 課務與關懷",
+      "frames": 22,
+      "texts": 435,
+      "instances": 200,
+      "images": 22,
+      "fonts": [
+        "Noto Sans TC"
+      ],
+      "overflow": [],
+      "overflowCount": 0
+    },
+    {
+      "page": "07 Admin · 官網與會務",
+      "frames": 22,
+      "texts": 462,
+      "instances": 212,
+      "images": 22,
+      "fonts": [
+        "Noto Sans TC"
+      ],
+      "overflow": [],
+      "overflowCount": 0
+    },
+    {
+      "page": "08 Admin · 人員與系統",
+      "frames": 20,
+      "texts": 396,
+      "instances": 202,
+      "images": 20,
+      "fonts": [
+        "Noto Sans TC"
+      ],
+      "overflow": [],
+      "overflowCount": 0
+    },
+    {
+      "page": "09 Flows & States",
+      "frames": 91,
+      "texts": 1514,
+      "instances": 675,
+      "images": 91,
+      "fonts": [
+        "Noto Sans TC"
+      ],
+      "overflow": [],
+      "overflowCount": 0
+    }
+  ],
+  "prototypeReviewUrl": "https://www.figma.com/proto/UOLMCw50qbCQFpLVG66f2L?node-id=8-921&scaling=scale-down&content-scaling=fixed",
+  "coverNodeId": "11:2",
+  "verifiedRoutes": 38,
+  "currentScreens": 174,
+  "currentPrototypeFrames": 45,
+  "reviewEntries": {
+    "home": "5:201",
+    "homeMobile": "5:343",
+    "todayMobile": "5:3399",
+    "calendarMobile": "6:564",
+    "adminScheduleMobile": "5:4837",
+    "permissionsMobile": "5:8933"
+  },
+  "scope": "Editable responsive first draft, not a live or fully interactive application",
+  "screenFrames": [
+    {
+      "id": "P01",
+      "route": "/",
+      "title": "讓盼望，重新發芽",
+      "device": "desktop",
+      "nodeId": "5:201"
+    },
+    {
+      "id": "P01",
+      "route": "/",
+      "title": "讓盼望，重新發芽",
+      "device": "mobile",
+      "nodeId": "5:343"
+    },
+    {
+      "id": "P02",
+      "route": "/about",
+      "title": "在恩典裡，重建盼望",
+      "device": "desktop",
+      "nodeId": "5:459"
+    },
+    {
+      "id": "P02",
+      "route": "/about",
+      "title": "在恩典裡，重建盼望",
+      "device": "mobile",
+      "nodeId": "5:567"
+    },
+    {
+      "id": "P03",
+      "route": "/news",
+      "title": "每一次同行，都有故事",
+      "device": "desktop",
+      "nodeId": "5:651"
+    },
+    {
+      "id": "P03",
+      "route": "/news",
+      "title": "每一次同行，都有故事",
+      "device": "mobile",
+      "nodeId": "5:753"
+    },
+    {
+      "id": "P04",
+      "route": "/news/[id]",
+      "title": "一次傾聽，打開新的可能",
+      "device": "desktop",
+      "nodeId": "5:831"
+    },
+    {
+      "id": "P04",
+      "route": "/news/[id]",
+      "title": "一次傾聽，打開新的可能",
+      "device": "mobile",
+      "nodeId": "5:897"
+    },
+    {
+      "id": "P10",
+      "route": "/search",
+      "title": "尋找你想了解的事",
+      "device": "desktop",
+      "nodeId": "5:939"
+    },
+    {
+      "id": "P10",
+      "route": "/search",
+      "title": "尋找你想了解的事",
+      "device": "mobile",
+      "nodeId": "5:1008"
+    },
+    {
+      "id": "P05",
+      "route": "/food",
+      "title": "好食，也讓好事發生",
+      "device": "desktop",
+      "nodeId": "5:1053"
+    },
+    {
+      "id": "P05",
+      "route": "/food",
+      "title": "好食，也讓好事發生",
+      "device": "mobile",
+      "nodeId": "5:1172"
+    },
+    {
+      "id": "P06",
+      "route": "/food/[id]",
+      "title": "把祝福，裝進禮盒",
+      "device": "desktop",
+      "nodeId": "5:1267"
+    },
+    {
+      "id": "P06",
+      "route": "/food/[id]",
+      "title": "把祝福，裝進禮盒",
+      "device": "mobile",
+      "nodeId": "5:1358"
+    },
+    {
+      "id": "P07",
+      "route": "/cart",
+      "title": "你的心意，即將送出",
+      "device": "desktop",
+      "nodeId": "5:1425"
+    },
+    {
+      "id": "P07",
+      "route": "/cart",
+      "title": "你的心意，即將送出",
+      "device": "mobile",
+      "nodeId": "5:1512"
+    },
+    {
+      "id": "P08",
+      "route": "/donate",
+      "title": "把支持，化成陪伴",
+      "device": "desktop",
+      "nodeId": "5:1575"
+    },
+    {
+      "id": "P08",
+      "route": "/donate",
+      "title": "把支持，化成陪伴",
+      "device": "mobile",
+      "nodeId": "5:1666"
+    },
+    {
+      "id": "P09",
+      "route": "/contact",
+      "title": "我們願意，聽見你",
+      "device": "desktop",
+      "nodeId": "5:1733"
+    },
+    {
+      "id": "P09",
+      "route": "/contact",
+      "title": "我們願意，聽見你",
+      "device": "mobile",
+      "nodeId": "5:1819"
+    },
+    {
+      "id": "P11",
+      "route": "/login",
+      "title": "歡迎回來，一起同行",
+      "device": "desktop",
+      "nodeId": "5:1881"
+    },
+    {
+      "id": "P11",
+      "route": "/login",
+      "title": "歡迎回來，一起同行",
+      "device": "mobile",
+      "nodeId": "5:1946"
+    },
+    {
+      "id": "P11-REGISTER",
+      "route": "/login（註冊頁籤）",
+      "title": "成為同行的一員",
+      "device": "desktop",
+      "nodeId": "5:2005"
+    },
+    {
+      "id": "P11-REGISTER",
+      "route": "/login（註冊頁籤）",
+      "title": "成為同行的一員",
+      "device": "mobile",
+      "nodeId": "5:2088"
+    },
+    {
+      "id": "P11-RESET",
+      "route": "/login（忘記密碼頁籤）",
+      "title": "重新設定密碼",
+      "device": "desktop",
+      "nodeId": "5:2165"
+    },
+    {
+      "id": "P11-RESET",
+      "route": "/login（忘記密碼頁籤）",
+      "title": "重新設定密碼",
+      "device": "mobile",
+      "nodeId": "5:2242"
+    },
+    {
+      "id": "P12",
+      "route": "/change-password",
+      "title": "先設定你的新密碼",
+      "device": "desktop",
+      "nodeId": "5:2313"
+    },
+    {
+      "id": "P12",
+      "route": "/change-password",
+      "title": "先設定你的新密碼",
+      "device": "mobile",
+      "nodeId": "5:2374"
+    },
+    {
+      "id": "S12",
+      "route": "/app/profile",
+      "title": "我的帳戶",
+      "device": "desktop",
+      "nodeId": "5:2429"
+    },
+    {
+      "id": "S12",
+      "route": "/app/profile",
+      "title": "我的帳戶",
+      "device": "mobile",
+      "nodeId": "5:2506"
+    },
+    {
+      "id": "S12-PASSWORD",
+      "route": "/app/profile（密碼）",
+      "title": "更改密碼",
+      "device": "desktop",
+      "nodeId": "5:2577"
+    },
+    {
+      "id": "S12-PASSWORD",
+      "route": "/app/profile（密碼）",
+      "title": "更改密碼",
+      "device": "mobile",
+      "nodeId": "5:2654"
+    },
+    {
+      "id": "S12-GIVING",
+      "route": "/app/profile（奉獻）",
+      "title": "我的奉獻",
+      "device": "desktop",
+      "nodeId": "5:2725"
+    },
+    {
+      "id": "S12-GIVING",
+      "route": "/app/profile（奉獻）",
+      "title": "我的奉獻",
+      "device": "mobile",
+      "nodeId": "5:2804"
+    },
+    {
+      "id": "S12-NOTICE",
+      "route": "/app/profile（通知）",
+      "title": "消息與通知偏好",
+      "device": "desktop",
+      "nodeId": "5:2870"
+    },
+    {
+      "id": "S12-NOTICE",
+      "route": "/app/profile（通知）",
+      "title": "消息與通知偏好",
+      "device": "mobile",
+      "nodeId": "5:2936"
+    },
+    {
+      "id": "S10",
+      "route": "/app/resources",
+      "title": "需要的資源，都在這裡",
+      "device": "desktop",
+      "nodeId": "5:2996"
+    },
+    {
+      "id": "S10",
+      "route": "/app/resources",
+      "title": "需要的資源，都在這裡",
+      "device": "mobile",
+      "nodeId": "5:3070"
+    },
+    {
+      "id": "S11",
+      "route": "/app/forms",
+      "title": "我的表單",
+      "device": "desktop",
+      "nodeId": "5:3131"
+    },
+    {
+      "id": "S11",
+      "route": "/app/forms",
+      "title": "我的表單",
+      "device": "mobile",
+      "nodeId": "5:3181"
+    },
+    {
+      "id": "S11-FILL",
+      "route": "/app/forms/[id]",
+      "title": "志工服務回饋",
+      "device": "desktop",
+      "nodeId": "5:3225"
+    },
+    {
+      "id": "S11-FILL",
+      "route": "/app/forms/[id]",
+      "title": "志工服務回饋",
+      "device": "mobile",
+      "nodeId": "5:3290"
+    },
+    {
+      "id": "S01",
+      "route": "/app",
+      "title": "今天，也一起走",
+      "device": "desktop",
+      "nodeId": "5:3349"
+    },
+    {
+      "id": "S01",
+      "route": "/app",
+      "title": "今天，也一起走",
+      "device": "mobile",
+      "nodeId": "5:3399"
+    },
+    {
+      "id": "S03",
+      "route": "/app/calendar（當日清單）",
+      "title": "10 月 15 日的行程",
+      "device": "desktop",
+      "nodeId": "5:3791"
+    },
+    {
+      "id": "S03",
+      "route": "/app/calendar（當日清單）",
+      "title": "10 月 15 日的行程",
+      "device": "mobile",
+      "nodeId": "5:3835"
+    },
+    {
+      "id": "S05",
+      "route": "/app/calendar（簽到）",
+      "title": "記錄今天的同行",
+      "device": "desktop",
+      "nodeId": "5:3999"
+    },
+    {
+      "id": "S05",
+      "route": "/app/calendar（簽到）",
+      "title": "記錄今天的同行",
+      "device": "mobile",
+      "nodeId": "5:4046"
+    },
+    {
+      "id": "S06",
+      "route": "/app/calendar（請假／換課）",
+      "title": "調整我的授課安排",
+      "device": "desktop",
+      "nodeId": "5:4095"
+    },
+    {
+      "id": "S06",
+      "route": "/app/calendar（請假／換課）",
+      "title": "調整我的授課安排",
+      "device": "mobile",
+      "nodeId": "5:4141"
+    },
+    {
+      "id": "S07",
+      "route": "/app/changes",
+      "title": "每一次異動，都有紀錄",
+      "device": "desktop",
+      "nodeId": "5:4189"
+    },
+    {
+      "id": "S07",
+      "route": "/app/changes",
+      "title": "每一次異動，都有紀錄",
+      "device": "mobile",
+      "nodeId": "5:4221"
+    },
+    {
+      "id": "S08",
+      "route": "/app/invitations?tab=notifications",
+      "title": "邀請與通知",
+      "device": "desktop",
+      "nodeId": "5:4255"
+    },
+    {
+      "id": "S08",
+      "route": "/app/invitations?tab=notifications",
+      "title": "邀請與通知",
+      "device": "mobile",
+      "nodeId": "5:4349"
+    },
+    {
+      "id": "S08-I",
+      "route": "/app/invitations?tab=invitations",
+      "title": "邀請與通知",
+      "device": "desktop",
+      "nodeId": "5:4445"
+    },
+    {
+      "id": "S08-I",
+      "route": "/app/invitations?tab=invitations",
+      "title": "邀請與通知",
+      "device": "mobile",
+      "nodeId": "5:4497"
+    },
+    {
+      "id": "S09",
+      "route": "/app/group-news",
+      "title": "小組裡的同行消息",
+      "device": "desktop",
+      "nodeId": "5:4551"
+    },
+    {
+      "id": "S09",
+      "route": "/app/group-news",
+      "title": "小組裡的同行消息",
+      "device": "mobile",
+      "nodeId": "5:4610"
+    },
+    {
+      "id": "S09-D",
+      "route": "/app/group-news/[id]",
+      "title": "服務前提醒與代禱",
+      "device": "desktop",
+      "nodeId": "5:4671"
+    },
+    {
+      "id": "S09-D",
+      "route": "/app/group-news/[id]",
+      "title": "服務前提醒與代禱",
+      "device": "mobile",
+      "nodeId": "5:4710"
+    },
+    {
+      "id": "A01",
+      "route": "/app/admin/schedule",
+      "title": "排程管理",
+      "device": "desktop",
+      "nodeId": "5:4751"
+    },
+    {
+      "id": "A01",
+      "route": "/app/admin/schedule",
+      "title": "排程管理",
+      "device": "mobile",
+      "nodeId": "5:4837"
+    },
+    {
+      "id": "A02",
+      "route": "/app/admin/classes",
+      "title": "班別管理",
+      "device": "desktop",
+      "nodeId": "5:4918"
+    },
+    {
+      "id": "A02",
+      "route": "/app/admin/classes",
+      "title": "班別管理",
+      "device": "mobile",
+      "nodeId": "5:4979"
+    },
+    {
+      "id": "A03",
+      "route": "/app/admin/prisons",
+      "title": "監所管理",
+      "device": "desktop",
+      "nodeId": "5:5035"
+    },
+    {
+      "id": "A03",
+      "route": "/app/admin/prisons",
+      "title": "監所管理",
+      "device": "mobile",
+      "nodeId": "5:5090"
+    },
+    {
+      "id": "A04",
+      "route": "/app/admin/cases",
+      "title": "個案與服務紀錄",
+      "device": "desktop",
+      "nodeId": "5:5146"
+    },
+    {
+      "id": "A04",
+      "route": "/app/admin/cases",
+      "title": "個案與服務紀錄",
+      "device": "mobile",
+      "nodeId": "5:5220"
+    },
+    {
+      "id": "A04-R",
+      "route": "/app/admin/cases?section=records",
+      "title": "服務紀錄",
+      "device": "desktop",
+      "nodeId": "5:5289"
+    },
+    {
+      "id": "A04-R",
+      "route": "/app/admin/cases?section=records",
+      "title": "服務紀錄",
+      "device": "mobile",
+      "nodeId": "5:5370"
+    },
+    {
+      "id": "A05",
+      "route": "/app/admin/reports",
+      "title": "把服務，看得更清楚",
+      "device": "desktop",
+      "nodeId": "5:5453"
+    },
+    {
+      "id": "A05",
+      "route": "/app/admin/reports",
+      "title": "把服務，看得更清楚",
+      "device": "mobile",
+      "nodeId": "5:5520"
+    },
+    {
+      "id": "A06",
+      "route": "/app/admin/content?section=news",
+      "title": "官網文章",
+      "device": "desktop",
+      "nodeId": "5:5589"
+    },
+    {
+      "id": "A06",
+      "route": "/app/admin/content?section=news",
+      "title": "官網文章",
+      "device": "mobile",
+      "nodeId": "5:5675"
+    },
+    {
+      "id": "A07",
+      "route": "/app/admin/products",
+      "title": "產品與運費",
+      "device": "desktop",
+      "nodeId": "5:5756"
+    },
+    {
+      "id": "A07",
+      "route": "/app/admin/products",
+      "title": "產品與運費",
+      "device": "mobile",
+      "nodeId": "5:5836"
+    },
+    {
+      "id": "A08",
+      "route": "/app/admin/orders",
+      "title": "訂單管理",
+      "device": "desktop",
+      "nodeId": "5:5911"
+    },
+    {
+      "id": "A08",
+      "route": "/app/admin/orders",
+      "title": "訂單管理",
+      "device": "mobile",
+      "nodeId": "5:5985"
+    },
+    {
+      "id": "A09",
+      "route": "/app/admin/contact-inquiries",
+      "title": "聯絡表單",
+      "device": "desktop",
+      "nodeId": "5:6054"
+    },
+    {
+      "id": "A09",
+      "route": "/app/admin/contact-inquiries",
+      "title": "聯絡表單",
+      "device": "mobile",
+      "nodeId": "5:6128"
+    },
+    {
+      "id": "A10",
+      "route": "/app/admin/meetings",
+      "title": "會議／活動管理",
+      "device": "desktop",
+      "nodeId": "5:6197"
+    },
+    {
+      "id": "A10",
+      "route": "/app/admin/meetings",
+      "title": "會議／活動管理",
+      "device": "mobile",
+      "nodeId": "5:6265"
+    },
+    {
+      "id": "A11",
+      "route": "/app/admin/forms",
+      "title": "表單中心",
+      "device": "desktop",
+      "nodeId": "5:6328"
+    },
+    {
+      "id": "A11",
+      "route": "/app/admin/forms",
+      "title": "表單中心",
+      "device": "mobile",
+      "nodeId": "5:6381"
+    },
+    {
+      "id": "A12",
+      "route": "/app/admin/users",
+      "title": "人員與角色",
+      "device": "desktop",
+      "nodeId": "5:6436"
+    },
+    {
+      "id": "A12",
+      "route": "/app/admin/users",
+      "title": "人員與角色",
+      "device": "mobile",
+      "nodeId": "5:6497"
+    },
+    {
+      "id": "A13",
+      "route": "/app/admin/roles",
+      "title": "角色與權限",
+      "device": "desktop",
+      "nodeId": "5:6553"
+    },
+    {
+      "id": "A13",
+      "route": "/app/admin/roles",
+      "title": "角色與權限",
+      "device": "mobile",
+      "nodeId": "5:6616"
+    },
+    {
+      "id": "A14",
+      "route": "/app/admin/login-records",
+      "title": "登入記錄",
+      "device": "desktop",
+      "nodeId": "5:6681"
+    },
+    {
+      "id": "A14",
+      "route": "/app/admin/login-records",
+      "title": "登入記錄",
+      "device": "mobile",
+      "nodeId": "5:6767"
+    },
+    {
+      "id": "A15",
+      "route": "/app/admin/groups",
+      "title": "小組管理",
+      "device": "desktop",
+      "nodeId": "5:6848"
+    },
+    {
+      "id": "A15",
+      "route": "/app/admin/groups",
+      "title": "小組管理",
+      "device": "mobile",
+      "nodeId": "5:6909"
+    },
+    {
+      "id": "A16",
+      "route": "/app/admin/settings",
+      "title": "協會設定",
+      "device": "desktop",
+      "nodeId": "5:6965"
+    },
+    {
+      "id": "A16",
+      "route": "/app/admin/settings",
+      "title": "協會設定",
+      "device": "mobile",
+      "nodeId": "5:7035"
+    },
+    {
+      "id": "A01-E",
+      "route": "/app/admin/schedule（編輯）",
+      "title": "編輯課程場次",
+      "device": "desktop",
+      "nodeId": "5:7107"
+    },
+    {
+      "id": "A01-E",
+      "route": "/app/admin/schedule（編輯）",
+      "title": "編輯課程場次",
+      "device": "mobile",
+      "nodeId": "5:7188"
+    },
+    {
+      "id": "A02-E",
+      "route": "/app/admin/classes（編輯／預覽）",
+      "title": "建立可重用的班別",
+      "device": "desktop",
+      "nodeId": "5:7271"
+    },
+    {
+      "id": "A02-E",
+      "route": "/app/admin/classes（編輯／預覽）",
+      "title": "建立可重用的班別",
+      "device": "mobile",
+      "nodeId": "5:7347"
+    },
+    {
+      "id": "A03-E",
+      "route": "/app/admin/prisons（編輯）",
+      "title": "監所基本資料",
+      "device": "desktop",
+      "nodeId": "5:7425"
+    },
+    {
+      "id": "A03-E",
+      "route": "/app/admin/prisons（編輯）",
+      "title": "監所基本資料",
+      "device": "mobile",
+      "nodeId": "5:7477"
+    },
+    {
+      "id": "A04-E",
+      "route": "/app/admin/cases（編輯）",
+      "title": "個案基本資料",
+      "device": "desktop",
+      "nodeId": "5:7531"
+    },
+    {
+      "id": "A04-E",
+      "route": "/app/admin/cases（編輯）",
+      "title": "個案基本資料",
+      "device": "mobile",
+      "nodeId": "5:7601"
+    },
+    {
+      "id": "S10-E",
+      "route": "/app/resources（上傳／編輯）",
+      "title": "分享授權資源",
+      "device": "desktop",
+      "nodeId": "5:7673"
+    },
+    {
+      "id": "S10-E",
+      "route": "/app/resources（上傳／編輯）",
+      "title": "分享授權資源",
+      "device": "mobile",
+      "nodeId": "5:7725"
+    },
+    {
+      "id": "A06-E",
+      "route": "/app/admin/content（編輯）",
+      "title": "編輯文章與發布",
+      "device": "desktop",
+      "nodeId": "5:7779"
+    },
+    {
+      "id": "A06-E",
+      "route": "/app/admin/content（編輯）",
+      "title": "編輯文章與發布",
+      "device": "mobile",
+      "nodeId": "5:7866"
+    },
+    {
+      "id": "A07-E",
+      "route": "/app/admin/products（編輯）",
+      "title": "編輯食品與規格",
+      "device": "desktop",
+      "nodeId": "5:7955"
+    },
+    {
+      "id": "A07-E",
+      "route": "/app/admin/products（編輯）",
+      "title": "編輯食品與規格",
+      "device": "mobile",
+      "nodeId": "5:8031"
+    },
+    {
+      "id": "A08-D",
+      "route": "/app/admin/orders（查看）",
+      "title": "訂單 EX-1015-001",
+      "device": "desktop",
+      "nodeId": "5:8109"
+    },
+    {
+      "id": "A08-D",
+      "route": "/app/admin/orders（查看）",
+      "title": "訂單 EX-1015-001",
+      "device": "mobile",
+      "nodeId": "5:8187"
+    },
+    {
+      "id": "A09-E",
+      "route": "/app/admin/contact-inquiries（處理）",
+      "title": "處理聯絡訊息",
+      "device": "desktop",
+      "nodeId": "5:8267"
+    },
+    {
+      "id": "A09-E",
+      "route": "/app/admin/contact-inquiries（處理）",
+      "title": "處理聯絡訊息",
+      "device": "mobile",
+      "nodeId": "5:8331"
+    },
+    {
+      "id": "A10-E",
+      "route": "/app/admin/meetings（編輯）",
+      "title": "編輯會議／活動",
+      "device": "desktop",
+      "nodeId": "5:8397"
+    },
+    {
+      "id": "A10-E",
+      "route": "/app/admin/meetings（編輯）",
+      "title": "編輯會議／活動",
+      "device": "mobile",
+      "nodeId": "5:8479"
+    },
+    {
+      "id": "A11-E",
+      "route": "/app/admin/forms（設計）",
+      "title": "設計表單與版本",
+      "device": "desktop",
+      "nodeId": "5:8563"
+    },
+    {
+      "id": "A11-E",
+      "route": "/app/admin/forms（設計）",
+      "title": "設計表單與版本",
+      "device": "mobile",
+      "nodeId": "5:8639"
+    },
+    {
+      "id": "A12-E",
+      "route": "/app/admin/users（新增）",
+      "title": "建立人員帳號",
+      "device": "desktop",
+      "nodeId": "5:8717"
+    },
+    {
+      "id": "A12-E",
+      "route": "/app/admin/users（新增）",
+      "title": "建立人員帳號",
+      "device": "mobile",
+      "nodeId": "5:8783"
+    },
+    {
+      "id": "A13-E",
+      "route": "/app/admin/roles（權限）",
+      "title": "依職責配置權限",
+      "device": "desktop",
+      "nodeId": "5:8851"
+    },
+    {
+      "id": "A13-E",
+      "route": "/app/admin/roles（權限）",
+      "title": "依職責配置權限",
+      "device": "mobile",
+      "nodeId": "5:8933"
+    },
+    {
+      "id": "A15-E",
+      "route": "/app/admin/groups（編輯）",
+      "title": "維護小組與成員",
+      "device": "desktop",
+      "nodeId": "5:9017"
+    },
+    {
+      "id": "A15-E",
+      "route": "/app/admin/groups（編輯）",
+      "title": "維護小組與成員",
+      "device": "mobile",
+      "nodeId": "5:9087"
+    },
+    {
+      "id": "A11-RESPONSES",
+      "route": "/app/admin/forms（回覆）",
+      "title": "讀懂每一份回覆",
+      "device": "desktop",
+      "nodeId": "5:9159"
+    },
+    {
+      "id": "A11-RESPONSES",
+      "route": "/app/admin/forms（回覆）",
+      "title": "讀懂每一份回覆",
+      "device": "mobile",
+      "nodeId": "5:9213"
+    },
+    {
+      "id": "S02",
+      "route": "/app/calendar",
+      "title": "我的行事曆",
+      "device": "desktop",
+      "nodeId": "6:366"
+    },
+    {
+      "id": "S02",
+      "route": "/app/calendar",
+      "title": "我的行事曆",
+      "device": "mobile",
+      "nodeId": "6:564"
+    },
+    {
+      "id": "S04",
+      "route": "/app/calendar（唯讀詳情）",
+      "title": "生命教育班",
+      "device": "desktop",
+      "nodeId": "6:743"
+    },
+    {
+      "id": "S04",
+      "route": "/app/calendar（唯讀詳情）",
+      "title": "生命教育班",
+      "device": "mobile",
+      "nodeId": "6:796"
+    },
+    {
+      "id": "P07-DONE",
+      "route": "/cart（完成）",
+      "title": "已收到你的訂購",
+      "device": "desktop",
+      "nodeId": "7:2"
+    },
+    {
+      "id": "P07-DONE",
+      "route": "/cart（完成）",
+      "title": "已收到你的訂購",
+      "device": "mobile",
+      "nodeId": "7:66"
+    },
+    {
+      "id": "P08-REVIEW",
+      "route": "/donate（確認）",
+      "title": "確認你的支持",
+      "device": "desktop",
+      "nodeId": "7:104"
+    },
+    {
+      "id": "P08-REVIEW",
+      "route": "/donate（確認）",
+      "title": "確認你的支持",
+      "device": "mobile",
+      "nodeId": "7:168"
+    },
+    {
+      "id": "P08-SUCCESS",
+      "route": "/donate（模擬成功）",
+      "title": "謝謝你，願意同行",
+      "device": "desktop",
+      "nodeId": "7:208"
+    },
+    {
+      "id": "P08-SUCCESS",
+      "route": "/donate（模擬成功）",
+      "title": "謝謝你，願意同行",
+      "device": "mobile",
+      "nodeId": "7:266"
+    },
+    {
+      "id": "P09-T",
+      "route": "/contact?category=試吃",
+      "title": "登記食品試吃",
+      "device": "desktop",
+      "nodeId": "7:300"
+    },
+    {
+      "id": "P09-T",
+      "route": "/contact?category=試吃",
+      "title": "登記食品試吃",
+      "device": "mobile",
+      "nodeId": "7:379"
+    },
+    {
+      "id": "P09-B",
+      "route": "/contact?category=大宗認購專案",
+      "title": "一起，把心意送得更遠",
+      "device": "desktop",
+      "nodeId": "7:434"
+    },
+    {
+      "id": "P09-B",
+      "route": "/contact?category=大宗認購專案",
+      "title": "一起，把心意送得更遠",
+      "device": "mobile",
+      "nodeId": "7:513"
+    },
+    {
+      "id": "S04-DONE",
+      "route": "/app/calendar（已簽到）",
+      "title": "生命教育班 · 已簽到",
+      "device": "desktop",
+      "nodeId": "7:568"
+    },
+    {
+      "id": "S04-DONE",
+      "route": "/app/calendar（已簽到）",
+      "title": "生命教育班 · 已簽到",
+      "device": "mobile",
+      "nodeId": "7:605"
+    },
+    {
+      "id": "S05-LATE",
+      "route": "/app/calendar（補簽）",
+      "title": "補上這次服務紀錄",
+      "device": "desktop",
+      "nodeId": "7:4639"
+    },
+    {
+      "id": "S05-LATE",
+      "route": "/app/calendar（補簽）",
+      "title": "補上這次服務紀錄",
+      "device": "mobile",
+      "nodeId": "7:4686"
+    },
+    {
+      "id": "S08-A",
+      "route": "/app/invitations（已接受）",
+      "title": "代課邀請已接受",
+      "device": "desktop",
+      "nodeId": "7:4735"
+    },
+    {
+      "id": "S08-A",
+      "route": "/app/invitations（已接受）",
+      "title": "代課邀請已接受",
+      "device": "mobile",
+      "nodeId": "7:4772"
+    },
+    {
+      "id": "S08-R",
+      "route": "/app/invitations（已讀）",
+      "title": "通知都已標示為已讀",
+      "device": "desktop",
+      "nodeId": "7:4811"
+    },
+    {
+      "id": "S08-R",
+      "route": "/app/invitations（已讀）",
+      "title": "通知都已標示為已讀",
+      "device": "mobile",
+      "nodeId": "7:4846"
+    },
+    {
+      "id": "A01-SAVED",
+      "route": "/app/admin/schedule（儲存成功）",
+      "title": "已更新課程",
+      "device": "desktop",
+      "nodeId": "7:4883"
+    },
+    {
+      "id": "A01-SAVED",
+      "route": "/app/admin/schedule（儲存成功）",
+      "title": "已更新課程",
+      "device": "mobile",
+      "nodeId": "7:4922"
+    },
+    {
+      "id": "A01-CONFLICT",
+      "route": "/app/admin/schedule（409）",
+      "title": "這筆課程已有新異動",
+      "device": "desktop",
+      "nodeId": "7:4963"
+    },
+    {
+      "id": "A01-CONFLICT",
+      "route": "/app/admin/schedule（409）",
+      "title": "這筆課程已有新異動",
+      "device": "mobile",
+      "nodeId": "7:5002"
+    },
+    {
+      "id": "A02-PREVIEW",
+      "route": "/app/admin/classes（90 天預覽）",
+      "title": "確認生成的服務日期",
+      "device": "desktop",
+      "nodeId": "7:5043"
+    },
+    {
+      "id": "A02-PREVIEW",
+      "route": "/app/admin/classes（90 天預覽）",
+      "title": "確認生成的服務日期",
+      "device": "mobile",
+      "nodeId": "7:5090"
+    },
+    {
+      "id": "A07-SHIPPING",
+      "route": "/app/admin/products（運費）",
+      "title": "運費與取貨設定",
+      "device": "desktop",
+      "nodeId": "7:5139"
+    },
+    {
+      "id": "A07-SHIPPING",
+      "route": "/app/admin/products（運費）",
+      "title": "運費與取貨設定",
+      "device": "mobile",
+      "nodeId": "7:5203"
+    },
+    {
+      "id": "A06-ORG",
+      "route": "/app/admin/content?section=pages（組織）",
+      "title": "組織架構與同工介紹",
+      "device": "desktop",
+      "nodeId": "7:5269"
+    },
+    {
+      "id": "A06-ORG",
+      "route": "/app/admin/content?section=pages（組織）",
+      "title": "組織架構與同工介紹",
+      "device": "mobile",
+      "nodeId": "7:5339"
+    },
+    {
+      "id": "A06-SHARING",
+      "route": "/app/admin/content?section=sharing",
+      "title": "事工分享",
+      "device": "desktop",
+      "nodeId": "7:5411"
+    },
+    {
+      "id": "A06-SHARING",
+      "route": "/app/admin/content?section=sharing",
+      "title": "事工分享",
+      "device": "mobile",
+      "nodeId": "7:5488"
+    },
+    {
+      "id": "A06-TESTIMONY",
+      "route": "/app/admin/content?section=testimony",
+      "title": "見證分享",
+      "device": "desktop",
+      "nodeId": "7:5559"
+    },
+    {
+      "id": "A06-TESTIMONY",
+      "route": "/app/admin/content?section=testimony",
+      "title": "見證分享",
+      "device": "mobile",
+      "nodeId": "7:5636"
+    },
+    {
+      "id": "A06-PAGES",
+      "route": "/app/admin/content?section=pages",
+      "title": "協會頁面",
+      "device": "desktop",
+      "nodeId": "7:5707"
+    },
+    {
+      "id": "A06-PAGES",
+      "route": "/app/admin/content?section=pages",
+      "title": "協會頁面",
+      "device": "mobile",
+      "nodeId": "7:5802"
+    },
+    {
+      "id": "A01-D",
+      "route": "/app/admin/schedule（唯讀詳情）",
+      "title": "生命教育班 · 管理詳情",
+      "device": "desktop",
+      "nodeId": "7:5893"
+    },
+    {
+      "id": "A01-D",
+      "route": "/app/admin/schedule（唯讀詳情）",
+      "title": "生命教育班 · 管理詳情",
+      "device": "mobile",
+      "nodeId": "7:5958"
+    },
+    {
+      "id": "X-EMPTY",
+      "route": "共用狀態",
+      "title": "這裡，還沒有資料",
+      "device": "desktop",
+      "nodeId": "7:6025"
+    },
+    {
+      "id": "X-EMPTY",
+      "route": "共用狀態",
+      "title": "這裡，還沒有資料",
+      "device": "mobile",
+      "nodeId": "7:6056"
+    },
+    {
+      "id": "X-ERROR",
+      "route": "共用狀態",
+      "title": "暫時無法載入",
+      "device": "desktop",
+      "nodeId": "7:6089"
+    },
+    {
+      "id": "X-ERROR",
+      "route": "共用狀態",
+      "title": "暫時無法載入",
+      "device": "mobile",
+      "nodeId": "7:6120"
+    },
+    {
+      "id": "X-FORBIDDEN",
+      "route": "共用狀態",
+      "title": "目前無法查看這份內容",
+      "device": "desktop",
+      "nodeId": "7:6153"
+    },
+    {
+      "id": "X-FORBIDDEN",
+      "route": "共用狀態",
+      "title": "目前無法查看這份內容",
+      "device": "mobile",
+      "nodeId": "7:6184"
+    },
+    {
+      "id": "X-INVALID-INVITE",
+      "route": "/app/invitations（邀請失效）",
+      "title": "這筆代課邀請已失效",
+      "device": "desktop",
+      "nodeId": "7:6217"
+    },
+    {
+      "id": "X-INVALID-INVITE",
+      "route": "/app/invitations（邀請失效）",
+      "title": "這筆代課邀請已失效",
+      "device": "mobile",
+      "nodeId": "7:6250"
+    },
+    {
+      "id": "S06-LEAVE",
+      "route": "/app/calendar（請假生效）",
+      "title": "請假已生效，課程待補老師",
+      "device": "desktop",
+      "nodeId": "8:7054"
+    },
+    {
+      "id": "S06-LEAVE",
+      "route": "/app/calendar（請假生效）",
+      "title": "請假已生效，課程待補老師",
+      "device": "mobile",
+      "nodeId": "8:7099"
+    }
+  ],
+  "prototypeFrames": [
+    {
+      "id": "P01",
+      "route": "/",
+      "title": "讓盼望，重新發芽",
+      "device": "mobile",
+      "nodeId": "8:921",
+      "sourceNodeId": "5:343"
+    },
+    {
+      "id": "P02",
+      "route": "/about",
+      "title": "在恩典裡，重建盼望",
+      "device": "mobile",
+      "nodeId": "8:973",
+      "sourceNodeId": "5:567"
+    },
+    {
+      "id": "P03",
+      "route": "/news",
+      "title": "每一次同行，都有故事",
+      "device": "mobile",
+      "nodeId": "8:1015",
+      "sourceNodeId": "5:753"
+    },
+    {
+      "id": "P04",
+      "route": "/news/[id]",
+      "title": "一次傾聽，打開新的可能",
+      "device": "mobile",
+      "nodeId": "8:1042",
+      "sourceNodeId": "5:897"
+    },
+    {
+      "id": "P05",
+      "route": "/food",
+      "title": "好食，也讓好事發生",
+      "device": "mobile",
+      "nodeId": "8:1069",
+      "sourceNodeId": "5:1172"
+    },
+    {
+      "id": "P06",
+      "route": "/food/[id]",
+      "title": "把祝福，裝進禮盒",
+      "device": "mobile",
+      "nodeId": "8:1113",
+      "sourceNodeId": "5:1358"
+    },
+    {
+      "id": "P07",
+      "route": "/cart",
+      "title": "你的心意，即將送出",
+      "device": "mobile",
+      "nodeId": "8:1146",
+      "sourceNodeId": "5:1512"
+    },
+    {
+      "id": "P07-DONE",
+      "route": "/cart（完成）",
+      "title": "已收到你的訂購",
+      "device": "mobile",
+      "nodeId": "8:1170",
+      "sourceNodeId": "7:66"
+    },
+    {
+      "id": "P09-T",
+      "route": "/contact?category=試吃",
+      "title": "登記食品試吃",
+      "device": "mobile",
+      "nodeId": "8:1189",
+      "sourceNodeId": "7:379"
+    },
+    {
+      "id": "P09-B",
+      "route": "/contact?category=大宗認購專案",
+      "title": "一起，把心意送得更遠",
+      "device": "mobile",
+      "nodeId": "8:1209",
+      "sourceNodeId": "7:513"
+    },
+    {
+      "id": "P08",
+      "route": "/donate",
+      "title": "把支持，化成陪伴",
+      "device": "mobile",
+      "nodeId": "8:1229",
+      "sourceNodeId": "5:1666"
+    },
+    {
+      "id": "P08-REVIEW",
+      "route": "/donate（確認）",
+      "title": "確認你的支持",
+      "device": "mobile",
+      "nodeId": "8:1254",
+      "sourceNodeId": "7:168"
+    },
+    {
+      "id": "P08-SUCCESS",
+      "route": "/donate（模擬成功）",
+      "title": "謝謝你，願意同行",
+      "device": "mobile",
+      "nodeId": "8:1272",
+      "sourceNodeId": "7:266"
+    },
+    {
+      "id": "P11",
+      "route": "/login",
+      "title": "歡迎回來，一起同行",
+      "device": "mobile",
+      "nodeId": "8:1289",
+      "sourceNodeId": "5:1946"
+    },
+    {
+      "id": "P12",
+      "route": "/change-password",
+      "title": "先設定你的新密碼",
+      "device": "mobile",
+      "nodeId": "8:1307",
+      "sourceNodeId": "5:2374"
+    },
+    {
+      "id": "S01",
+      "route": "/app",
+      "title": "今天，也一起走",
+      "device": "mobile",
+      "nodeId": "8:1326",
+      "sourceNodeId": "5:3399"
+    },
+    {
+      "id": "S02",
+      "route": "/app/calendar",
+      "title": "我的行事曆",
+      "device": "mobile",
+      "nodeId": "8:1349",
+      "sourceNodeId": "6:564"
+    },
+    {
+      "id": "S03",
+      "route": "/app/calendar（當日清單）",
+      "title": "10 月 15 日的行程",
+      "device": "mobile",
+      "nodeId": "8:1483",
+      "sourceNodeId": "5:3835"
+    },
+    {
+      "id": "S04",
+      "route": "/app/calendar（唯讀詳情）",
+      "title": "生命教育班",
+      "device": "mobile",
+      "nodeId": "8:1505",
+      "sourceNodeId": "6:796"
+    },
+    {
+      "id": "S05",
+      "route": "/app/calendar（簽到）",
+      "title": "記錄今天的同行",
+      "device": "mobile",
+      "nodeId": "8:1538",
+      "sourceNodeId": "5:4046"
+    },
+    {
+      "id": "S04-DONE",
+      "route": "/app/calendar（已簽到）",
+      "title": "生命教育班 · 已簽到",
+      "device": "mobile",
+      "nodeId": "8:1557",
+      "sourceNodeId": "7:605"
+    },
+    {
+      "id": "S05-LATE",
+      "route": "/app/calendar（補簽）",
+      "title": "補上這次服務紀錄",
+      "device": "mobile",
+      "nodeId": "8:1577",
+      "sourceNodeId": "7:4686"
+    },
+    {
+      "id": "S06",
+      "route": "/app/calendar（請假／換課）",
+      "title": "調整我的授課安排",
+      "device": "mobile",
+      "nodeId": "8:1596",
+      "sourceNodeId": "5:4141"
+    },
+    {
+      "id": "S08",
+      "route": "/app/invitations?tab=notifications",
+      "title": "邀請與通知",
+      "device": "mobile",
+      "nodeId": "8:1614",
+      "sourceNodeId": "5:4349"
+    },
+    {
+      "id": "S08-I",
+      "route": "/app/invitations?tab=invitations",
+      "title": "邀請與通知",
+      "device": "mobile",
+      "nodeId": "8:1649",
+      "sourceNodeId": "5:4497"
+    },
+    {
+      "id": "S08-A",
+      "route": "/app/invitations（已接受）",
+      "title": "代課邀請已接受",
+      "device": "mobile",
+      "nodeId": "8:1671",
+      "sourceNodeId": "7:4772"
+    },
+    {
+      "id": "S08-R",
+      "route": "/app/invitations（已讀）",
+      "title": "通知都已標示為已讀",
+      "device": "mobile",
+      "nodeId": "8:1691",
+      "sourceNodeId": "7:4846"
+    },
+    {
+      "id": "A01",
+      "route": "/app/admin/schedule",
+      "title": "排程管理",
+      "device": "mobile",
+      "nodeId": "8:1709",
+      "sourceNodeId": "5:4837"
+    },
+    {
+      "id": "A01-D",
+      "route": "/app/admin/schedule（唯讀詳情）",
+      "title": "生命教育班 · 管理詳情",
+      "device": "mobile",
+      "nodeId": "8:1736",
+      "sourceNodeId": "7:5958"
+    },
+    {
+      "id": "A01-E",
+      "route": "/app/admin/schedule（編輯）",
+      "title": "編輯課程場次",
+      "device": "mobile",
+      "nodeId": "8:1771",
+      "sourceNodeId": "5:7188"
+    },
+    {
+      "id": "A01-SAVED",
+      "route": "/app/admin/schedule（儲存成功）",
+      "title": "已更新課程",
+      "device": "mobile",
+      "nodeId": "8:1797",
+      "sourceNodeId": "7:4922"
+    },
+    {
+      "id": "A01-CONFLICT",
+      "route": "/app/admin/schedule（409）",
+      "title": "這筆課程已有新異動",
+      "device": "mobile",
+      "nodeId": "8:1816",
+      "sourceNodeId": "7:5002"
+    },
+    {
+      "id": "A04",
+      "route": "/app/admin/cases",
+      "title": "個案與服務紀錄",
+      "device": "mobile",
+      "nodeId": "8:1835",
+      "sourceNodeId": "5:5220"
+    },
+    {
+      "id": "A04-R",
+      "route": "/app/admin/cases?section=records",
+      "title": "服務紀錄",
+      "device": "mobile",
+      "nodeId": "8:1860",
+      "sourceNodeId": "5:5370"
+    },
+    {
+      "id": "A13",
+      "route": "/app/admin/roles",
+      "title": "角色與權限",
+      "device": "mobile",
+      "nodeId": "8:1886",
+      "sourceNodeId": "5:6616"
+    },
+    {
+      "id": "A13-E",
+      "route": "/app/admin/roles（權限）",
+      "title": "依職責配置權限",
+      "device": "mobile",
+      "nodeId": "8:1910",
+      "sourceNodeId": "5:8933"
+    },
+    {
+      "id": "A11",
+      "route": "/app/admin/forms",
+      "title": "表單中心",
+      "device": "mobile",
+      "nodeId": "8:1934",
+      "sourceNodeId": "5:6381"
+    },
+    {
+      "id": "A11-E",
+      "route": "/app/admin/forms（設計）",
+      "title": "設計表單與版本",
+      "device": "mobile",
+      "nodeId": "8:1955",
+      "sourceNodeId": "5:8639"
+    },
+    {
+      "id": "A11-RESPONSES",
+      "route": "/app/admin/forms（回覆）",
+      "title": "讀懂每一份回覆",
+      "device": "mobile",
+      "nodeId": "8:1978",
+      "sourceNodeId": "5:9213"
+    },
+    {
+      "id": "A08",
+      "route": "/app/admin/orders",
+      "title": "訂單管理",
+      "device": "mobile",
+      "nodeId": "9:6431",
+      "sourceNodeId": "5:5985"
+    },
+    {
+      "id": "A08-D",
+      "route": "/app/admin/orders（查看）",
+      "title": "訂單 EX-1015-001",
+      "device": "mobile",
+      "nodeId": "9:6456",
+      "sourceNodeId": "5:8187"
+    },
+    {
+      "id": "S06-LEAVE",
+      "route": "/app/calendar（請假生效）",
+      "title": "請假已生效，課程待補老師",
+      "device": "mobile",
+      "nodeId": "9:6481",
+      "sourceNodeId": "8:7099"
+    },
+    {
+      "id": "P09",
+      "route": "/contact",
+      "title": "我們願意，聽見你",
+      "device": "mobile",
+      "nodeId": "9:6752",
+      "sourceNodeId": "5:1819"
+    },
+    {
+      "id": "S12-GIVING",
+      "route": "/app/profile（奉獻）",
+      "title": "我的奉獻",
+      "device": "mobile",
+      "nodeId": "9:6774",
+      "sourceNodeId": "5:2804"
+    },
+    {
+      "id": "A04-E",
+      "route": "/app/admin/cases（編輯）",
+      "title": "個案基本資料",
+      "device": "mobile",
+      "nodeId": "9:6798",
+      "sourceNodeId": "5:7601"
+    }
+  ],
+  "prototypeConnections": 176,
+  "unresolvedPrototypeTargets": [],
+  "knownReviewNotes": [
+    "High fidelity direction and detailed field layouts require user review; photos are illustration-first pending authorized assets.",
+    "Prototype transitions are static demonstrations, not server actions or permission grants.",
+    "Not every filter, checkbox and field in Figma is interactive.",
+    "Tablet 768px and narrow mobile 320px are specified rules; dedicated artboards currently use 1440px and 390px.",
+    "Public calendar path is redirect-only; no public prison calendar is designed."
+  ]
+}
