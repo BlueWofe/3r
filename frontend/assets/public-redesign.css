@@ -1286,3 +1286,17 @@
   font-size: 18px;
   font-weight: 700;
 }
+
+.public-shell .product-detail-image {
+  height: 420px;
+  max-height: 420px;
+}
+@media (max-width: 760px) {
+  .public-shell .rich-article img {
+    max-height: 320px;
+  }
+  .public-shell .product-detail-image {
+    height: 280px;
+    max-height: 280px;
+  }
+}

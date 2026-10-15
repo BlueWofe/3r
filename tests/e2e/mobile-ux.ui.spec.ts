@@ -5,7 +5,7 @@ test.use({ timezoneId: 'Asia/Taipei' });
 
 const adminPages = [
   ['/app/admin/users', '人員與角色'],
-  ['/app/admin/products', '產品管理'],
+  ['/app/admin/products', '產品與運費'],
   ['/app/admin/classes', '班別管理'],
   ['/app/admin/content', '內容管理'],
   ['/app/admin/schedule', '排程管理'],

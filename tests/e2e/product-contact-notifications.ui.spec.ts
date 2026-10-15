@@ -15,7 +15,7 @@ test('published product category filtering and contact CTAs preserve their exact
     const second = await createProduct(admin, suffix, `分類乙商品 ${suffix}`, categoryB, productIds);
 
     await page.goto('/food');
-    await expect(page.getByRole('heading', { name: '愛心好食' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '好食，也讓好事發生', level: 1 })).toBeVisible();
     const productFilter = page.getByLabel('產品分類');
     await expect(productFilter.locator(`option[value="${categoryA}"]`)).toBeAttached();
     await expect(productFilter.locator(`option[value="${categoryB}"]`)).toBeAttached();

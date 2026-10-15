@@ -44,7 +44,7 @@ test('schedule notification focuses its row without opening actions and keeps ma
   const row = page.locator('[data-session-id="23"]');
   await expect(row).toHaveClass(/linked-session/);
   await expect(page.locator('.modal')).toHaveCount(0);
-  await row.getByRole('button', { name: '管理場次' }).click();
+  await row.getByRole('button', { name: '查看內容' }).click();
   await expect(page.locator('.modal')).toContainText('深連結合成課程');
 });
 
