@@ -71,12 +71,19 @@ async function submit() {
 }
 </script>
 <template>
-  <main class="auth">
+  <div class="auth">
     <section class="authbox">
       <NuxtLink class="brand auth-brand" to="/" aria-label="回到協會官網"
-        ><img class="auth-brand-logo" :src="logoUrl" :alt="`${associationName}標誌`" /><span>{{ associationName }}</span></NuxtLink>
-      <h1 class="serif">會員入口</h1>
-      <p class="muted auth-lead">同工、志工與會員的服務入口。</p>
+        ><img
+          class="auth-brand-logo"
+          :src="logoUrl"
+          :alt="`${associationName}標誌`"
+        /><span>{{ associationName }}</span></NuxtLink
+      >
+      <h1>歡迎回來，一起同行</h1>
+      <p class="muted auth-lead">
+        登入後查看你的服務安排、個人資料與奉獻紀錄。
+      </p>
       <div class="tabs">
         <button :class="{ selected: tab === 'login' }" @click="tab = 'login'">
           登入</button
@@ -129,11 +136,29 @@ async function submit() {
         </fieldset>
       </form>
     </section>
-  </main>
+  </div>
 </template>
 <style scoped>
-.auth-brand { align-items: center; min-width: 0; white-space: normal; }
-.auth-brand-logo { width: 80px; height: 80px; flex: 0 0 80px; object-fit: contain; }
-.auth-brand span { min-width: 0; overflow-wrap: anywhere; }
-@media (max-width: 480px) { .auth-brand-logo { width: 72px; height: 72px; flex-basis: 72px; } }
+.auth-brand {
+  align-items: center;
+  min-width: 0;
+  white-space: normal;
+}
+.auth-brand-logo {
+  width: 80px;
+  height: 80px;
+  flex: 0 0 80px;
+  object-fit: contain;
+}
+.auth-brand span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .auth-brand-logo {
+    width: 72px;
+    height: 72px;
+    flex-basis: 72px;
+  }
+}
 </style>

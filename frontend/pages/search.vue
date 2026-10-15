@@ -42,4 +42,5 @@ async function search() {
       <div v-else-if="q" class="empty">找不到符合的內容。</div>
     </div>
   </section>
+  <PublicSupport />
 </template>

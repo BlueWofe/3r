@@ -1,5 +1,5 @@
 const fallbackName = "中華復甦更新發展協會";
-const fallbackLogo = "/images/association-backend-logo.png";
+const fallbackLogo = "/images/redesign/imgBrandLogo.png";
 
 export function useAssociationBranding() {
   const { data } = useAsyncData(

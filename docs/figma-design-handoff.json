@@ -3,8 +3,8 @@
   "sourceCommit": "248daaf",
   "figmaFileKey": "UOLMCw50qbCQFpLVG66f2L",
   "figmaUrl": "https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L",
-  "approvalStatus": "awaiting_user_design_review",
-  "integrationStatus": "No website UI or database changed",
+  "approvalStatus": "user_approved_2026-10-15",
+  "integrationStatus": "Approved Figma design integrated into existing Nuxt/Vue UI; validation in progress",
   "structuralValidation": [
     {
       "page": "02 Public · 品牌與內容",

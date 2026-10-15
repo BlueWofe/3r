@@ -3,7 +3,11 @@ const route = useRoute();
 const router = useRouter();
 const selectedCategory = computed({
   get: () => String(route.query.category || ""),
-  set: (category: string) => { void router.replace({ query: { ...route.query, category: category || undefined } }); },
+  set: (category: string) => {
+    void router.replace({
+      query: { ...route.query, category: category || undefined },
+    });
+  },
 });
 const { data, pending, error, refresh } = await useAsyncData("products", () =>
   api<any>(
@@ -15,16 +19,30 @@ const products = computed(() => data.value?.data || []);
 watch(selectedCategory, () => refresh());
 </script>
 <template>
-  <div class="pagehead">
+  <PublicHero
+    eyebrow="WITH LOVE MADE"
+    title="好食，也讓好事發生"
+    description="企業 CSR 與教會節慶禮盒大宗認購專案"
+    photo
+    ><p>把一份支持，變成更多人的日常。讓陪伴與祝福持續走下去。</p>
+    <div class="actions">
+      <NuxtLink class="button support-primary" to="/contact?category=試吃"
+        >登記試吃 →</NuxtLink
+      ><NuxtLink
+        class="button support-secondary"
+        to="/contact?category=大宗認購專案"
+        >大宗洽詢</NuxtLink
+      >
+    </div></PublicHero
+  >
+  <section class="section food-catalog">
     <div class="container">
-      <div class="eyebrow">WITH LOVE MADE</div>
-      <h1>愛心好食</h1>
-    </div>
-  </div>
-  <section class="section">
-    <div class="container">
-      <p class="notice">可將商品加入購物車，免登入送出訂單；本網站不提供線上付款。</p>
-      <div class="actions"><NuxtLink class="button ghost" to="/cart">查看購物車 →</NuxtLink></div>
+      <p class="notice">
+        可將商品加入購物車，免登入送出訂單；本網站不提供線上付款。
+      </p>
+      <div class="actions">
+        <NuxtLink class="button ghost" to="/cart">查看購物車 →</NuxtLink>
+      </div>
       <section class="bulk-cta">
         <h2>企業 CSR 與教會節慶禮盒大宗認購專案</h2>
         <p>支援客製祝福燙金小卡、開立合法三聯式統一發票及捐贈抵扣憑證</p>
@@ -36,6 +54,29 @@ watch(selectedCategory, () => refresh());
           >
         </div>
       </section>
+      <div class="catalog-heading">
+        <div>
+          <p class="eyebrow">精選商品</p>
+          <h2>好食，也讓好事發生</h2>
+        </div>
+        <div class="tabs" aria-label="產品分類快速篩選">
+          <button
+            :class="{ selected: !selectedCategory }"
+            :aria-pressed="!selectedCategory"
+            @click="selectedCategory = ''"
+          >
+            全部</button
+          ><button
+            v-for="category in categories"
+            :key="category"
+            :class="{ selected: selectedCategory === category }"
+            :aria-pressed="selectedCategory === category"
+            @click="selectedCategory = category"
+          >
+            {{ category }}
+          </button>
+        </div>
+      </div>
       <label class="field product-filter"
         >產品分類<select v-model="selectedCategory">
           <option value="">全部產品</option>
@@ -63,7 +104,12 @@ watch(selectedCategory, () => refresh());
             :src="`/api/v1/files/${p.image_id}/download`"
             :alt="p.title"
           />
-          <PastryIllustration v-else-if="['classic-yolk-pastry', 'taro-yolk-pastry'].includes(p.slug)" :flavor="p.slug === 'taro-yolk-pastry' ? 'taro' : 'red-bean'" />
+          <PastryIllustration
+            v-else-if="
+              ['classic-yolk-pastry', 'taro-yolk-pastry'].includes(p.slug)
+            "
+            :flavor="p.slug === 'taro-yolk-pastry' ? 'taro' : 'red-bean'"
+          />
           <div v-else class="media-placeholder" aria-hidden="true">🍞</div>
           <span v-if="p.category" class="eyebrow">{{ p.category }}</span>
           <h3>{{ p.title }}</h3>
@@ -73,6 +119,7 @@ watch(selectedCategory, () => refresh());
       </div>
     </div>
   </section>
+  <PublicSupport />
 </template>
 <style scoped>
 .bulk-cta {

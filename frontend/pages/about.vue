@@ -18,22 +18,35 @@ const cover = computed(() => {
 });
 </script>
 <template>
-  <div class="pagehead">
-    <div class="container">
-      <div class="eyebrow">ABOUT US</div>
-      <h1>在恩典裡，重建盼望</h1>
-      <p class="muted">以信仰為起點，以陪伴走進每一段生命。</p>
+  <section class="section about-intro">
+    <div class="container about-intro-grid">
+      <div>
+        <p class="eyebrow">RENEWAL / RESTORATION / HOPE</p>
+        <h1>在恩典裡，重建盼望</h1>
+        <p class="muted">
+          以基督信仰為根基，尊重每一個人，以長期陪伴支持生命更新。
+        </p>
+        <nav class="about-anchor-nav" aria-label="協會介紹章節">
+          <a href="#mission">協會宗旨</a><a href="#history">協會沿革</a
+          ><a href="#organization">組織架構</a><a href="#team">同工介紹</a>
+        </nav>
+      </div>
+      <figure class="about-door">
+        <MinistryIllustration kind="door" />
+        <figcaption>每一次相遇，都是陪伴的開始</figcaption>
+      </figure>
     </div>
-  </div>
-  <nav class="about-anchor-nav container" aria-label="協會介紹章節">
-    <a href="#mission">協會宗旨</a><a href="#history">協會沿革</a
-    ><a href="#organization">組織架構</a><a href="#team">同工介紹</a>
-  </nav>
+  </section>
+
   <section id="mission" class="section">
     <div class="container mission-layout">
       <figure class="mission-visual">
         <img v-if="cover" :src="cover" alt="協會公開事工影像" /><template v-else
-          ><MinistryIllustration kind="people" />
+          ><img
+            src="/images/redesign/about-imgMissionVisual.png"
+            alt="綠葉萌生的生命意象"
+            loading="lazy"
+          />
           <figcaption>陪伴與同行・示意插畫</figcaption></template
         >
       </figure>
@@ -92,6 +105,7 @@ const cover = computed(() => {
       <OrganizationOverview :metadata="data?.organization?.metadata" />
     </div>
   </section>
+  <PublicSupport />
 </template>
 <style scoped>
 .about-anchor-nav {

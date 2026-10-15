@@ -62,13 +62,29 @@ function restart() {
 }
 </script>
 <template>
-  <div class="pagehead">
-    <div class="container">
-      <div class="eyebrow">GIVING WITH PURPOSE</div>
-      <h1>把支持，化成陪伴</h1>
-      <p class="muted">每一份心意，都是一起走下去的力量。</p>
+  <section class="section public-split-intro">
+    <div class="container public-split-grid">
+      <div>
+        <p class="eyebrow">GIVING WITH PURPOSE</p>
+        <h1>把支持，化成陪伴</h1>
+        <p class="muted">每一份心意，都是一起走下去的力量。</p>
+        <div class="donate-stage-preview">
+          <span :class="{ selected: currentStep === 1 }">1 選擇</span
+          ><span :class="{ selected: currentStep === 2 }">2 確認</span
+          ><span :class="{ selected: currentStep === 3 }">3 結果</span>
+        </div>
+      </div>
+      <figure class="donation-photo">
+        <img
+          src="/images/redesign/donate-imgHeroImage.png"
+          alt="人們圍桌交流、彼此陪伴的情境示意"
+        />
+        <figcaption>
+          情境示意 · 目前為模擬奉獻，不扣款、不開立正式收據。
+        </figcaption>
+      </figure>
     </div>
-  </div>
+  </section>
   <section class="section">
     <div class="container giving-layout">
       <aside class="giving-purpose">
@@ -296,6 +312,7 @@ function restart() {
       </div>
     </div>
   </section>
+  <PublicSupport />
 </template>
 <style scoped>
 .giving-layout {

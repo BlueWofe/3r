@@ -80,12 +80,20 @@ onMounted(() => {
 });
 </script>
 <template>
-  <div class="pagehead">
-    <div class="container">
-      <div class="eyebrow">CONTACT</div>
-      <h1>與我們聯絡</h1>
+  <section class="section public-split-intro">
+    <div class="container public-split-grid">
+      <div>
+        <p class="eyebrow">RENEWAL / RESTORATION / HOPE</p>
+        <h1>我們願意，聽見你</h1>
+        <p class="muted">認識服務、參與志工、食品洽詢，歡迎與我們聯繫。</p>
+        <a class="button" href="#contact-form">立即聯絡 →</a>
+      </div>
+      <img
+        src="/images/redesign/contact-imgHeroImage.png"
+        alt="新芽與綠色山丘的生命意象"
+      />
     </div>
-  </div>
+  </section>
   <section class="section">
     <div class="container grid responsive-two contact-layout">
       <div>
@@ -102,7 +110,7 @@ onMounted(() => {
           </p>
         </div>
       </div>
-      <form class="card form" @submit.prevent="submit">
+      <form id="contact-form" class="card form" @submit.prevent="submit">
         <h3>留下訊息</h3>
         <fieldset
           class="form"
@@ -148,4 +156,5 @@ onMounted(() => {
       </form>
     </div>
   </section>
+  <PublicSupport />
 </template>

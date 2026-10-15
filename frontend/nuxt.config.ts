@@ -1,7 +1,12 @@
 import process from "node:process";
 export default defineNuxtConfig({
   ssr: true,
-  css: ["~/assets/main.css"],
+  css: [
+    "~/assets/main.css",
+    "~/assets/design-tokens.css",
+    "~/assets/public-redesign.css",
+    "~/assets/workspace-redesign.css",
+  ],
   runtimeConfig: {
     apiInternalUrl: process.env.NUXT_API_INTERNAL_URL || "http://web/api/v1",
     public: { apiBase: process.env.NUXT_PUBLIC_API_BASE || "/api/v1" },

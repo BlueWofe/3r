@@ -6,15 +6,6 @@ const {
 } = await useAsyncData("homepage-latest-news", () =>
   api<any>("/public/news?limit=3"),
 );
-const taipeiDate = (value?: string) =>
-  value
-    ? new Intl.DateTimeFormat("zh-TW", {
-        timeZone: "Asia/Taipei",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(new Date(value))
-    : "發布日期未提供";
 const { data: association } = await useAsyncData("homepage-association", () =>
   api<any>("/public/pages/about").catch(() => ({ data: null })),
 );
@@ -22,261 +13,192 @@ const imageFor = (id?: number) =>
   Number.isInteger(id) && Number(id) > 0
     ? `/api/v1/files/${id}/download`
     : null;
-const heroImage = computed(() =>
-  imageFor(
-    latestNews.value?.data?.find((article: any) => imageFor(article.image_id))
-      ?.image_id,
-  ),
-);
+const taipeiDate = (value?: string) =>
+  value
+    ? new Intl.DateTimeFormat("zh-TW", {
+        timeZone: "Asia/Taipei",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(value))
+    : "發布日期未提供";
+const ministries = [
+  {
+    title: "走進高牆",
+    action: "認識協會",
+    body: "主動走向需要陪伴的生命。",
+    icon: "Home",
+    to: "/about",
+  },
+  {
+    title: "建立信任",
+    action: "聯絡我們",
+    body: "每一次傾聽，都有意義。",
+    icon: "Heart",
+    to: "/contact",
+  },
+  {
+    title: "預備復歸",
+    action: "最新消息",
+    body: "為下一步，預備一份力量。",
+    icon: "Star",
+    to: "/news",
+  },
+  {
+    title: "社區同行",
+    action: "支持事工",
+    body: "回家的路，一起走。",
+    icon: "Users",
+    to: "/donate",
+  },
+];
 </script>
 <template>
-  <section class="hero">
-    <div class="container home-hero-layout">
-      <div class="home-hero-copy">
-        <div class="eyebrow">RENEWAL • RESTORATION • HOPE</div>
+  <section class="renewal-hero">
+    <div class="container renewal-hero-inner">
+      <div class="renewal-hero-copy">
+        <p class="eyebrow">RENEWAL / RESTORATION / HOPE</p>
         <h1>讓每一段生命，<br />都能重新被看見。</h1>
         <p class="lead">
-          我們走進高牆，也陪伴走出高牆的人與家庭，以信仰、關係和實際支持，見證更新的可能。
+          我們走進高牆，也陪伴走出高牆的人與家庭。<br />從信仰與關係開始，讓更新成為可能。
         </p>
         <div class="actions">
-          <NuxtLink class="button gold" to="/about">認識我們</NuxtLink
-          ><NuxtLink class="button ghost" to="/donate">支持陪伴</NuxtLink>
+          <NuxtLink class="button support-primary" to="/about"
+            >認識我們<span aria-hidden="true"> →</span></NuxtLink
+          ><a class="button support-secondary" href="#ministry">了解事工</a>
         </div>
       </div>
-      <figure class="home-hero-visual">
-        <img v-if="heroImage" :src="heroImage" alt="協會已發布的事工影像" />
-        <template v-else
-          ><MinistryIllustration kind="door" />
-          <figcaption>為生命打開盼望・示意插畫</figcaption></template
-        >
-      </figure>
+      <img
+        class="renewal-hero-mobile"
+        src="/images/redesign/imgHeroSection.png"
+        alt="陽光灑落的林間小徑，象徵重新出發"
+      />
     </div>
   </section>
-  <section class="section home-welcome">
-    <div class="container home-welcome-layout">
-      <figure class="home-welcome-visual">
+  <div class="brand-strip">
+    <div class="container">
+      <div class="brand-values">
+        <span>盼望</span><span>尊嚴</span><span>同行</span><span>更新</span>
+      </div>
+      <p>中華復甦更新發展協會 · 協助監獄更生人及發展監獄事工</p>
+    </div>
+  </div>
+  <section class="section renewal-mission">
+    <div class="container renewal-mission-layout">
+      <div>
+        <p class="eyebrow">關於我們的使命</p>
+        <h2>讓盼望，重新發芽</h2>
+        <p class="muted">
+          每一個走出高牆的人，都值得被看見、被接納。我們相信每段生命都有更新的可能，陪伴是我們所做最真實的事。
+        </p>
+        <NuxtLink class="button" to="/about">了解協會宗旨 →</NuxtLink>
+      </div>
+      <div>
+        <div class="mission-values">
+          <div>
+            <b>盼望</b>
+            <p>以信仰為根基，支持生命更新。</p>
+          </div>
+          <div>
+            <b>同行</b>
+            <p>以長期陪伴，走好下一步。</p>
+          </div>
+        </div>
         <img
-          v-if="imageFor(association?.data?.image_id)"
-          :src="imageFor(association?.data?.image_id)!"
-          alt="協會公開影像"
+          class="mission-nature"
+          :src="
+            imageFor(association?.data?.image_id) ||
+            '/images/redesign/imgImageNature.png'
+          "
+          :alt="
+            imageFor(association?.data?.image_id)
+              ? '協會公開事工影像'
+              : '土壤中萌芽的新苗，象徵生命更新'
+          "
           loading="lazy"
         />
-        <template v-else
-          ><MinistryIllustration kind="people" />
-          <figcaption>
-            每一次相遇，都是陪伴的開始・示意插畫
-          </figcaption></template
-        >
-      </figure>
-      <div>
-        <p class="eyebrow">WE WALK TOGETHER</p>
-        <h2>人生的下一步，<br />我們陪你一起走。</h2>
-        <p class="muted">
-          中華復甦更新發展協會以基督信仰為根基，協助監獄更生人及發展監獄事工。從高牆內的關懷，到重新出發的陪伴，讓每個人都有被傾聽、被支持的機會。
-        </p>
-        <NuxtLink class="button ghost" to="/about"
-          >認識協會 <span aria-hidden="true">↗</span></NuxtLink
-        >
       </div>
     </div>
   </section>
-  <section class="section">
+  <section id="ministry" class="section renewal-ministry">
     <div class="container">
-      <div class="eyebrow">OUR MINISTRY</div>
-      <h2>陪伴旅程</h2>
-      <p class="muted section-lead">
-        從走進高牆到社區同行，用關係陪伴每一步更新。
-      </p>
-      <ol class="ministry-grid">
-        <li>
+      <p class="eyebrow">OUR MINISTRY · 事工旅程</p>
+      <div class="section-heading">
+        <h2>把陪伴，走成一條路</h2>
+        <p class="muted">四個方向，一份共同的心意。</p>
+      </div>
+      <ol class="renewal-ministry-grid">
+        <li v-for="(item, index) in ministries" :key="item.title">
           <NuxtLink
-            to="/about"
-            class="ministry-panel ministry-panel--door"
-            aria-label="走進高牆｜認識協會"
+            :to="item.to"
+            :class="[
+              'renewal-ministry-card',
+              { 'renewal-ministry-card--dark': index === 3 },
+            ]"
+            :aria-label="`${item.title}｜${item.action}`"
+            ><span class="ministry-icon"
+              ><img
+                :src="`/images/redesign/img${item.icon}.svg`"
+                alt="" /></span
+            ><small>STEP {{ String(index + 1).padStart(2, "0") }}</small>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.body }}</p>
+            <span class="ministry-direct-link"
+              >{{ item.title }}｜{{ item.action }} ↗</span
+            ></NuxtLink
           >
-            <span class="ministry-number">01 / OUR MINISTRY</span>
-            <span class="ministry-arrow" aria-hidden="true">↗</span>
-            <MinistryIllustration kind="door" class="ministry-illustration" />
-            <div class="ministry-caption">
-              <h3>走進高牆<span class="ministry-action">｜認識協會</span></h3>
-              <p>讓關懷，走進每一個角落。</p>
-            </div>
-          </NuxtLink>
-        </li>
-        <li>
-          <NuxtLink
-            to="/contact"
-            class="ministry-panel ministry-panel--people"
-            aria-label="建立信任｜聯絡我們"
-          >
-            <span class="ministry-number">02 / OUR MINISTRY</span>
-            <span class="ministry-arrow" aria-hidden="true">↗</span>
-            <MinistryIllustration kind="people" class="ministry-illustration" />
-            <div class="ministry-caption">
-              <h3>建立信任<span class="ministry-action">｜聯絡我們</span></h3>
-              <p>用傾聽，陪伴生命的改變。</p>
-            </div>
-          </NuxtLink>
-        </li>
-        <li>
-          <NuxtLink
-            to="/news"
-            class="ministry-panel ministry-panel--growth"
-            aria-label="預備復歸｜最新消息"
-          >
-            <span class="ministry-number">03 / OUR MINISTRY</span>
-            <span class="ministry-arrow" aria-hidden="true">↗</span>
-            <MinistryIllustration kind="growth" class="ministry-illustration" />
-            <div class="ministry-caption">
-              <h3>預備復歸<span class="ministry-action">｜最新消息</span></h3>
-              <p>為重新出發，預備一份力量。</p>
-            </div>
-          </NuxtLink>
-        </li>
-        <li>
-          <NuxtLink
-            to="/donate"
-            class="ministry-panel ministry-panel--home"
-            aria-label="社區同行｜支持事工"
-          >
-            <span class="ministry-number">04 / OUR MINISTRY</span>
-            <span class="ministry-arrow" aria-hidden="true">↗</span>
-            <MinistryIllustration kind="home" class="ministry-illustration" />
-            <div class="ministry-caption">
-              <h3>社區同行<span class="ministry-action">｜支持事工</span></h3>
-              <p>回家的路，我們一起走。</p>
-            </div>
-          </NuxtLink>
         </li>
       </ol>
     </div>
   </section>
-  <section class="section tint">
-    <div
-      class="container grid responsive-two"
-      style="grid-template-columns: 1fr 1fr; align-items: center"
-    >
-      <div>
-        <div class="eyebrow">A STORY OF HOPE</div>
+  <FullVerse />
+  <section class="section renewal-stories">
+    <div class="container">
+      <p class="eyebrow">A STORY OF HOPE · 更新故事</p>
+      <div class="section-heading">
         <h2>更新的足跡</h2>
-        <p class="muted">記錄事工近況，分享陪伴與生命更新的故事。</p>
-        <NuxtLink class="button" to="/news">閱讀更多消息與見證</NuxtLink>
+        <NuxtLink class="button ghost" to="/news">更多消息與見證 →</NuxtLink>
       </div>
-      <div v-if="newsPending" class="empty">載入最新消息中…</div>
+      <p v-if="newsPending" class="empty">載入最新消息中…</p>
       <p v-else-if="newsError" class="notice">
         目前無法取得最新消息，請稍後再試。
       </p>
       <p v-else-if="!latestNews?.data?.length" class="empty">
         目前尚無已發布的消息。
       </p>
-      <ol v-else class="story-timeline">
-        <li v-for="article in latestNews.data" :key="article.id">
-          <NuxtLink :to="`/news/${article.id}`">
-            <span class="eyebrow">{{ article.category || "最新消息" }}</span>
-            <b>{{ article.title }}</b
-            ><br />
-            <small class="muted">{{ taipeiDate(article.published_at) }}</small>
-          </NuxtLink>
-        </li>
-      </ol>
+      <div v-else class="renewal-story-grid">
+        <NuxtLink
+          v-for="(article, index) in latestNews.data.slice(0, 3)"
+          :key="article.id"
+          :to="`/news/${article.id}`"
+          class="renewal-story-card"
+          ><figure>
+            <img
+              :src="
+                imageFor(article.image_id) ||
+                `/images/redesign/imgStoryImage${Number(index) + 1}.png`
+              "
+              :alt="
+                imageFor(article.image_id)
+                  ? article.title
+                  : '陪伴與更新的情境示意圖'
+              "
+              loading="lazy"
+            />
+            <figcaption v-if="!imageFor(article.image_id)">情境示意</figcaption>
+          </figure>
+          <div class="renewal-story-body">
+            <small
+              >{{ taipeiDate(article.published_at) }} ·
+              {{ article.category || "最新消息" }}</small
+            >
+            <h3>{{ article.title }}</h3>
+            <p class="muted">{{ article.summary }}</p>
+            <span>閱讀故事 →</span>
+          </div></NuxtLink
+        >
+      </div>
     </div>
   </section>
-  <FullVerse />
+  <PublicSupport />
 </template>
-<style scoped>
-.home-hero-layout {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  align-items: center;
-  gap: 48px;
-  padding: 64px 0;
-}
-.home-hero-copy {
-  min-width: 0;
-}
-.home-hero-copy h1 {
-  font-size: clamp(34px, 4.2vw, 58px);
-  line-height: 1.4;
-}
-.home-hero-copy .lead {
-  font-size: 17px;
-  max-width: 520px;
-}
-.home-hero-visual,
-.home-welcome-visual {
-  position: relative;
-  margin: 0;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 28px;
-  min-width: 0;
-  aspect-ratio: 1;
-}
-.home-hero-visual {
-  background: #e9dfc5;
-  color: #385747;
-  border-top-left-radius: 140px;
-}
-.home-hero-visual img,
-.home-welcome-visual img {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-}
-.home-hero-visual :deep(svg) {
-  width: 90%;
-}
-.home-hero-visual figcaption,
-.home-welcome-visual figcaption {
-  position: absolute;
-  bottom: 24px;
-  font-size: 12px;
-  color: #4b6456;
-  padding: 0 14px;
-  text-align: center;
-}
-.home-welcome {
-  background: #fffdf8;
-}
-.home-welcome-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(32px, 6vw, 80px);
-  align-items: center;
-}
-.home-welcome-visual {
-  aspect-ratio: 1.15;
-  background: #e6ece3;
-  color: #476752;
-}
-.home-welcome-visual :deep(svg) {
-  width: 80%;
-}
-.home-welcome-layout h2 {
-  font-size: clamp(28px, 3.2vw, 40px);
-  line-height: 1.55;
-}
-.home-welcome-layout .button {
-  margin-top: 24px;
-}
-@media (max-width: 760px) {
-  .home-hero-layout,
-  .home-welcome-layout {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  .home-hero-layout {
-    padding: 40px 0 56px;
-  }
-  .home-hero-visual {
-    width: 100%;
-    max-height: 300px;
-    aspect-ratio: 1.2;
-    border-top-left-radius: 90px;
-  }
-  .home-welcome-visual {
-    max-height: 340px;
-  }
-}
-</style>

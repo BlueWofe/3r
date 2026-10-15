@@ -78,6 +78,7 @@ async function submit() {
       </form>
     </template>
   </div></section>
+  <PublicSupport />
 </template>
 <style scoped>
 .checkout-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:24px;margin-top:24px;align-items:start}.cart-controls{border:0;padding:0;margin:0;min-width:0}.cart-row{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:16px;padding:22px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.cart-row p{margin:6px 0}.cart-quantity .button{width:100%;padding:8px}.cart-quantity input{width:100%}.checkout-total{padding-top:16px;border-top:1px solid var(--line)}.checkout-total div{display:flex;justify-content:space-between;gap:16px;margin:12px 0}.checkout-total dd{margin:0}.grand-total{font-size:22px;font-weight:700;color:var(--pine)}.checkout-submit{width:100%;min-height:48px}.order-success{max-width:650px;margin:auto;background:#f1f6ee}.checkout-details h2,.cart-products h2{margin-top:0}@media(max-width:760px){.checkout-grid{grid-template-columns:1fr}.cart-row{grid-template-columns:minmax(0,1fr) 96px}.checkout-details,.cart-products{padding:20px}}
