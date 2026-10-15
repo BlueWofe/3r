@@ -54,7 +54,7 @@ const taipeiDateTime = (value?: string) =>
       <aside class="article-sidebar">
         <section class="card">
           <p class="eyebrow">關於這篇文章</p>
-          <h3>{{ data?.data?.title || "消息內容" }}</h3>
+          <p class="article-sidebar-title">{{ data?.data?.title || "消息內容" }}</p>
           <p class="muted">{{ taipeiDateTime(data?.data?.published_at) }}</p>
           <p>作者：{{ data?.data?.author_name || "協會編輯" }}</p>
         </section>

@@ -1256,3 +1256,23 @@
   font-size: 17px;
   line-height: 1.8;
 }
+
+.public-shell .mission-layout > *,
+.public-shell .history-layout > *,
+.public-shell .public-split-grid > *,
+.public-shell .about-intro-grid > * {
+  min-width: 0;
+}
+.public-shell .rich-article {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.public-shell .rich-article a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.public-shell .rich-article table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
