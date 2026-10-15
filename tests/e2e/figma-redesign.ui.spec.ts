@@ -161,12 +161,13 @@ test('admin cards, permission labels and form responses retain reviewable work w
   await expect(page.getByText('管理角色、權限及人員角色指派')).toBeVisible();
   await page.getByRole('button', { name: '全不選', exact: true }).first().click();
   await page.getByRole('button', { name: '儲存角色' }).click();
-  await expect(page.getByRole('alert')).toContainText('此角色已有新版本');
+  await expect(page.getByText('此角色已有新版本')).toBeVisible();
 
   await page.goto('/app/admin/forms');
   await expect(page.getByRole('heading', { name: '表單中心' })).toBeVisible();
-  await page.getByRole('button', { name: '查看回覆' }).click();
-  await expect(page.getByRole('heading', { name: /合成服務回饋 的回覆/ })).toBeVisible();
+  await page.getByRole('button', { name: /回覆與版本/ }).click();
+  await expect(page.getByRole('heading', { name: '讀懂每一份回覆' })).toBeVisible();
+  await page.getByRole('button', { name: '附件與欄位答案' }).click();
   await expect(page.getByText('服務日期')).toBeVisible();
   await expect(page.getByText('希望增加共同備課時間。')).toBeVisible();
   await expect(page.locator('pre')).toHaveCount(0);
@@ -263,9 +264,9 @@ async function mockApi(page: Page, persona: 'guest' | 'member-teacher' | 'admin'
     if (path === '/roles' && method === 'GET') return fulfill(route, { data: [{ id: 3, name: '志工老師', slug: 'synthetic-teacher', active: true, permissions: ['schedule.read.own', 'attendance.create.own'] }] });
     if (path === '/permissions') return fulfill(route, { data: adminPermissions });
     if (path === '/roles/3' && method === 'PUT') return fulfill(route, { message: '此角色已有新版本，請重新載入後再儲存。' }, 409);
-    if (path === '/forms' && method === 'GET') return fulfill(route, { data: [{ id: 77, title: '合成服務回饋', description: '合成表單', status: 'published', fields: [{ key: 'service_date', label: '服務日期', type: 'date' }, { key: 'reflection', label: '心得', type: 'textarea' }] }] });
+    if (path === '/forms' && method === 'GET') return fulfill(route, { data: [{ id: 77, title: '合成服務回饋', description: '合成表單', status: 'published', version: 2, fields: [{ key: 'service_date', label: '服務日期', type: 'date' }, { key: 'reflection', label: '心得', type: 'textarea' }], snapshots: [{ version: 2, fields: [{ key: 'service_date', label: '服務日期', type: 'date' }, { key: 'reflection', label: '心得', type: 'textarea' }] }] }] });
     if (path === '/role-options') return fulfill(route, { data: [{ id: 3, name: '志工老師' }] });
-    if (path === '/forms/77/responses') return fulfill(route, { data: [{ id: 1, answers: { service_date: '2026-10-15', reflection: '希望增加共同備課時間。' }, created_at: '2026-10-15T15:20:00+08:00' }] });
+    if (path === '/forms/77/responses') return fulfill(route, { data: [{ id: 1, owner_id: 22, version: 2, answers: { service_date: '2026-10-15', reflection: '希望增加共同備課時間。' }, created_at: '2026-10-15T15:20:00+08:00' }] });
     if (path.startsWith('/sessions/410') && method === 'PUT') return fulfill(route, { message: '這筆課程已有新異動，請重新載入。' }, 409);
     if (path === '/contact-inquiries' && method === 'GET') return fulfill(route, { data: [{ id: 61, name: '合成聯絡人', category: '其他', message: '合成詢問內容', status: 'new', created_at: '2026-10-15T09:00:00+08:00' }] });
     if (path === '/contact-inquiries/61' && ['PUT', 'PATCH'].includes(method)) return fulfill(route, { message: '目前沒有處理這筆訊息的權限。' }, 403);
