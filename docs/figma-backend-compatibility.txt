@@ -1,0 +1,61 @@
+Figma forms integration compatibility audit (2026-10-15)
+
+Scope
+-----
+The /app/admin/forms redesign changes only the Nuxt view. It does not change
+Laravel routes, authorization, database schema, seeds, or stored records.
+The existing same-origin session and CSRF handling in frontend/composables/useApi.ts
+continues to handle mutations.
+
+Contracts checked against docs/contract.md and the Laravel controllers
+-----------------------------------------------------------------------
+- GET /api/v1/forms provides the existing permission-filtered list.
+- GET /api/v1/forms/{id} provides the current form, version, and published
+  field snapshots. POST/PUT use title, description, status, deadline,
+  role_ids, and fields with the existing field types and options.
+- The server increments version on every saved form and keeps prior published
+  field snapshots. The response reader resolves labels from the matching
+  snapshot, falling back to the stored key for legacy responses without one.
+- GET /api/v1/forms/{id}/responses requires forms.read.all. GET
+  /api/v1/forms/{id}/export requires forms.export.all. The view hides those
+  actions without the matching permission; Laravel remains authoritative.
+- Form uploads remain private and use /api/v1/files/{id}/download. The
+  redesigned reader links numeric file IDs to that guarded endpoint. It does
+  not make files public or expose storage paths.
+- GET /api/v1/role-options is called only for users with form create/update
+  permissions. Form role_ids are preserved on edit.
+- The existing /app/forms/{id} fill route remains linked for published forms.
+
+Read-only pre-deployment verification
+-------------------------------------
+1. Record the currently deployed application revision and database schema
+   migration status. Check that the expected database and storage volume are
+   attached before any deployment.
+2. Take the project's normal database and file-storage backups; verify their
+   manifests and restore instructions without resetting or reseeding data.
+3. Compare environment variable names and mounted storage paths with the
+   current deployment. Preserve production secrets, uploaded files, and
+   database volumes.
+4. Review the deployment diff for migrations, seed commands, forced database
+   rebuilds, and changes to permissions or file download policy. This forms
+   change requires none of them.
+   The existing deploy-uat.sh still runs migrate --force. It runs db:seed
+   only when /opt/3r/current is absent, so confirm that symlink resolves to
+   the existing release before deployment. Do not take that initial-release
+   path against a populated database.
+   scripts/gcp.py protects APP_KEY and DB_PASSWORD from rotation, but it
+   replaces the entire UAT env file. Compare all environment keys and values
+   with the deployed file before using it, including session, OTP, and
+   integration settings.
+5. On a production-like isolated copy, exercise read-only list/detail/
+   responses/export as an authorized administrator and a denied account.
+   Check a historical version response and a private attachment download.
+6. After deployment, verify the existing data counts and audit trail are
+   unchanged, then smoke-test the same read-only paths. Do not submit or
+   modify real forms as a smoke test.
+
+No production database access or user-action test was performed for this audit.
+Verification performed in the local container with the repository's forced
+in-memory SQLite PHPUnit configuration: ModuleSecurityTest passed (8 tests,
+63 assertions), including private form file authorization and snapshot CSV
+export. Nuxt typecheck and production build passed for the redesigned page.
