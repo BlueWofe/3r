@@ -16,7 +16,7 @@ test('published product category filtering and contact CTAs preserve their exact
 
     await page.goto('/food');
     await expect(page.getByRole('heading', { name: '好食，也讓好事發生', level: 1 })).toBeVisible();
-    const productFilter = page.getByLabel('產品分類');
+    const productFilter = page.getByRole('combobox', { name: '產品分類', exact: true });
     await expect(productFilter.locator(`option[value="${categoryA}"]`)).toBeAttached();
     await expect(productFilter.locator(`option[value="${categoryB}"]`)).toBeAttached();
     const firstCard = page.getByRole('link', { name: new RegExp(first.title) });
@@ -30,7 +30,7 @@ test('published product category filtering and contact CTAs preserve their exact
     await expect(firstCard).toContainText(categoryA);
     await expect(page).toHaveURL(new RegExp('category='));
     await page.reload();
-    await expect(page.getByLabel('產品分類')).toHaveValue(categoryA);
+    await expect(page.getByRole('combobox', { name: '產品分類', exact: true })).toHaveValue(categoryA);
     await expect(firstCard).toBeVisible();
     await expect(secondCard).toHaveCount(0);
 
