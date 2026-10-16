@@ -78,7 +78,7 @@ const ministries = [
   <div class="brand-strip">
     <div class="container">
       <div class="brand-values">
-        <span>盼望</span><span>尊嚴</span><span>同行</span><span>更新</span>
+        <span>復甦</span><span>更新</span><span>發展</span>
       </div>
       <p>中華復甦更新發展協會 · 協助監獄更生人及發展監獄事工</p>
     </div>

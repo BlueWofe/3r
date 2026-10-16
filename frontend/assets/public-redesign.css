@@ -270,8 +270,10 @@
   gap: 24px;
 }
 .brand-values {
-  display: flex;
-  gap: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex: 1;
+  max-width: 600px;
 }
 .brand-values span {
   font:
@@ -280,9 +282,7 @@
   padding: 0 30px;
   border-right: 1px solid #3d6357;
   white-space: nowrap;
-}
-.brand-values span:first-child {
-  padding-left: 0;
+  text-align: center;
 }
 .brand-values span:last-child {
   border: 0;
@@ -753,7 +753,8 @@
   }
   .brand-values {
     width: 100%;
-    justify-content: space-between;
+    flex-basis: 100%;
+    max-width: none;
   }
   .brand-values span {
     font-size: 24px;
@@ -1217,12 +1218,6 @@
   .brand-values span {
     font-size: 22px;
     padding: 0 10px;
-  }
-  .brand-values span:first-child {
-    padding-left: 0;
-  }
-  .brand-values span:last-child {
-    padding-right: 0;
   }
   .public-shell .navin .brand {
     font-size: 12px;
