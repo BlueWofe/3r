@@ -421,11 +421,13 @@ a.card:hover {
 .field select,
 .search-field {
   width: 100%;
+  min-width: 0;
   padding: 12px 14px;
   border: 1px solid #d5c9b4;
   border-radius: 12px;
   background: #fff;
-  font: 15px inherit;
+  font-family: inherit;
+  font-size: 16px;
   color: var(--ink);
   transition:
     border-color 0.15s ease,
