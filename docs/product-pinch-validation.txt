@@ -27,3 +27,15 @@ An initial preview used the container-only SSR hostname http://web, which cannot
 Regression command:
 BASE_URL=http://127.0.0.1:3184 npx playwright test tests/e2e/product-carousel.ui.spec.ts tests/e2e/product-gallery-layout.ui.spec.ts tests/e2e/figma-redesign.ui.spec.ts --grep "product gallery|missing main|thumbnail and circular|lightbox synchronizes|horizontal touch|single image|zero images|duplicate main|navigating away|fresh touch|public story" --project=desktop --project=mobile --workers=2 --output=runtime/pinch-regression-results
 Result: 43 passed, 1 intentional desktop touch duplicate skipped, 0 failed (1.2m). Combined with the new focused suite: 50 passed, 2 intentional skips, 0 failures.
+
+Additional user steering: mobile authentication focus / viewport — 2026-10-16
+Terra corrected an invalid font shorthand in the shared field controls to explicit inherited font-family / 16px font-size and added min-width:0 to prevent intrinsically wide inputs. The original compiled UI already computed 16px from later design-token rules: this verification does NOT claim the actual cascade was 14px, nor that a physical iOS keyboard bug was reproduced.
+
+Read-only QA compared the original compiled http://localhost:3180 with the updated http://127.0.0.1:3184 preview:
+- Chromium and WebKit mobile emulation, widths 320 and 390, each with login / registration / password reset / first-login change-password: 16 cases per version, 32 total passed.
+- Each visible input computed 16px before and after, remained inside the viewport, and focus / fill / blur preserved visualViewport.scale and scrollX without document horizontal overflow.
+- Viewport meta stayed unchanged; browser zoom was not disabled. No page errors.
+- All browser API calls were mocked, including the synthetic first-login user; no form was submitted and zero POST/PUT/OTP calls occurred.
+- Physical Safari/iPhone keyboard behavior remains a device acceptance check; browser-emulation results cannot prove it.
+
+Ignored evidence in the Luna worktree: runtime/verify-mobile-auth.cjs, runtime/mobile-auth-before.json and runtime/mobile-auth-after.json. Both commands printed 16 passed cases with unique computed font size [16].
