@@ -63,6 +63,16 @@ function closed() {
   opener.value?.focus({ preventScroll: true });
 }
 function keydown(event: KeyboardEvent) {
+  if (opened.value && event.key === 'Tab' && dialog.value) {
+    const buttons = [...dialog.value.querySelectorAll<HTMLButtonElement>('button:not([disabled])')];
+    const first = buttons[0], last = buttons[buttons.length - 1];
+    const active = document.activeElement;
+    if (first && last && (!dialog.value.contains(active) || (event.shiftKey ? active === first : active === last))) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
+    return;
+  }
   if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
     event.preventDefault();
     step(event.key === 'ArrowLeft' ? -1 : 1);
