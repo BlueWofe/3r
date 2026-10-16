@@ -39,3 +39,25 @@ Additional requested homepage change, read-only QA
 Repeat focused checks
 BASE_URL=http://localhost:3184 npx playwright test tests/e2e/product-gallery-layout.ui.spec.ts --project=desktop --workers=3
 BASE_URL=http://localhost:3184 npx playwright test tests/e2e/figma-redesign.ui.spec.ts --project=desktop --project=mobile --grep "public story, article, food and guest order" --workers=2
+
+Compiled release and GCP acceptance — 2026-10-16 Asia/Taipei
+- Release 4ae304399ef639471776882bd4cbd3c6fc75f9eb compiled successfully and
+  installed locally. The same 13 focused tests passed against compiled3180
+  in6.5s; homepage three-value checks passed at320/390/1440px.
+- Terra deployed the same release to GCP. Before any product detail browsing,
+  Luna ran runtime/figma-gcp-audit.py after: all19 application-table hashes,
+  all174 uploaded-file hashes, and every non3r container identity match the
+  pre-deployment snapshot. Association and existing py health checks passed.
+- Real GCP products9 and10 each have four loaded images, no image download
+  links, and zero horizontal overflow at320/390/1440px. No non-read API calls
+  were allowed by the verification browser, no unexpected API5xx or JS errors.
+- At1440px both products: main x120,width560,height420; thumbnails x120/312/504,
+  width176,height96,y1104.27, sixteen pixels below main bottom1088.27;
+  information starts atx720 in the right column.
+- At320/390px main height280, thumbnails share one row,height80,gap16;
+  the information starts below all three thumbnails. This remains the documented
+  mobile adaptation, not a claim that the original mobile Figma has four images.
+- GCP homepage 復甦 / 更新 / 發展 columns are equally sized and centered at all
+  three widths with no overflow. Both /api/v1/health and py/api/debug/health200.
+- Real product page browsing happened only after preservation audit succeeded;
+  its normal public view-count recording may subsequently change product data.
