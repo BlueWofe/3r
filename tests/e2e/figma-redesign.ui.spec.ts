@@ -77,6 +77,12 @@ test('public story, article, food and guest order remain usable at desktop and p
     await expectNoOverflow(page, `public home at ${width}px`);
   }
 
+  // SSR links render before Vue attaches navigation handlers in the dev preview.
+  // Wait for hydration so this remains a client navigation with mocked API calls.
+  await page.waitForFunction(() => {
+    const app = (document.querySelector('#__nuxt') as any)?.__vue_app__;
+    return app && !app.config.globalProperties.$nuxt.isHydrating;
+  });
   await page.locator('a[href="/news"]:visible').first().click();
   await page.getByRole('link', { name: /合成消息：同行近況/ }).click();
   await expect(page.getByRole('heading', { name: '合成消息：同行近況' })).toBeVisible();
