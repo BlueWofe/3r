@@ -145,7 +145,7 @@ onBeforeUnmount(() => { dialog.value?.close(); unlockScroll(); });
 .lightbox-close { flex-shrink: 0; min-height: 44px; padding: 8px 14px; border: 1px solid #bdc8bd; border-radius: 24px; background: white; color: #173c30; cursor: pointer; }
 .lightbox-close span { font-size: 22px; margin-left: 8px; }
 .lightbox-stage { position: relative; touch-action: pan-y pinch-zoom; }
-.lightbox-stage > img { display: block; width: 100%; height: min(65dvh, 720px); object-fit: contain; user-select: none; }
+.lightbox-stage > img { display: block; width: 100%; height: auto; max-height: min(65dvh, 720px); object-fit: contain; user-select: none; }
 .lightbox-count { margin: 14px 0 0; text-align: center; font-size: 14px; }
 @media (max-width: 760px) {
   .product-gallery .product-detail-image { height: 280px; max-height: 280px; }
