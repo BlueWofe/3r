@@ -28,3 +28,13 @@ The separate synthetic-event regression verifies swipe + compatibility click doe
 
 Additional command:
 BASE_URL=http://127.0.0.1:3184 npx playwright test tests/e2e/product-carousel.ui.spec.ts --project=desktop --project=mobile --grep "fresh touch gesture" --workers=2
+
+Compiled final-CSS and GCP verification — 2026-10-16 (Asia/Taipei)
+
+Final UI release: 7e9645d86002e4262762e7e32a40d81d62c5b197. Lightbox image now uses height:auto with max-height:min(65dvh,720px); the main image and thumbnails are unchanged.
+- Compiled http://localhost:3180 focused rerun: lightbox keyboard/focus/scroll on desktop Chromium and mobile WebKit, plus trusted Chromium touch swipes with the smaller image geometry: 3 passed, 1 intentional desktop touch skip, 0 failed (4.8s).
+- After Terra completed deployment and BEFORE visiting product details, python runtime/figma-gcp-audit.py after verified all 19 application-table hashes and 174 uploaded-file hashes unchanged from the saved pre-deployment baseline, unchanged non-3r container identities, and healthy py/3r endpoints. Current symlink points to the final release above. The pre-deployment baseline was not overwritten.
+- Then node runtime/verify-live-product-carousel.cjs http://35.229.149.68:3180 passed all 4 real-product viewport cases: products 9/10 at 390/1440px. Thumbnail selection, selected-state indication, synchronized modal index, next/keyboard previous/Escape, focus return, scroll unlock, 4 loaded gallery images, absence of download links, no horizontal overflow, no page errors and no HTTP 5xx all passed.
+- Screenshots inspected for mobile product 9 and desktop product 10 lightboxes: the photo fits its natural aspect ratio with compact margins and clearly visible controls.
+- Public product reads may increment the existing view statistic, so the preservation audit was deliberately completed first. No account, role, product, order or attachment was edited. All test browsers closed after verification.
+Evidence retained in ignored runtime files: figma-gcp-after.json, carousel-gcp-live-report.json and carousel-gcp-{9,10}-{390,1440}-{gallery,lightbox}.png in the primary checkout.
