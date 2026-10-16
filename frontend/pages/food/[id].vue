@@ -72,37 +72,38 @@ watch([selected, quantity], () => {
       <NuxtLink class="back-link" to="/food">← 回到愛心好食</NuxtLink>
     </div>
     <div class="container grid responsive-two product-layout">
-      <div v-if="data?.data?.image_id">
+      <div class="product-gallery" data-testid="product-gallery">
         <img
+          v-if="data?.data?.image_id"
           class="product-detail-image"
           :src="`/api/v1/files/${data.data.image_id}/download`"
           :alt="data.data.title"
         />
-      </div>
-      <PastryIllustration
-        v-else-if="
-          ['classic-yolk-pastry', 'taro-yolk-pastry'].includes(data?.data?.slug)
-        "
-        :flavor="data?.data?.slug === 'taro-yolk-pastry' ? 'taro' : 'red-bean'"
-      />
-      <div v-else class="product-fallback" aria-hidden="true">🍞</div>
-      <article>
-        <p class="eyebrow">愛心好食</p>
-        <p class="product-title serif">{{ data?.data?.title }}</p>
-        <p class="muted">{{ data?.data?.body || data?.data?.summary }}</p>
+        <PastryIllustration
+          v-else-if="
+            ['classic-yolk-pastry', 'taro-yolk-pastry'].includes(data?.data?.slug)
+          "
+          :flavor="data?.data?.slug === 'taro-yolk-pastry' ? 'taro' : 'red-bean'"
+        />
+        <div v-else class="product-fallback" aria-hidden="true">🍞</div>
         <div
           v-if="data?.data?.metadata?.gallery_ids?.length"
-          class="grid"
-          style="grid-template-columns: repeat(3, 1fr)"
+          class="product-gallery-thumbnails"
+          data-testid="product-gallery-thumbnails"
         >
           <div v-for="id in data.data.metadata.gallery_ids" :key="id">
             <img
               :src="`/api/v1/files/${id}/download`"
-              :alt="data.data.title"
+              :alt="`${data.data.title}商品附圖`"
               class="product-gallery-image"
             />
           </div>
         </div>
+      </div>
+      <article>
+        <p class="eyebrow">愛心好食</p>
+        <p class="product-title serif">{{ data?.data?.title }}</p>
+        <p class="muted">{{ data?.data?.body || data?.data?.summary }}</p>
         <p class="muted spec-list">
           成分：{{ data?.data?.metadata?.ingredients || "未提供"
           }}<br />過敏原：{{ data?.data?.metadata?.allergens || "未提供"
@@ -170,6 +171,42 @@ watch([selected, quantity], () => {
 </template>
 
 <style scoped>
+.product-layout.grid {
+  grid-template-columns: minmax(0, 14fr) minmax(0, 15fr);
+  gap: 40px;
+}
+.product-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.product-gallery-thumbnails {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.product-gallery-thumbnails > div {
+  min-width: 0;
+}
+.product-gallery .product-detail-image,
+.product-gallery .product-gallery-image {
+  display: block;
+  width: 100%;
+}
+.product-gallery .product-gallery-image {
+  height: 96px;
+  border-radius: 16px;
+}
+@media (max-width: 760px) {
+  .product-layout.grid {
+    gap: 24px;
+  }
+  .product-gallery .product-gallery-image {
+    height: 80px;
+  }
+}
 .product-cart-actions {
   margin-top: 18px;
   display: flex;
