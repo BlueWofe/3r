@@ -1,0 +1,42 @@
+Approved Figma UI integration — 2026-10-15
+
+Source: https://www.figma.com/design/UOLMCw50qbCQFpLVG66f2L
+Approval: explicit user approval of reDesign, 2026-10-15.
+Current node contexts and screenshots were fetched before translation; current
+user-edited 14:* nodes supersede the initial generated draft.
+
+Implementation
+- Existing Laravel API, role checks, session auth, CSRF and database are retained.
+- Existing Nuxt/Vue components and routes are retained; no React, Tailwind,
+  Bootstrap or replacement application was introduced.
+- Public pages use the approved forest hero, paper/green palette, serif brand
+  headings, mission cards, published story cards and contextual support footer.
+- Uploaded branding and article/association/product photos take precedence.
+  Figma photos are presentation assets, with illustrative story fallbacks labelled.
+  No Figma example contacts, names, prices, dates, article text or records were seeded.
+- The public navigation preserves search, cart, auth and the named workspace link.
+- Workspace navigation preserves the two expandable service/management menus,
+  existing multi-role permission union and logo link back to the public website.
+- Forms keep the existing builder/version/file/export contracts and replace raw
+  response JSON with labelled answer cards resolved against historical versions.
+
+Intentional accessibility and functionality adaptations
+- Status and form text remain at least 16px; teacher names remain 18px for clarity.
+- Mobile course toolbar, equal calendar cells, attendance-first read-only details,
+  explicit admin edit, notification unread badges/read-all and list-focus links remain.
+- Full original Bible verse/reference remains; the shortened design excerpt does
+  not replace the existing text. No design-example banner is shown to real users.
+- Empty/error/loading states show real API state rather than design sample records.
+- Long links in user-edited rich text wrap, and content tables scroll within their
+  own reading area to prevent small-screen document overflow.
+
+Data preservation
+- No schema, seed, role, account, password, imported roster, class or session change.
+- Local DB and uploaded storage backed up before build; per-table hashes recorded
+  outside Git. Browser mutation testing uses synthetic intercepted requests only.
+- GCP preflight verifies an existing release pointer, all current environment
+  settings, app table/file hashes and existing py service/container identities.
+- Deployment uses the existing r3-uat project on port 3180, with release backup and
+  previous-version pointer. Existing py UAT remains on its own port and volumes.
+
+Validation results are recorded in figma-redesign-validation.txt after integration.

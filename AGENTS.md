@@ -1,6 +1,6 @@
 # 3r implementation
 
-Use Traditional Chinese for user-facing UI. This is a Christian prison ministry association. Products are display-only. Never copy YS secrets or data. All seeded content must be visibly fictional/demo.
+Use Traditional Chinese for user-facing UI. This is a Christian prison ministry association. Products support a cart and guest orders without online payments, as explicitly authorized by the user; see docs/orders.md. Never copy YS secrets or data. All seeded content must be visibly fictional/demo.
 
 Architecture: backend Laravel PHP 8.3+ (container runtime), frontend Nuxt 4 Vue TypeScript, PostgreSQL 17, Redis 7, Compose. API prefix /api/v1. Same-origin session auth, CSRF. Data is synthetic UAT until HTTPS and real integrations are configured.
 

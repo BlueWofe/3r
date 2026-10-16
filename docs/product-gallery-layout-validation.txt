@@ -1,0 +1,63 @@
+Product gallery layout verification — 2026-10-16 Asia/Taipei
+
+Reference scope
+- Figma UOLMCw50qbCQFpLVG66f2L desktop 5:1267 / 14:18265 / 14:18266:
+  main photo and supporting row form the left gallery; information stays right.
+- Desktop geometry reviewed by Astra/Terra: 560px gallery, 600px information,
+  40px columns gap; three 176x96px thumbnails with 16px gaps.
+- Mobile 5:1358 shows one main photo. Keeping the live product's additional
+  photos as a three-column row below it is a responsive adaptation.
+- Main image caps of 420px desktop / 280px phone remain intentionally in place.
+  Existing right-side information order and other pages were not redesigned in
+  this correction. This is not certification of whole-site 1:1 Figma fidelity.
+
+Regression first: original local 3180, e30e14c
+- Same focused test failed at 390px: thumbnail y positions differed by 212.78px,
+  proving the supporting images stacked vertically.
+- Same focused test failed at 1440px: first thumbnail y853.66 preceded main
+  photo bottom1088.27, proving thumbnails belonged to the right article.
+
+Corrected Terra preview, localhost:3184
+- 13 focused Chromium tests passed in 9.0s: 320/390/1440 widths, 0/1/3/10
+  additional photos and missing-main-photo pastry fallback.
+- Bounding boxes verify supporting photos below and within the main photo's
+  column, all three photos share one row, desktop information is right, phone
+  information follows the complete gallery, and no horizontal overflow.
+- Images load, are not linked to downloads, and keep image height limits.
+- Each fixture still calculates a quantity-two quote and adds to the cart.
+- Existing fully mocked public story/article/food/guest order test passed for
+  desktop and iPhone projects (2 tests, 11.5s). Wait for hydration was added
+  before navigating an SSR link so dev-preview navigation uses mocked APIs.
+- All API writes in these checks are mocked; no live local/GCP data modified.
+- Terra ran frontend typecheck successfully. No backend changes in this patch.
+
+Additional requested homepage change, read-only QA
+- At 320/390/1440px, brand strip contains exactly 復甦 / 更新 / 發展.
+- Columns are equal width (96px / ~119.33px / 200px respectively), centered,
+  with document overflow0. The association purpose text remains present.
+
+Repeat focused checks
+BASE_URL=http://localhost:3184 npx playwright test tests/e2e/product-gallery-layout.ui.spec.ts --project=desktop --workers=3
+BASE_URL=http://localhost:3184 npx playwright test tests/e2e/figma-redesign.ui.spec.ts --project=desktop --project=mobile --grep "public story, article, food and guest order" --workers=2
+
+Compiled release and GCP acceptance — 2026-10-16 Asia/Taipei
+- Release 4ae304399ef639471776882bd4cbd3c6fc75f9eb compiled successfully and
+  installed locally. The same 13 focused tests passed against compiled3180
+  in6.5s; homepage three-value checks passed at320/390/1440px.
+- Terra deployed the same release to GCP. Before any product detail browsing,
+  Luna ran runtime/figma-gcp-audit.py after: all19 application-table hashes,
+  all174 uploaded-file hashes, and every non3r container identity match the
+  pre-deployment snapshot. Association and existing py health checks passed.
+- Real GCP products9 and10 each have four loaded images, no image download
+  links, and zero horizontal overflow at320/390/1440px. No non-read API calls
+  were allowed by the verification browser, no unexpected API5xx or JS errors.
+- At1440px both products: main x120,width560,height420; thumbnails x120/312/504,
+  width176,height96,y1104.27, sixteen pixels below main bottom1088.27;
+  information starts atx720 in the right column.
+- At320/390px main height280, thumbnails share one row,height80,gap16;
+  the information starts below all three thumbnails. This remains the documented
+  mobile adaptation, not a claim that the original mobile Figma has four images.
+- GCP homepage 復甦 / 更新 / 發展 columns are equally sized and centered at all
+  three widths with no overflow. Both /api/v1/health and py/api/debug/health200.
+- Real product page browsing happened only after preservation audit succeeded;
+  its normal public view-count recording may subsequently change product data.

@@ -1,0 +1,40 @@
+Product carousel acceptance — 2026-10-16 (Asia/Taipei)
+
+Scope: user-requested product image interaction, without backend/schema/data changes.
+Preview: http://127.0.0.1:3184 (Terra worktree; final implementation includes fresh-touch click guard and explicit dialog keyboard focus trap).
+
+All browser /api/v1 requests are fulfilled with synthetic fixtures. Images are local SVG responses. Product detail is entered through client navigation to avoid SSR bypass of browser interception. No live account is used, no order is sent, and no database is seeded/reset. Homepage SSR may perform existing public read-only requests.
+
+Coverage:
+- Additional thumbnails select the main photo; previous/next wrap across all photos and counter stays synchronized.
+- Clicking opens the selected photo in a modal; arrows and keyboard Left/Right stay synchronized with the main gallery.
+- Tab/Shift+Tab stay inside the modal; Escape and close button restore opener focus and prior body overflow and scroll offset.
+- Navigating away while modal is open restores scrolling; returning starts with the main image and no modal.
+- A genuine mobile tap opens the modal. Chromium CDP trusted touch gestures exercise horizontal forward/back swipes and vertical non-navigation both inside the modal and on the main gallery; swiping the main image does not accidentally open the modal.
+- Single-photo, zero-photo illustration, duplicate IDs, and missing-primary-photo promotion retain sensible behavior.
+- Existing layout protection retained: 0/1/3/10 supporting photos at 320/390/1440 widths; thumbnails below main image, three supporting photos share one row, bounded heights, product information stays in its responsive column, no horizontal overflow, no download links, selected-state thumbnail buttons keep image height.
+- Existing quote/cart assertions and mocked public story/article/food/guest-order workflow remain enabled.
+
+Browser coverage: desktop Chromium and mobile WebKit. WebKit exposes no CDP session, so the trusted-touch case uses a separate Chromium mobile 390x844/hasTouch context. Desktop touch-case duplication is intentionally skipped; desktop uses accessible buttons and keyboard. This is browser emulation, not a physical iPhone acceptance test.
+
+Testing found and Terra fixed explicit focus trapping and allowing a new touch gesture after a prior swipe. Chromium can omit its compatibility click when Playwright touchscreen.tap immediately follows injected CDP gestures, even though trusted touchstart/end arrive; the trusted-touch case starts with the actual tap and then tests both gesture surfaces without mixing the input sources in that order. No arbitrary sleep or deleted gesture assertion was used to pass the test.
+
+Final command:
+BASE_URL=http://127.0.0.1:3184 npx playwright test tests/e2e/product-carousel.ui.spec.ts tests/e2e/product-gallery-layout.ui.spec.ts tests/e2e/figma-redesign.ui.spec.ts --project=desktop --project=mobile --grep "thumbnail and circular|lightbox synchronizes|horizontal touch|single image|zero images|duplicate main|navigating away|product gallery stays|missing main image|public story, article, food and guest order" --workers=2
+
+Final result: combined 42 cases = 41 passed, 1 intentional desktop touch duplicate skipped, 0 failed. The separate fresh-touch application-event regression passed on desktop Chromium and mobile WebKit (2/2). Total executed passing cases: 43; 1 intentional skip.
+
+The separate synthetic-event regression verifies swipe + compatibility click does not open the dialog, followed immediately by a new touchstart/touchend + intentional click opening the selected image. It uses no timing wait. This supplements, and does not replace, the trusted Chromium touch pipeline integration.
+
+Additional command:
+BASE_URL=http://127.0.0.1:3184 npx playwright test tests/e2e/product-carousel.ui.spec.ts --project=desktop --project=mobile --grep "fresh touch gesture" --workers=2
+
+Compiled final-CSS and GCP verification — 2026-10-16 (Asia/Taipei)
+
+Final UI release: 7e9645d86002e4262762e7e32a40d81d62c5b197. Lightbox image now uses height:auto with max-height:min(65dvh,720px); the main image and thumbnails are unchanged.
+- Compiled http://localhost:3180 focused rerun: lightbox keyboard/focus/scroll on desktop Chromium and mobile WebKit, plus trusted Chromium touch swipes with the smaller image geometry: 3 passed, 1 intentional desktop touch skip, 0 failed (4.8s).
+- After Terra completed deployment and BEFORE visiting product details, python runtime/figma-gcp-audit.py after verified all 19 application-table hashes and 174 uploaded-file hashes unchanged from the saved pre-deployment baseline, unchanged non-3r container identities, and healthy py/3r endpoints. Current symlink points to the final release above. The pre-deployment baseline was not overwritten.
+- Then node runtime/verify-live-product-carousel.cjs http://35.229.149.68:3180 passed all 4 real-product viewport cases: products 9/10 at 390/1440px. Thumbnail selection, selected-state indication, synchronized modal index, next/keyboard previous/Escape, focus return, scroll unlock, 4 loaded gallery images, absence of download links, no horizontal overflow, no page errors and no HTTP 5xx all passed.
+- Screenshots inspected for mobile product 9 and desktop product 10 lightboxes: the photo fits its natural aspect ratio with compact margins and clearly visible controls.
+- Public product reads may increment the existing view statistic, so the preservation audit was deliberately completed first. No account, role, product, order or attachment was edited. All test browsers closed after verification.
+Evidence retained in ignored runtime files: figma-gcp-after.json, carousel-gcp-live-report.json and carousel-gcp-{9,10}-{390,1440}-{gallery,lightbox}.png in the primary checkout.

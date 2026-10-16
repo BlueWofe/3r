@@ -1,0 +1,1297 @@
+/* Approved Figma UOLMCw50qbCQFpLVG66f2L: public 5:201, 5:343 and P02–P10. */
+.public-shell {
+  --r3-paper: #faf8f0;
+  --r3-ink: #1a3d2e;
+  --r3-primary: #1a3d2e;
+  --r3-muted: #4a6258;
+  --r3-border: #e8e4da;
+  background: var(--r3-paper);
+  min-height: 100vh;
+}
+.public-shell .container {
+  width: min(1200px, calc(100% - 64px));
+}
+.public-shell .nav {
+  background: #fff;
+  backdrop-filter: none;
+  border-bottom: 1px solid #e8e4da;
+  box-shadow: none;
+}
+.public-shell .navin {
+  width: calc(100% - 64px);
+  max-width: 1600px;
+  min-height: 72px;
+  height: auto;
+  padding: 12px 0;
+}
+.public-shell .brand {
+  font:
+    700 16px/1.4 "Noto Sans TC",
+    sans-serif;
+  letter-spacing: 0;
+  white-space: normal;
+  min-width: 0;
+}
+.public-shell .brand-logo {
+  width: 44px;
+  height: 44px;
+}
+.public-shell .links {
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+.public-shell .links .button {
+  padding: 8px 14px;
+}
+.public-shell .links a:not(.button) {
+  color: var(--r3-primary);
+}
+.public-shell .section {
+  padding: 72px 0;
+}
+.public-shell h1,
+.public-shell h2 {
+  font-family: "Noto Serif TC", serif;
+  font-weight: 500;
+}
+.public-shell h1 {
+  font-size: clamp(32px, 4.4vw, 56px);
+  line-height: 1.35;
+}
+.public-shell h2 {
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.4;
+}
+.public-shell .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #668572;
+  font-weight: 500;
+}
+.public-shell .pagehead,
+.public-page-hero {
+  padding: 72px 0;
+  background: var(--r3-paper);
+  border-bottom: 0;
+}
+.public-shell .pagehead h1,
+.public-page-hero h1 {
+  margin: 12px 0 16px;
+  font-size: clamp(30px, 3.4vw, 44px);
+}
+.public-page-hero .hero-description {
+  color: var(--r3-muted);
+  max-width: 720px;
+}
+.public-page-hero--photo {
+  position: relative;
+  padding: 160px 0 100px;
+  background:
+    linear-gradient(#0d241885, #0d241885),
+    url("/images/redesign/imgHeroSection.png") center/cover;
+  color: #faf8f0;
+}
+.public-page-hero--photo .eyebrow,
+.public-page-hero--photo .hero-description {
+  color: #c8d8c0;
+}
+.public-page-hero--photo h1 {
+  font-size: clamp(36px, 4.5vw, 64px);
+}
+.public-shell .tint {
+  background: #f0ede4;
+}
+.public-shell .card {
+  background: white;
+  border: 1px solid var(--r3-border);
+  box-shadow: none;
+  border-radius: 16px;
+}
+.public-shell .cards {
+  gap: 24px;
+}
+.public-shell .media-card {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.public-shell
+  .media-card
+  > :not(img):not(svg):not(.media-placeholder):not(figure) {
+  margin: 0 24px;
+}
+.public-shell .media-card > :last-child {
+  margin-bottom: 24px;
+}
+.public-shell .media-card .cover-thumb {
+  height: 220px;
+  max-height: 220px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  margin: 0;
+}
+.public-shell .media-placeholder {
+  height: 200px;
+  display: grid;
+  place-items: center;
+  background: #e7eee6;
+  color: #557866;
+  font-size: 40px;
+}
+.public-shell .media-card h3 {
+  font-size: 20px;
+  line-height: 1.5;
+}
+.public-shell .cover-thumb,
+.public-shell .article-image {
+  object-fit: cover;
+  max-height: 420px;
+}
+.public-shell .rich-article img {
+  max-height: 440px;
+  object-fit: contain;
+}
+.public-shell .toolbar {
+  gap: 16px;
+}
+.public-shell .toolbar label {
+  display: grid;
+  gap: 8px;
+}
+.public-shell .footer {
+  padding: 56px 0 0;
+  background: #214f40;
+  color: #e5eee6;
+  border: 0;
+}
+.public-shell .footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 40px;
+  padding-bottom: 40px;
+}
+.public-shell .footer .brand {
+  display: flex;
+  align-items: center;
+  font-size: 17px;
+}
+.public-shell .footer .brand img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  background: #faf8f0;
+  border-radius: 16px;
+  padding: 8px;
+}
+.public-shell .footer p,
+.public-shell .footer a {
+  color: #d0ded1;
+  font-size: 14px;
+}
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.footer-column b {
+  font-size: 14px;
+  color: white;
+  margin-bottom: 6px;
+}
+.public-shell .footer-bottom {
+  padding: 18px 0;
+  background: #122e22;
+  color: #b8cfbb;
+  font-size: 12px;
+}
+.footer-bottom .container {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.renewal-hero {
+  position: relative;
+  background:
+    linear-gradient(#0d241885, #0d241885),
+    url("/images/redesign/imgHeroSection.png") center/cover;
+  color: #faf8f0;
+}
+.renewal-hero-inner {
+  min-height: 620px;
+  display: flex;
+  align-items: flex-end;
+  padding-top: 100px;
+  padding-bottom: 80px;
+}
+.renewal-hero-copy {
+  max-width: 760px;
+}
+.renewal-hero .eyebrow {
+  color: #a8c8a0;
+  font-size: 13px;
+}
+.renewal-hero h1 {
+  font-size: clamp(40px, 4.5vw, 64px);
+  line-height: 1.3;
+  margin: 24px 0;
+}
+.renewal-hero .lead {
+  font-size: 17px;
+  line-height: 1.8;
+  color: #c8d8c0;
+  margin: 0 0 32px;
+}
+.renewal-hero-mobile {
+  display: none;
+}
+.public-shell .support-primary {
+  background: #faf8f0;
+  color: #1a3d2e;
+}
+.public-shell .support-secondary {
+  background: transparent;
+  border: 1px solid #b9cfb8;
+  color: #faf8f0;
+}
+.brand-strip {
+  background: #1a3d2e;
+  color: #faf8f0;
+  padding: 18px 0;
+}
+.brand-strip > .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.brand-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex: 1;
+  max-width: 600px;
+}
+.brand-values span {
+  font:
+    500 28px/1.3 "Noto Serif TC",
+    serif;
+  padding: 0 30px;
+  border-right: 1px solid #3d6357;
+  white-space: nowrap;
+  text-align: center;
+}
+.brand-values span:last-child {
+  border: 0;
+}
+.brand-strip p {
+  font-size: 12px;
+  color: #9bb7a2;
+  margin: 0;
+}
+.renewal-mission-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.renewal-mission-layout h2 {
+  margin: 16px 0 24px;
+}
+.renewal-mission-layout .muted {
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: 28px;
+}
+.mission-values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.mission-values > div {
+  padding: 28px;
+  border-radius: 16px;
+  background: #e8f0e4;
+}
+.mission-values > div:last-child {
+  background: #f5edd8;
+}
+.mission-values b {
+  font:
+    500 32px "Noto Serif TC",
+    serif;
+}
+.mission-values p {
+  font-size: 13px;
+  margin: 12px 0 0;
+}
+.mission-nature {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 16px;
+  display: block;
+}
+.renewal-ministry {
+  background: #f0ede4;
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.section-heading h2,
+.section-heading p {
+  margin: 0;
+}
+.renewal-ministry-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.renewal-ministry-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid #e0dad0;
+  background: #fff;
+  padding: 32px 24px;
+  border-radius: 20px;
+}
+.ministry-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  background: #e7eee6;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.ministry-icon img {
+  width: 26px;
+  height: 26px;
+}
+.renewal-ministry-grid li:nth-child(2) .ministry-icon {
+  background: #f5edd8;
+}
+.renewal-ministry-card small {
+  color: #668572;
+  font-size: 11px;
+}
+.renewal-ministry-card h3 {
+  font-size: 20px;
+  margin: 8px 0;
+}
+.renewal-ministry-card p {
+  font-size: 16px;
+  color: #64746c;
+  margin: 0 0 24px;
+}
+.ministry-direct-link {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: auto;
+}
+.renewal-ministry-card--dark {
+  background: #1a3d2e;
+  color: #faf8f0;
+  border-color: #1a3d2e;
+}
+.renewal-ministry-card--dark p,
+.renewal-ministry-card--dark small {
+  color: #c8d8c0;
+}
+.renewal-ministry-card--dark .ministry-icon {
+  background: #3d6357;
+}
+.public-shell .full-verse {
+  background:
+    linear-gradient(#faf8f025, #faf8f025),
+    url("/images/redesign/imgQuoteBanner.png") center/cover;
+  padding: 72px 0;
+  color: #1a3d2e;
+  text-align: center;
+}
+.public-shell .full-verse p {
+  font:
+    500 clamp(24px, 3vw, 40px) / 1.7 "Noto Serif TC",
+    serif;
+  max-width: 1000px;
+  margin: 0 auto 20px;
+}
+.public-shell .full-verse cite {
+  font-style: normal;
+  font-size: 13px;
+}
+.renewal-story-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.renewal-story-card {
+  background: #fff;
+  border: 1px solid #e8e4da;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.renewal-story-card figure {
+  margin: 0;
+  position: relative;
+}
+.renewal-story-card figure img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+.renewal-story-card figcaption {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  border-radius: 6px;
+  background: #ffffffed;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #476752;
+}
+.renewal-story-body {
+  padding: 24px;
+}
+.renewal-story-body small {
+  font-size: 12px;
+  color: #668572;
+}
+.renewal-story-body h3 {
+  font-size: 20px;
+  margin: 12px 0;
+}
+.renewal-story-body p {
+  font-size: 15px;
+}
+.renewal-story-body > span {
+  font-size: 14px;
+  font-weight: 600;
+}
+.public-support {
+  background:
+    linear-gradient(#0d2418a6, #0d2418a6),
+    url("/images/redesign/imgCtaSection.png") center/cover;
+  color: #faf8f0;
+  padding: 64px 0;
+}
+.support-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
+  min-height: 230px;
+}
+.support-layout > div:first-child {
+  max-width: 700px;
+}
+.public-support h2 {
+  margin: 0 0 20px;
+}
+.public-support p {
+  color: #c8d8c0;
+}
+.support-brand {
+  text-align: center;
+  min-width: 160px;
+}
+.support-brand img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 20px;
+  background: #faf8f0;
+  padding: 12px;
+}
+.support-brand p {
+  font-size: 13px;
+}
+.public-shell .auth {
+  background: var(--r3-paper);
+  padding: 56px 24px 80px;
+  min-height: 70vh;
+  display: block;
+}
+.public-shell .authbox {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.public-shell .authbox h1 {
+  font:
+    700 36px/1.4 "Noto Sans TC",
+    sans-serif;
+  margin-top: 24px;
+}
+.public-shell .authbox .tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 28px 0 24px;
+  background: #e7eee6;
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
+}
+.public-shell .authbox .tabs button {
+  font-size: 16px;
+  margin: 0;
+  padding: 10px 4px;
+}
+.public-shell .authbox > form {
+  padding: 28px;
+  background: white;
+  border: 1px solid var(--r3-border);
+  border-radius: 24px;
+}
+.public-shell .authbox .field input {
+  width: 100%;
+}
+.public-shell .authbox .form .button {
+  width: 100%;
+}
+.public-shell .authbox .field > span {
+  display: flex;
+  gap: 8px;
+}
+.public-shell .authbox .field > span input {
+  min-width: 0;
+  flex: 1;
+}
+.public-shell .authbox .field > span .button {
+  width: auto;
+  flex-shrink: 0;
+  margin: 0 !important;
+}
+.public-shell .authbox .auth-brand-logo {
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
+}
+.public-shell .contact-layout {
+  grid-template-columns: 1fr 1.6fr;
+  gap: 48px;
+  align-items: start;
+}
+.public-shell .contact-layout > div {
+  background: #214f40;
+  color: #fff;
+  padding: 32px;
+  border-radius: 20px;
+}
+.public-shell .contact-layout > div .muted {
+  color: #d0ded1;
+}
+.public-shell .contact-facts {
+  background: transparent;
+  color: #d0ded1;
+  border: 0;
+  padding: 0;
+}
+.public-shell .contact-layout > .form {
+  padding: 32px;
+  border-radius: 24px;
+}
+.public-shell .contact-layout .form h3 {
+  margin-top: 0;
+}
+.public-shell .bulk-cta {
+  background: #e7eee6;
+  color: #1a3d2e;
+}
+.public-shell .bulk-cta .ghost {
+  color: #1a3d2e;
+  border-color: #b9c9b9;
+}
+.public-shell .product-filter {
+  margin-bottom: 24px;
+}
+.public-shell .search-panel {
+  padding: 24px;
+  background: white;
+  border: 1px solid var(--r3-border);
+  border-radius: 16px;
+}
+@media (min-width: 1000px) {
+  .public-shell .food-catalog .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .public-shell .food-catalog .cover-thumb {
+    height: 320px;
+    max-height: 320px;
+  }
+}
+@media (max-width: 1200px) {
+  .public-shell .mobile-menu {
+    display: inline-flex;
+  }
+  .public-shell .links {
+    display: none;
+  }
+  .public-shell .links.open {
+    display: flex;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    background: white;
+    padding: 24px;
+    gap: 12px;
+    max-height: calc(100dvh - 72px);
+    overflow: auto;
+    border-bottom: 1px solid var(--r3-border);
+  }
+  .renewal-ministry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .renewal-mission-layout {
+    gap: 40px;
+  }
+  .brand-strip > .container {
+    flex-wrap: wrap;
+  }
+  .brand-values span {
+    font-size: 24px;
+  }
+}
+@media (max-width: 760px) {
+  .public-shell .container {
+    width: calc(100% - 32px);
+  }
+  .public-shell .navin {
+    width: calc(100% - 32px);
+    gap: 8px;
+  }
+  .public-shell .brand {
+    font-size: 14px;
+    gap: 8px;
+  }
+  .public-shell .brand-logo {
+    width: 40px;
+    height: 40px;
+  }
+  .public-shell .mobile-menu {
+    font-size: 14px;
+    min-width: 44px;
+    padding: 8px;
+  }
+  .public-shell .section {
+    padding: 36px 0;
+  }
+  .public-shell .pagehead,
+  .public-page-hero {
+    padding: 36px 0;
+  }
+  .public-page-hero--photo {
+    padding: 64px 0;
+  }
+  .renewal-hero {
+    background: none;
+    padding: 24px 0;
+  }
+  .renewal-hero-inner {
+    padding: 0;
+    min-height: 0;
+    display: grid;
+    gap: 16px;
+  }
+  .renewal-hero-copy {
+    padding: 24px 20px;
+    border-radius: 24px;
+    background: #7c8a7b;
+  }
+  .renewal-hero h1 {
+    font-size: clamp(28px, 8.3vw, 36px);
+    line-height: 1.25;
+    margin: 18px 0;
+  }
+  .renewal-hero .lead {
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+  .renewal-hero .eyebrow {
+    font-size: 11px;
+  }
+  .renewal-hero-mobile {
+    display: block;
+    height: 220px;
+    object-fit: cover;
+    width: 100%;
+    border-radius: 20px;
+  }
+  .renewal-hero .actions {
+    gap: 8px;
+  }
+  .renewal-hero .button {
+    padding: 10px 14px;
+  }
+  .brand-strip {
+    padding: 12px 0;
+  }
+  .brand-strip > .container {
+    gap: 8px;
+  }
+  .brand-values {
+    width: 100%;
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .brand-values span {
+    font-size: 24px;
+    padding: 0 16px;
+  }
+  .brand-strip p {
+    font-size: 11px;
+    text-align: right;
+    width: 100%;
+  }
+  .renewal-mission-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .renewal-mission-layout h2 {
+    font-size: 32px;
+    margin: 8px 0 16px;
+  }
+  .mission-values > div {
+    padding: 20px;
+  }
+  .mission-values b {
+    font-size: 28px;
+  }
+  .mission-nature {
+    height: 200px;
+  }
+  .section-heading {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .renewal-ministry-grid,
+  .renewal-story-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .renewal-ministry-card {
+    padding: 24px;
+  }
+  .renewal-story-card figure img {
+    height: 200px;
+  }
+  .public-shell .full-verse {
+    padding: 48px 0;
+  }
+  .public-shell .full-verse p {
+    font-size: 24px;
+  }
+  .public-support {
+    padding: 40px 0;
+  }
+  .support-layout {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .support-brand {
+    display: none;
+  }
+  .public-support h2 {
+    font-size: 32px;
+  }
+  .public-shell .footer {
+    padding-top: 36px;
+  }
+  .public-shell .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+  }
+  .public-shell .footer-grid > div:first-child {
+    grid-column: 1/-1;
+  }
+  .public-shell .footer-grid > div:last-child {
+    grid-column: 1/-1;
+  }
+  .public-shell .footer .brand img {
+    width: 64px;
+    height: 64px;
+  }
+  .public-shell .auth {
+    padding: 28px 16px 48px;
+  }
+  .public-shell .authbox h1 {
+    font-size: 30px;
+  }
+  .public-shell .authbox > form {
+    padding: 20px;
+  }
+  .public-shell .authbox .tabs button {
+    font-size: 14px;
+  }
+  .public-shell .contact-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .public-shell .contact-layout > .form {
+    padding: 24px;
+  }
+  .public-shell .contact-layout > div {
+    padding: 24px;
+  }
+  .public-shell .search-panel {
+    display: flex;
+    padding: 16px;
+    gap: 8px;
+  }
+  .public-shell .search-field {
+    min-width: 0;
+  }
+  .public-shell .toolbar {
+    flex-wrap: wrap;
+  }
+  .public-shell .toolbar label {
+    flex: 1;
+    min-width: 130px;
+  }
+}
+
+.about-intro-grid,
+.public-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+.about-intro h1,
+.public-split-intro h1 {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: clamp(30px, 3.4vw, 44px);
+  font-weight: 700;
+}
+.about-door {
+  border-radius: 24px;
+  background: #e7eee6;
+  padding: 56px 40px;
+  margin: 0;
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+}
+.about-door svg {
+  max-width: 240px;
+}
+.about-door figcaption {
+  font-size: 13px;
+  color: #64746c;
+}
+.about-intro-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.about-intro-tabs a {
+  padding: 10px 28px;
+  border: 1px solid #aab8aa;
+  border-radius: 8px;
+  background: #e7eee6;
+}
+.about-intro-tabs a:first-child {
+  background: #234d3e;
+  color: white;
+}
+.public-shell .about-anchor-nav {
+  display: flex;
+  width: 100%;
+  padding-top: 16px;
+  gap: 8px;
+}
+.public-shell .about-anchor-nav a {
+  border-radius: 8px;
+  background: #e7eee6;
+  font-size: 16px;
+}
+.public-shell .mission-visual {
+  background: transparent;
+}
+.public-shell .mission-visual img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+.public-split-grid > img,
+.donation-photo > img {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 24px;
+}
+.donation-photo {
+  margin: 0;
+}
+.donation-photo figcaption {
+  font-size: 13px;
+  color: #64746c;
+  background: white;
+  border: 1px solid #dce3db;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.donate-stage-preview {
+  display: flex;
+  gap: 8px;
+  margin-top: 28px;
+}
+.donate-stage-preview span {
+  flex: 1;
+  background: #e7eee6;
+  border: 1px solid #b8c5b7;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.donate-stage-preview .selected {
+  background: #234d3e;
+  color: white;
+}
+.public-shell .giving-layout {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 32px;
+}
+.public-shell .giving-panel,
+.public-shell .giving-purpose {
+  width: 100%;
+}
+.public-shell .giving-panel {
+  border-radius: 24px;
+  background: white;
+  border: 1px solid #dce3db;
+  padding: 32px;
+  box-shadow: none;
+}
+.public-shell .giving-purpose {
+  background: white;
+  border: 1px solid #dce3db;
+  padding: 32px;
+  border-radius: 16px;
+}
+.public-shell .giving-purpose h2 {
+  font-size: 28px;
+}
+.public-shell .giving-impact {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.public-shell .giving-purpose > .full-verse {
+  display: none;
+}
+.public-shell .giving-form fieldset {
+  min-width: 0;
+}
+.public-shell .giving-amounts button {
+  border-radius: 8px;
+}
+.public-shell .checkout-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+}
+.public-shell .checkout-details,
+.public-shell .cart-products {
+  padding: 28px;
+}
+.public-shell .article-cover-image {
+  max-height: 440px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 20px;
+}
+.public-shell .product-detail-image {
+  height: 460px;
+  max-height: 460px;
+  border-radius: 24px;
+  object-fit: cover;
+}
+.public-shell .product-layout {
+  gap: 48px;
+  align-items: start;
+}
+.public-shell .spec-list {
+  padding: 24px;
+  border-radius: 16px;
+  background: #e7eee6;
+}
+.public-shell .product-gallery-image {
+  height: 120px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+@media (max-width: 760px) {
+  .about-intro-grid,
+  .public-split-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .about-door {
+    min-height: 220px;
+    padding: 28px;
+  }
+  .about-door svg {
+    max-width: 150px;
+  }
+  .about-intro-tabs a {
+    padding: 10px 18px;
+  }
+  .public-split-grid > img,
+  .donation-photo > img {
+    height: 220px;
+  }
+  .public-shell .giving-panel,
+  .public-shell .giving-purpose {
+    padding: 20px;
+  }
+  .public-shell .giving-impact {
+    grid-template-columns: 1fr;
+  }
+  .public-shell .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+  .public-shell .product-detail-image {
+    height: 300px;
+  }
+  .public-shell .product-layout {
+    gap: 24px;
+  }
+  .public-shell .product-gallery-image {
+    height: 80px;
+  }
+}
+
+.password-page {
+  background: #faf8f2 !important;
+}
+.password-card {
+  box-shadow: none !important;
+  border-radius: 24px !important;
+  background: white !important;
+}
+.password-card h1 {
+  font-family: "Noto Sans TC", sans-serif !important;
+  font-size: 32px;
+}
+.password-brand {
+  font-family: "Noto Sans TC", sans-serif !important;
+}
+.password-brand img {
+  border-radius: 16px;
+}
+
+.news-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.news-filter-bar .field {
+  min-width: 220px;
+}
+.news-index .grid.cards {
+  grid-template-columns: 1fr;
+}
+.news-row {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 32px;
+  padding: 24px;
+  align-items: center;
+}
+.public-shell .news-row .cover-thumb {
+  height: 220px;
+  width: 100%;
+  border-radius: 16px;
+  object-fit: cover;
+}
+.news-row-content {
+  display: grid;
+  gap: 12px;
+}
+.news-row-content h3,
+.news-row-content p {
+  margin: 0;
+}
+.news-row-content h3 {
+  font-size: 24px;
+}
+.news-row-placeholder {
+  height: 220px;
+  background: #e7eee6;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+}
+.news-row-placeholder svg {
+  height: 150px;
+  width: 150px;
+}
+.public-shell .article-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+.article-detail-layout .article-shell {
+  width: 100%;
+  min-width: 0;
+}
+.article-sidebar {
+  display: grid;
+  gap: 20px;
+}
+.article-sidebar .card {
+  padding: 24px;
+}
+.article-sidebar .article-support {
+  background: #1a3d2e;
+  color: #faf8f0;
+}
+.article-support p {
+  color: #c8d8c0;
+}
+.article-back {
+  margin-top: 32px;
+}
+@media (max-width: 760px) {
+  .news-row {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 20px;
+  }
+  .news-row-content h3 {
+    font-size: 22px;
+  }
+  .news-filter-bar {
+    align-items: stretch;
+  }
+  .news-filter-bar .field {
+    width: 100%;
+  }
+  .public-shell .article-detail-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .public-shell .article-shell h1 {
+    font-family: "Noto Sans TC", sans-serif;
+    font-weight: 700;
+    font-size: 30px;
+  }
+}
+
+.public-shell .full-verse cite {
+  color: #4a6258;
+}
+.public-shell .full-verse .container {
+  max-width: 1100px;
+}
+@media (max-width: 360px) {
+  .brand-values span {
+    font-size: 22px;
+    padding: 0 10px;
+  }
+  .public-shell .navin .brand {
+    font-size: 12px;
+  }
+  .public-shell .navin .brand-logo {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.catalog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 40px 0 24px;
+}
+.catalog-heading h2 {
+  margin: 8px 0 0;
+}
+.catalog-heading .tabs button {
+  border-radius: 24px;
+}
+.product-title {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.public-shell .public-page-hero--photo .hero-description {
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.public-shell .mission-layout > *,
+.public-shell .history-layout > *,
+.public-shell .public-split-grid > *,
+.public-shell .about-intro-grid > * {
+  min-width: 0;
+}
+.public-shell .rich-article {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.public-shell .rich-article a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.public-shell .rich-article table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.public-shell input,
+.public-shell select,
+.public-shell textarea {
+  border-color: var(--r3-border);
+}
+.article-sidebar-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.public-shell .product-detail-image {
+  height: 420px;
+  max-height: 420px;
+}
+@media (max-width: 760px) {
+  .public-shell .rich-article img {
+    max-height: 320px;
+  }
+  .public-shell .product-detail-image {
+    height: 280px;
+    max-height: 280px;
+  }
+}

@@ -1,0 +1,111 @@
+Figma redesign UI validation
+Date: 2026-10-15
+Source handoff: docs/figma-design-handoff.json (38 verified routes, 174 desktop/mobile frames)
+Spec: tests/e2e/figma-redesign.ui.spec.ts
+
+Scope and safety
+The spec intercepts every /api/v1 request in the browser and returns fictional fixtures. No real account password, database record, attendance record, message, or external service is used. The mock login accepts a synthetic-only password string; all mutation endpoints are handled by route fixtures. The photo check posts attendance with no file to prove that a photo remains optional. Mock 403 and 409 replies exercise visible authorization and stale-version feedback.
+
+Responsive coverage
+The public home is opened at 320, 390, 768, and 1440 CSS pixels. A guest follows a public article and product detail into a guest cart, supplies synthetic contact data, and receives a no-payment order result. The volunteer inbox, read-only session detail, admin people list, permission editor, and form response detail are checked at 390px for overflow. The route matrix below checks every Figma route at 390px.
+
+Route matrix
+Each route is visited by the Playwright route-matrix case and checked for a rendered app/page shell and no horizontal document overflow at 390px. `/calendar` is excluded because the handoff defines it as a public redirect, not a designed screen. `/change-password` is visited and its redirect for an account that does not require a password change is checked.
+
+01. `/` — public home and links
+02. `/about` — association story
+03. `/news` — published article list
+04. `/news/301` — public article detail
+05. `/search` — public search
+06. `/food` — food catalog
+07. `/food/31` — product detail and variants
+08. `/cart` — guest cart and checkout
+09. `/donate` — mock giving
+10. `/contact` — public contact form
+11. `/login` — login, registration, and reset tabs
+12. `/change-password` — required-change route and redirect state
+13. `/app` — member/volunteer today view
+14. `/app/calendar` — calendar and course agenda
+15. `/app/resources` — authorized resource list
+16. `/app/forms` — member forms
+17. `/app/forms/77` — member response form
+18. `/app/profile` — profile, password, giving, and notification tabs
+19. `/app/changes` — schedule change history
+20. `/app/invitations?tab=notifications` — inbox and notification tabs
+21. `/app/group-news` — group news list
+22. `/app/group-news/301` — group news detail
+23. `/app/admin/schedule` — schedule table/cards and stale update
+24. `/app/admin/classes` — class management
+25. `/app/admin/prisons` — prison directory
+26. `/app/admin/cases` — case directory and records
+27. `/app/admin/reports` — service reporting
+28. `/app/admin/content?section=news` — public content management
+29. `/app/admin/products` — product and shipping management
+30. `/app/admin/orders` — order management
+31. `/app/admin/contact-inquiries` — inquiry list and denied update
+32. `/app/admin/meetings` — meeting and activity management
+33. `/app/admin/forms` — form versioning and readable response values
+34. `/app/admin/users` — user list and multiple roles
+35. `/app/admin/roles` — permission groups and stale-update feedback
+36. `/app/admin/login-records` — read-only login history
+37. `/app/admin/groups` — group management
+38. `/app/admin/settings` — association settings
+
+Behavior checks
+- Public story, article, food catalog, product variant, cart quotation, and guest order; verify the order result states that no payment was collected.
+- A multi-role volunteer sees service navigation without management navigation. The mobile menu opens and Escape closes it while restoring focus.
+- Course notification filtering and unread count, notification deep link to the course, teacher and location details, and the absence of edit controls for a volunteer.
+- Self check-in accepts no photo and sends `mode=self` to a mocked endpoint.
+- Admin user list, human-readable permission labels, existing-form editor fields, and human-readable form answers; opening the editor must not raise a browser JavaScript error, and response detail must not render a raw JSON `<pre>`.
+- Schedule summaries distinguish a filled replacement from a vacancy and mark `present=false` as nonattendance.
+- A mocked 409 stale-role/schedule response and mocked 403 inquiry update are shown to the operator.
+
+Verified execution
+Against the rebuilt integrated frontend at `http://localhost:3180`, the fully intercepted Playwright suite passed on 2026-10-15:
+
+`npx playwright test tests/e2e/figma-redesign.ui.spec.ts --project=desktop --project=mobile --workers=2`
+
+Result: 10 passed in 23.8 seconds. The desktop and mobile projects each passed all five scenarios, including the 38-route smoke matrix. This run used only mocked API responses and synthetic fixture data.
+
+Regression boundaries
+This spec does not replace existing notification or calendar suites. Keep the existing 6 notification and 20 calendar checks in the normal mocked Playwright run. Do not use the live API/e2e suite against a local or GCP database as part of this validation.
+
+Coordinator integration verification — 2026-10-15
+- npm run typecheck: passed for the combined source.
+- docker compose -p r3-dev build frontend: passed.
+- Existing calendar-detail, notification-inbox and check-in-mock suites:
+  36 desktop/mobile tests passed (46.4 seconds), entirely intercepted API fixtures.
+- Public home/about/news/food/contact/donate/login/cart/search at widths
+  320, 390, 768 and 1440: 36 route/viewport combinations; no document overflow
+  or browser JavaScript errors after the rich-text wrapping correction.
+- Complete Laravel suite: 140 tests / 1,355 assertions passed in forced
+  in-memory SQLite. Backend source and database migrations remain unchanged.
+- Before the separately requested restore, all 19 local application table hashes
+  were identical to the pre-integration backup.
+
+User-requested GCP-to-local restore — 2026-10-15
+The user subsequently explicitly requested downloading the GCP database backup
+and installing it locally. A new local database and file-storage backup was kept.
+The GCP dump was downloaded with pinned SSH authentication, SHA256-verified,
+and restored to a disposable database before the real local restore. The restore
+used a single transaction, with only the local r3-dev application workers stopped.
+All 19 application-table hashes match the verified source dump. 169 GCP uploaded
+files were downloaded and hash-verified, including 26 previously missing locally.
+The local environment, application key/configuration and program source were
+retained; no seed, migration, role or password reset was performed. Local services
+returned healthy, homepage rendered without JavaScript errors, and the configured
+login logo loaded successfully.
+Backups and fingerprint manifests contain private data and remain under ignored
+runtime/gcp-to-local-backups; none are committed or sent to Figma.
+
+Complete integration regression
+The final full Playwright suite passed against a separate synthetic Compose project
+r3-figma-ci at 127.0.0.1:3190, after updating stale selectors to the approved
+headings/cards and restoring mobile image height limits. Command:
+BASE_URL=http://localhost:3190 DEMO_PASSWORD=<synthetic-only> npx playwright test
+--workers=2 --reporter=line --output=runtime/figma-ci-final-results
+Result: 144 passed, 1 intentionally skipped mobile-only exclusion of a desktop
+navigation scenario, 0 failed; 3.6 minutes. All 27 API scenarios and all desktop /
+mobile UI scenarios ran against the isolated synthetic database. Main local and
+GCP data were not test targets. The final combined frontend typecheck and Docker
+build passed. No backend source or migrations differ from the prior UAT release.

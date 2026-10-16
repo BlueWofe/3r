@@ -1,0 +1,91 @@
+2026-10-16 release recheck
+
+Candidate source: 9641e9f1a93379ea682521c2b24e670091f6ad5f.
+Luna worktree: test/luna-release-recheck; Terra: test/terra-release-recheck.
+
+Data safety
+All mutating end-to-end scenarios target the separate r3-figma-ci Compose
+project at http://localhost:3190 with newly created synthetic volumes and
+demo accounts. Backend feature tests force SQLite :memory:. Main local
+localhost:3180 and GCP databases are not test write/seed/reset targets.
+The restored real local database and its uploads must be preserved.
+
+Backend and types
+Complete Laravel suite: 140 passed, 1,355 assertions, 9.07 seconds.
+Coverage includes multi-role authorization, last-admin protection, OTP limits,
+first-password change, login records, private files, form versions, group
+visibility, contacts, orders, catalog pricing, templates, attendance,
+leave/substitute transitions, stale/concurrent changes, and notifications.
+Combined frontend npm run typecheck: passed, exit 0.
+
+Terra UI verification
+46 fully mocked desktop/mobile Figma, calendar-detail, self-check-in and
+notification-inbox checks passed in 52.3 seconds. No real database writes.
+Live public read-only audit on isolated 3190: /, /about, /news, /food,
+/contact, /donate, /login, /cart and /search at 320/390/768/1440 pixels:
+36 combinations passed, no horizontal overflow, JavaScript exception,
+HTTP 5xx or failed network request. Home/login screenshots were retained
+under Terra's ignored test-results directory and inspected.
+
+Full integration run
+First run used Playwright's machine default of 12 workers, while other
+validation was also active. Result: 133 passed, 1 intentional skip,
+11 failed due to 30-second timeouts in calendar density, case/CMS saves,
+class templates and mobile workspace navigation. Traces/screenshots show
+loading or incomplete waits; this first run is not a release pass.
+No backend ERROR/CRITICAL or nginx HTTP 5xx was found during that run.
+Its log and traces remain in ignored runtime/luna-release-check-e2e.log
+and runtime/luna-release-check-results.
+The synthetic database was reset and the entire suite rerun with the
+previously validated two-worker setting after Terra's browser batch ended.
+Final result: 144 passed, 1 intentional skip, 0 failed in 4.1 minutes.
+The skip is the desktop-only collapsed-navigation scenario excluded from
+the mobile project, not a skipped feature or failing test.
+All 27 API scenarios and the complete desktop/mobile UI suites ran.
+The 11 first-run timeout scenarios all passed with two workers, without
+changing source, selectors, timeouts or assertions. No code fix was needed.
+Command: BASE_URL=http://localhost:3190 DEMO_PASSWORD=<synthetic-only>
+npx playwright test --workers=2 --reporter=line
+--output=runtime/luna-release-check-final-results
+Final log: ignored runtime/luna-release-check-final-e2e.log.
+Runtime logs across both passes contain zero nginx HTTP 5xx and zero
+backend ERROR/CRITICAL entries. Expected 401/403/409/422 responses are
+asserted by negative authorization, stale-state and validation scenarios.
+
+Coordinator read-only smoke
+The coordinator checked both localhost:3180 and GCP 35.229.149.68:3180:
+health/public pages/news/products/contact/shipping-settings/search returned
+200 with valid JSON. Anonymous sessions/users/roles/cases/notifications/
+orders returned the expected 401. No 5xx was observed. These probes did
+not log in or mutate the real databases.
+
+Deployment boundary
+GCP deployment must pass the existing 8 GiB free-disk guard, preserve the
+current database/storage and verify the existing py UAT remains healthy.
+Do not treat local test success as evidence that GCP was updated.
+At recheck time GCP still had about 7.2 GB free, below that guard.
+Deployment is pending disk resolution; the unknown-origin unused Docker
+image has not been deleted by these validation agents.
+
+Final deployment and preservation verification (2026-10-16)
+After explicit user approval to remove the single unused, locally backed-up
+image, Terra completed deployment. GCP current now resolves to
+/opt/3r/releases/9641e9f1a93379ea682521c2b24e670091f6ad5f.
+The release required no new migrations and did not seed the real database.
+Luna then ran the coordinator's fresh before/after preservation audit:
+all 19 application-table fingerprints, all 169 uploaded-file hashes and
+all non-3r container identities were unchanged. Both py and 3r health
+endpoints returned healthy. Free disk was about 11 GB as shown by df -h.
+
+Independent GCP browser smoke was read-only: the same nine public routes
+at 390 and 1440 pixels all returned 200 with no horizontal overflow,
+JavaScript exception or HTTP 5xx (18 route/viewport combinations).
+Seven public/health API reads returned valid JSON and HTTP 200; sessions,
+users, roles, cases, notifications and orders all returned expected 401
+when anonymous. Recent r3-uat web/backend logs contained zero HTTP 5xx,
+ERROR or CRITICAL entries. No authenticated write test ran on GCP.
+Ignored evidence: runtime/figma-gcp-after.json,
+runtime/luna-gcp-readonly-report.json and Terra's release log.
+Only the r3-figma-ci synthetic local Compose project and its own volumes
+were removed after verification; r3-dev and the remote projects were
+not cleanup targets.

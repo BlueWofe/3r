@@ -1,0 +1,31 @@
+{
+  "figmaFileKey": "UOLMCw50qbCQFpLVG66f2L",
+  "retrieved": "2026-10-15",
+  "sourceFrames": [
+    "5:201",
+    "5:343",
+    "5:459",
+    "5:1575",
+    "5:1733",
+    "5:651"
+  ],
+  "usage": "Presentation imagery only; uploaded article/product/association media takes priority. Story fallback photos are labelled 情境示意. No sample names, products, prices, contacts or dates imported. On 2026-10-16 the user explicitly requested importing Figma product imagery into the two existing products; see figma-product-images.json for the four-image-per-product mapping.",
+  "assets": {
+    "about-imgMissionVisual.png": "4ba81341d3701544e7da18c4d9a523b10b0b338335d374b9bf3f25fe2304bb96",
+    "contact-imgHeroImage.png": "d46ea7504139d14ce1c1591a4cfdb934b1c479594e0c1ec290044e8ece138063",
+    "donate-imgHeroImage.png": "bafd45cec64f5b7f30587898c164ab8d14d8de9d0ba823ebcfb803bc00752ac6",
+    "imgBrandLogo.png": "918244d51746de040d7f988c516acfc8f9e5bb16b286bf5e92c2f9110f7a920d",
+    "imgCtaSection.png": "d9baec4db9db8c2f9befd098085d2e01bb5d2a8878266242a4f6174cd7a03d44",
+    "imgHeart.svg": "8a7cc3043792db19cc7ae42d414a1b3ee669f661302559c20f6183899b3f6251",
+    "imgHeroSection.png": "e606b9923aa5d584099af1fce039b3479f67f138d200959d0ce46ceeb7fd0dd6",
+    "imgHome.svg": "5ee8a5043f2f876ffbc394f9d7aaa76e12fd2c969fb9d73a2e2e3bcd3f8b5883",
+    "imgImageNature.png": "4b82c411e244f7d82800b223089e55995f0f330117ba5db8d98b791ee0c94800",
+    "imgQuoteBanner.png": "f61301d740afb75e351c713b6ba491cf5ac22d97052bef58e13ff754b23db966",
+    "imgStar.svg": "58a4fc051624e8a179ef3c1b17377e6c6af4326638a3cd382043df7f59ca1a29",
+    "imgStoryImage1.png": "2722f0fa51daf8d78a37aec35d8f0b3987df46041aca8f4a7e4bd5f315e09634",
+    "imgStoryImage2.png": "aceb8d363916fed7aa4b3ba46fd32e470af13108f6f31797641b1b65109aee78",
+    "imgStoryImage3.png": "4aedee853b2b4ab0e5a18eac34405b1063ffba97b6ebf3ac296bd3bad45ba321",
+    "imgUsers.svg": "30bf2589a3f0b729677faaa5e1795adbd010b74ecc0e44e60087c43517e0011c",
+    "news-hero.png": "452d83f529bee92088c157af86839478024f2082cd9ee49242819ae324bb6b56"
+  }
+}

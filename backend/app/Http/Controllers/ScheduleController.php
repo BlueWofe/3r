@@ -1,0 +1,375 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Assignment;
+use App\Models\Entity;
+use App\Models\ServiceSession;
+use App\Models\User;
+use App\Services\PrisonDirectory;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class ScheduleController extends ApiController
+{
+    private function access(Request $r, ServiceSession $s, string $action = 'read'): void
+    {
+        abort_unless($r->user()->canDo("schedule.$action.all") || ($r->user()->canDo("schedule.$action.own") && $s->assignments()->where('teacher_id', $r->user()->id)->exists()), 403);
+    }
+
+    private function output(ServiceSession $s, $invitations = null, $events = null): array
+    {
+        $assignments = $s->relationLoaded('assignments') ? $s->assignments : $s->assignments()->with('teacher:id,name')->get();
+
+        return $s->prisonData() + ['id' => $s->id, 'version' => $s->version, 'assignments' => $assignments, 'invitations' => $invitations ?? DB::table('invitations')->whereIn('assignment_id', $assignments->pluck('id'))->get(), 'events' => $events ?? Entity::where('type', 'changes')->where('data->session_id', $s->id)->get()->map->publicData()->values()];
+    }
+
+    private function snapshot(ServiceSession $s): array
+    {
+        return $s->prisonData() + ['version' => $s->version, 'assignments' => $s->assignments()->get()->toArray()];
+    }
+
+    private function mutable(ServiceSession $s): void
+    {
+        abort_unless($s->data['status'] === 'scheduled', 409, '排課已取消');
+        abort_if(now('Asia/Taipei')->gte(Carbon::parse($s->data['service_date'].' '.$s->data['end_time'], 'Asia/Taipei')) || $s->assignments()->whereNotNull('attendance')->exists(), 409, '課程已結束或已有簽到');
+    }
+
+    private function event(Request $r, ServiceSession $s, string $action, string $reason, array $before = []): void
+    {
+        Entity::create(['type' => 'changes', 'owner_id' => $r->user()->id, 'data' => ['session_id' => $s->id, 'action' => $action, 'reason' => $reason, 'version' => $s->version, 'actor' => $r->user()->name, 'acknowledged_by' => [], 'before' => $before, 'after' => $this->snapshot($s)]]);
+        if ($action === '簽到') {
+            return;
+        }
+        $beforeTeachers = collect($before['assignments'] ?? [])->filter(fn ($a) => in_array($a['status'] ?? '', ['assigned', 'leave'], true))->pluck('teacher_id');
+        $currentTeachers = $s->assignments()->whereIn('status', ['assigned', 'leave'])->pluck('teacher_id');
+        $systemAdmins = User::where('active', true)->whereHas('roles', fn ($q) => $q->where('slug', 'system-admin')->where('roles.active', true))->pluck('id');
+        $recipients = $beforeTeachers->merge($currentTeachers)->merge($systemAdmins)->unique();
+        $activeRecipients = User::where('active', true)->whereIn('id', $recipients)->with('roles')->get()
+            ->filter(fn ($user) => $user->roles->where('active', true)->contains('slug', 'system-admin') || $user->canDo('schedule.read.own') || $user->canDo('schedule.update.own'))
+            ->pluck('id');
+        foreach ($activeRecipients as $recipient) {
+            Entity::create(['type' => 'notifications', 'owner_id' => $recipient, 'data' => ['title' => $s->data['title'], 'message' => $action.'：'.$reason, 'session_id' => $s->id, 'read' => false]]);
+            $line = Entity::where('type', 'line')->where('owner_id', $recipient)->first();
+            if (($line?->data['bound'] ?? false) && ($line?->data['subscribed'] ?? false)) {
+                Entity::create(['type' => 'line-outbox', 'owner_id' => $recipient, 'data' => ['mode' => 'mock', 'message' => $action.'：'.$reason, 'delivered' => false]]);
+            }
+        }
+    }
+
+    private function conflict(int $teacher, array $d, int $except = 0): bool
+    {
+        return ServiceSession::where('id', '!=', $except)->whereHas('assignments', fn ($q) => $q->where('teacher_id', $teacher)->where('status', 'assigned'))->get()->contains(fn ($s) => $s->data['status'] === 'scheduled' && $s->data['service_date'] === $d['service_date'] && $s->data['start_time'] < $d['end_time'] && $s->data['end_time'] > $d['start_time']);
+    }
+
+    private function teacher(int $id): User
+    {
+        $u = User::where('active', true)->findOrFail($id);
+        abort_unless($u->canDo('schedule.read.own') || $u->canDo('schedule.update.own'), 422, '此帳號不是啟用教師');
+
+        return $u;
+    }
+
+    public function sessions(Request $r, ?int $id = null)
+    {
+        if ($r->isMethod('get')) {
+            if ($id) {
+                $s = ServiceSession::findOrFail($id);
+                $this->access($r, $s);
+
+                return $this->output($s);
+            }abort_unless($r->user()->canDo('schedule.read.all') || $r->user()->canDo('schedule.read.own'), 403);
+
+            $query = ServiceSession::query();
+            if (! $r->user()->canDo('schedule.read.all')) {
+                $query->whereHas('assignments', fn ($a) => $a->where('teacher_id', $r->user()->id));
+            }
+            foreach (['from' => ['service_date', '>='], 'to' => ['service_date', '<='], 'status' => ['status', '=']] as $parameter => [$field,$operator]) {
+                if ($r->$parameter) {
+                    $query->where('data->'.$field, $operator, $r->$parameter);
+                }
+            }
+            if ($r->teacher_id) {
+                $query->whereHas('assignments', fn ($a) => $a->where('teacher_id', $r->teacher_id));
+            }
+            if ($r->prison_id) {
+                $query->where('prison_id', $r->prison_id);
+            }
+            $sessions = $query->with(['assignments.teacher:id,name', 'prison'])->get()->filter(function ($s) use ($r) {
+                $d = $s->prisonData();
+
+                return (! $r->prison || str_contains((string) $d['prison'], $r->prison)) && (! $r->q || str_contains($d['title'].' '.$d['prison'].' '.($d['class_name'] ?? '').' '.$d['location'], $r->q));
+            });
+            $assignmentIds = $sessions->flatMap(fn ($s) => $s->assignments->pluck('id'));
+            $invitations = DB::table('invitations')->whereIn('assignment_id', $assignmentIds)->get()->groupBy('assignment_id');
+            $events = Entity::where('type', 'changes')->whereIn('data->session_id', $sessions->pluck('id'))->get()->groupBy(fn ($e) => $e->data['session_id']);
+
+            return ['data' => $sessions->map(fn ($s) => $this->output($s, $s->assignments->flatMap(fn ($a) => $invitations->get($a->id, collect()))->values(), $events->get($s->id, collect())->map->publicData()->values()))->values()];
+        }
+        if (! $id) {
+            $this->permit($r, 'schedule.create.all');
+        }
+        $rules = ['title' => 'required|string|max:200', 'prison' => 'required_without:prison_id|string|max:100', 'prison_id' => 'required_without:prison|integer|exists:prisons,id', 'location' => 'required|string|max:200', 'participant_count' => 'required|integer|min:0', 'service_date' => 'required|date_format:Y-m-d', 'start_time' => 'required|date_format:H:i', 'end_time' => 'required|date_format:H:i|after:start_time'];
+        if ($id) {
+            $rules = array_map(fn ($x) => str_replace('required', 'sometimes', $x), $rules) + ['version' => 'required|integer', 'reason' => 'required|string|max:1000', 'status' => 'sometimes|in:scheduled,cancelled', 'override_conflict' => 'boolean', 'attendance_resolution' => 'nullable|in:void'];
+            $rules['prison'] = 'sometimes|string|max:100';
+            $rules['prison_id'] = 'sometimes|integer|exists:prisons,id';
+        } else {
+            $rules += ['teacher_ids' => 'required|array|min:1', 'teacher_ids.*' => 'required|integer|distinct|exists:users,id', 'repeat_weeks' => 'nullable|integer|min:1|max:52', 'override_conflict' => 'sometimes|boolean', 'reason' => 'required_if:override_conflict,true|string|max:1000'];
+        }
+        $rules['class_name'] = 'sometimes|nullable|string|max:200';
+        $rules['color'] = ['sometimes', 'required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'];
+        $v = $r->validate($rules);
+
+        return DB::transaction(function () use ($r, $id, $v) {
+            User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
+            if (! $id) {
+                $this->permit($r, 'schedule.create.all');
+            }
+            if ($v['override_conflict'] ?? false) {
+                $this->permit($r, 'schedule.update.all');
+            }
+            if ($id) {
+                $s = ServiceSession::lockForUpdate()->findOrFail($id);
+                $before = $this->snapshot($s);
+                $this->access($r, $s, 'update');
+                $admin = $r->user()->canDo('schedule.update.all');
+                if (! $admin) {
+                    abort_unless(($s->data['original_teacher_count'] ?? $s->assignments()->count()) === 1 && $s->assignments()->where('teacher_id', $r->user()->id)->where('status', 'assigned')->exists(), 403, '共同排課須由管理員修改');
+                    $this->mutable($s);
+                    abort_if($v['override_conflict'] ?? false, 403);
+                    abort_if(isset($v['attendance_resolution']), 403);
+                    foreach (['title', 'participant_count'] as $field) {
+                        abort_if(isset($v[$field]) && $v[$field] !== $s->data[$field], 403, '此欄位須由管理員修改');
+                    }
+                    abort_if(array_key_exists('class_name', $v) && $v['class_name'] !== ($s->data['class_name'] ?? null), 403, '班級名稱須由管理員修改');
+                    abort_if(array_key_exists('color', $v) && $v['color'] !== ($s->data['color'] ?? '#3d8768'), 403, '班級顏色須由管理員修改');
+                    abort_if(isset($v['prison_id']) && (int) $v['prison_id'] !== $s->prison_id, 403, '監所須由管理員修改');
+                    abort_if(isset($v['prison']) && ! in_array($v['prison'], [$s->data['prison'], $s->prisonData()['prison']], true), 403, '監所須由管理員修改');
+                    if ($s->prison_id) {
+                        $v['prison_id'] = $s->prison_id;
+                    }
+                }
+                abort_unless($s->version === $v['version'], 409, '版本已更新');
+                if ($s->prison_id && ! array_key_exists('prison_id', $v) && ($v['prison'] ?? null) === ($s->data['prison'] ?? null)) {
+                    $v['prison_id'] = $s->prison_id;
+                }
+                if ($admin && ! $s->prison_id && ! array_key_exists('prison_id', $v) && ! array_key_exists('prison', $v)) {
+                    $v['prison'] = $s->data['prison'];
+                }
+                if ($admin || $s->prison_id) {
+                    $v = array_merge($v, app(PrisonDirectory::class)->resolve($v, $s->prison_id, $r->user()->canDo('schedule.create.all') || $r->user()->canDo('prisons.manage.all')));
+                }
+                $d = array_merge($s->data, collect($v)->except(['version', 'reason', 'override_conflict', 'attendance_resolution'])->all());
+                abort_unless($d['end_time'] > $d['start_time'], 422);
+                if (! $admin) {
+                    abort_if(now('Asia/Taipei')->gte(Carbon::parse($d['service_date'].' '.$d['end_time'], 'Asia/Taipei')), 422, '不可將排課改至已結束的時間');
+                }
+                $changed = ($d['prison_id'] ?? null) !== $s->prison_id || $d['service_date'] !== $s->data['service_date'] || $d['start_time'] !== $s->data['start_time'] || $d['end_time'] !== $s->data['end_time'] || $d['location'] !== $s->data['location'] || $d['status'] !== $s->data['status'];
+                if ($changed) {
+                    DB::table('invitations')->whereIn('assignment_id', $s->assignments()->pluck('id'))->where('status', 'pending')->update(['status' => 'cancelled']);
+                }
+                if ($changed && $s->assignments()->whereNotNull('attendance')->exists()) {
+                    abort_unless(($v['attendance_resolution'] ?? '') === 'void', 409, '請明確作廢既有簽到');
+                    $s->assignments()->update(['attendance' => null]);
+                }foreach ($s->assignments()->where('status', 'assigned')->get() as $a) {
+                    abort_if($d['status'] === 'scheduled' && $this->conflict($a->teacher_id, $d, $s->id) && ! ($v['override_conflict'] ?? false), 409, '教師時間衝突');
+                }$s->update(['data' => $d, 'version' => $s->version + 1]);
+                $this->event($r, $s, '修改排課', $v['reason'], $before);
+
+                return $this->output($s);
+            }
+            $v = array_merge($v, app(PrisonDirectory::class)->resolve($v));
+            $out = [];
+            for ($i = 0; $i < ($v['repeat_weeks'] ?? 1); $i++) {
+                $d = collect($v)->except(['teacher_ids', 'repeat_weeks', 'reason', 'override_conflict'])->all();
+                $d['color'] = $d['color'] ?? '#3d8768';
+                $d['service_date'] = Carbon::parse($v['service_date'])->addWeeks($i)->format('Y-m-d');
+                $d['status'] = 'scheduled';
+                $d['original_teacher_count'] = count($v['teacher_ids']);
+                foreach ($v['teacher_ids'] as $teacher) {
+                    $this->teacher($teacher);
+                    abort_if($this->conflict($teacher, $d) && ! ($v['override_conflict'] ?? false), 409, '教師時間衝突');
+                }$s = ServiceSession::create(['data' => $d]);
+                foreach ($v['teacher_ids'] as $teacher) {
+                    $s->assignments()->create(['teacher_id' => $teacher]);
+                }$this->event($r, $s, '新增排課', $v['reason'] ?? '建立');
+                $out[] = $this->output($s);
+            }
+
+            return count($out) === 1 ? $out[0] : ['data' => $out];
+        });
+    }
+
+    public function assignment(Request $r, int $id, string $action)
+    {
+        if ($action === 'attendance') {
+            return $this->attendance($r, $id);
+        }
+        $v = $r->validate(['version' => 'required|integer', 'reason' => 'required|string|max:1000', 'teacher_id' => in_array($action, ['invite', 'replace']) ? 'required|integer|exists:users,id' : 'nullable', 'override_conflict' => 'boolean', 'attendance_resolution' => 'nullable|in:void']);
+
+        return DB::transaction(function () use ($r, $id, $action, $v) {
+            User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
+            $a = Assignment::findOrFail($id);
+            $s = ServiceSession::lockForUpdate()->findOrFail($a->session_id);
+            $before = $this->snapshot($s);
+            $a->refresh();
+            abort_unless($s->version === $v['version'], 409, '版本已更新');
+            abort_unless($s->data['status'] === 'scheduled', 409, '排課已取消');
+            $admin = $r->user()->canDo('schedule.update.all');
+            abort_unless($admin || ($a->teacher_id === $r->user()->id && $r->user()->canDo('schedule.update.own')), 403);
+            if (! $admin) {
+                $this->mutable($s);
+            }
+            if (! $admin) {
+                abort_if($v['override_conflict'] ?? false, 403);
+            }
+            if ($action === 'leave') {
+                abort_unless($a->status === 'assigned' && ! $a->attendance, 409);
+                $a->update(['status' => 'leave']);
+            }
+            if ($action === 'withdraw-leave') {
+                abort_unless($a->status === 'leave', 409);
+                abort_if($this->conflict($a->teacher_id, $s->data, $s->id), 409);
+                $a->update(['status' => 'assigned']);
+                DB::table('invitations')->where('assignment_id', $id)->where('status', 'pending')->update(['status' => 'cancelled']);
+            }
+            if ($action === 'invite') {
+                $this->mutable($s);
+                abort_unless(in_array($a->status, ['assigned', 'leave']), 409);
+                $this->teacher($v['teacher_id']);
+                abort_if($v['teacher_id'] === $a->teacher_id || $s->assignments()->where('teacher_id', $v['teacher_id'])->exists() || $this->conflict($v['teacher_id'], $s->data, $s->id), 409, '教師不可代課');
+                abort_if(DB::table('invitations')->where('assignment_id', $id)->where('status', 'pending')->exists(), 409, '已有待回覆邀請');
+                $invitationId = DB::table('invitations')->insertGetId(['assignment_id' => $id, 'teacher_id' => $v['teacher_id'], 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()]);
+                Entity::create(['type' => 'notifications', 'owner_id' => $v['teacher_id'], 'data' => ['title' => '代課邀請', 'message' => $s->data['title'], 'session_id' => $s->id, 'invitation_id' => $invitationId, 'invitation' => true, 'read' => false]]);
+            }
+            if ($action === 'replace') {
+                $this->permit($r, 'schedule.update.all');
+                $this->replace($r, $a, $s, $v);
+            }
+            $s->increment('version');
+            $this->event($r, $s, $action, $v['reason'], $before);
+
+            return $this->output($s->fresh());
+        });
+    }
+
+    public function assignVacancy(Request $r, int $id)
+    {
+        $this->permit($r, 'schedule.update.all');
+        $v = $r->validate(['version' => 'required|integer|min:1', 'teacher_id' => 'required|integer|exists:users,id', 'reason' => 'required|string|max:1000', 'override_conflict' => 'sometimes|boolean']);
+
+        return DB::transaction(function () use ($r, $id, $v) {
+            User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
+            $this->permit($r, 'schedule.update.all');
+            $s = ServiceSession::lockForUpdate()->findOrFail($id);
+            abort_unless($s->version === (int) $v['version'], 409, '版本已更新');
+            abort_if($s->assignments()->exists(), 409, '已有教師指派，請使用既有代課流程。');
+            $this->mutable($s);
+            $teacher = $this->teacher((int) $v['teacher_id']);
+            $before = $this->snapshot($s);
+            abort_if($this->conflict($teacher->id, $s->data, $s->id) && ! ($v['override_conflict'] ?? false), 409, '教師時間衝突');
+            $s->assignments()->create(['teacher_id' => $teacher->id]);
+            $s->increment('version');
+            $this->event($r, $s, '補齊教師', $v['reason'], $before);
+
+            return $this->output($s->fresh());
+        });
+    }
+
+    private function replace(Request $r, Assignment $a, ServiceSession $s, array $v): void
+    {
+        $this->teacher($v['teacher_id']);
+        $target = $s->assignments()->where('teacher_id', $v['teacher_id'])->first();
+        abort_if($target && ($target->status !== 'replaced' || ! $r->user()->canDo('schedule.update.all')), 409, '已在名單');
+        abort_if($this->conflict($v['teacher_id'], $s->data, $s->id) && ! ($v['override_conflict'] ?? false), 409, '教師時間衝突');
+        if ($a->attendance) {
+            abort_unless(($v['attendance_resolution'] ?? '') === 'void', 409, '請明確作廢既有簽到');
+        }$a->update(['status' => 'replaced', 'attendance' => null]);
+        if ($target) {
+            $target->update(['status' => 'assigned', 'attendance' => null]);
+        } else {
+            $s->assignments()->create(['teacher_id' => $v['teacher_id']]);
+        }
+        DB::table('invitations')->where('assignment_id', $a->id)->where('status', 'pending')->update(['status' => 'cancelled']);
+    }
+
+    public function invitations(Request $r, ?int $id = null)
+    {
+        $this->permit($r, 'schedule.update.own');
+        if (! $id) {
+            return ['data' => DB::table('invitations')->where('teacher_id', $r->user()->id)->get()->map(function ($i) {
+                $a = Assignment::find($i->assignment_id);
+
+                return (array) $i + ['session_id' => $a?->session_id, 'session' => $a ? $this->output($a->session) : null];
+            })];
+        }
+        $v = $r->validate(['action' => 'required|in:accept,decline']);
+
+        return DB::transaction(function () use ($r, $id, $v) {
+            User::orderBy('id')->lockForUpdate()->get();
+            $r->user()->refresh()->unsetRelation('roles');
+            $this->permit($r, 'schedule.update.own');
+            $i = DB::table('invitations')->where('id', $id)->first();
+            abort_unless($i, 404);
+            $a = Assignment::findOrFail($i->assignment_id);
+            $s = ServiceSession::lockForUpdate()->findOrFail($a->session_id);
+            $before = $this->snapshot($s);
+            $i = DB::table('invitations')->where('id', $id)->lockForUpdate()->first();
+            $a->refresh();
+            abort_unless($i->teacher_id === $r->user()->id, 403);
+            abort_unless($i->status === 'pending', 409);
+            if ($v['action'] === 'accept') {
+                abort_unless(in_array($a->status, ['assigned', 'leave']) && $s->data['status'] === 'scheduled', 409);
+                $this->mutable($s);
+                $this->replace($r, $a, $s, ['teacher_id' => $i->teacher_id]);
+            }DB::table('invitations')->where('id', $id)->update(['status' => $v['action'] === 'accept' ? 'accepted' : 'declined', 'updated_at' => now()]);
+            $s->increment('version');
+            $this->event($r, $s, '代課'.$v['action'], '邀請回覆', $before);
+
+            return $this->output($s->fresh());
+        });
+    }
+
+    private function attendance(Request $r, int $id)
+    {
+        $v = $r->validate(['mode' => 'sometimes|in:self,admin', 'photo' => 'nullable|image|mimes:jpeg,png,webp|max:5120', 'present' => 'sometimes|boolean', 'reason' => 'nullable|string|max:1000']);
+
+        return DB::transaction(function () use ($r, $id, $v) {
+            $a = Assignment::findOrFail($id);
+            $s = ServiceSession::lockForUpdate()->findOrFail($a->session_id);
+            $before = $this->snapshot($s);
+            $a->refresh();
+            $own = $a->teacher_id === $r->user()->id && $r->user()->canDo('attendance.create.own');
+            $admin = ($v['mode'] ?? ($own ? 'self' : 'admin')) === 'admin';
+            abort_unless($admin ? $r->user()->canDo('attendance.update.all') : $own, 403);
+            abort_unless($s->data['status'] === 'scheduled' && $a->status === 'assigned', 409);
+            $at = now('Asia/Taipei');
+            $serviceDate = $s->data['service_date'];
+            $reason = trim($v['reason'] ?? '');
+            if (! $admin) {
+                abort_if($serviceDate > $at->format('Y-m-d'), 422, '尚未到服務日期');
+                abort_if($a->attendance, 409, '已簽到');
+                abort_if(array_key_exists('present', $v) && ! $v['present'], 422, '本人簽到不可登記未出席');
+                abort_if($serviceDate < $at->format('Y-m-d') && $reason === '', 422, '補簽需要原因');
+            } else {
+                abort_unless($reason !== '', 422, '更正需要原因');
+            }
+            $photo = $admin ? ($a->attendance['photo_id'] ?? null) : null;
+            if ($r->hasFile('photo')) {
+                $file = Entity::create(['type' => 'files', 'owner_id' => $r->user()->id, 'data' => ['path' => $r->file('photo')->store('private'), 'name' => 'attendance-photo', 'visibility' => 'private', 'assignment_id' => $a->id]]);
+                $photo = $file->id;
+            }
+            $kind = $admin ? 'admin_adjustment' : ($serviceDate < $at->format('Y-m-d') ? 'late_check_in' : 'check_in');
+            $a->update(['attendance' => ['present' => $admin ? ($v['present'] ?? true) : true, 'photo_id' => $photo, 'at' => $at->toIso8601String(), 'service_date' => $serviceDate, 'kind' => $kind, 'reason' => $reason !== '' ? $reason : null, 'actor_id' => $r->user()->id]]);
+            $s->increment('version');
+            $this->event($r, $s, '簽到', $v['reason'] ?? '教師簽到', $before);
+
+            return $this->output($s->fresh());
+        });
+    }
+}

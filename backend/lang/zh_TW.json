@@ -1,0 +1,5 @@
+{
+    "(and :count more error)": "（另有 :count 項錯誤）",
+    "(and :count more errors)": "（另有 :count 項錯誤）",
+    "The given data was invalid.": "填寫的資料無效。"
+}

@@ -1,0 +1,13 @@
+.git
+**/.git
+**/node_modules
+**/vendor
+**/.nuxt
+**/.output
+.env
+.env.*
+runtime
+artifacts
+backups
+tests
+**/*.log

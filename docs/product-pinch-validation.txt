@@ -1,0 +1,55 @@
+Product lightbox pinch / pan acceptance — 2026-10-16 (Asia/Taipei)
+
+Scope: image-only lightbox zoom from 1x to 4x, with one-finger panning after zoom. Original-size horizontal swipe continues to navigate photos. No backend, schema, permissions, or product-data change.
+
+All browser /api/v1 requests use synthetic fixtures, including SVG image downloads, quote/cart and public guest-order responses. Product details are entered by client-side navigation to avoid bypassing browser interception with SSR. Homepage SSR can perform existing read-only public requests. No live account is used and no real database is seeded, reset, or written.
+
+New focused suite tests/e2e/product-pinch.ui.spec.ts:
+- Visible percentage and rendered image DOMMatrix scale / translation, rather than private Vue state.
+- Accessible +/- controls clamp at 100–400%; reset, next slide, close/reopen and route disposal reset both zoom and pan.
+- Modal Tab focus containment, Escape focus return and asynchronous native-dialog scroll restoration.
+- Trusted Chromium CDP two-finger movement enlarges image dimensions, preserves visualViewport.scale=1, then trusted single-finger pan changes translation without changing the selected photo.
+- Repeated pans stay within bounds; additional outward pinch clamps at 4x. Shrinking to 1x restores horizontal swipe navigation.
+- Trusted two-to-one finger transition/cancellation and deterministic TouchEvent transition regressions never become accidental photo navigation.
+- A portrait 600x1200 synthetic image at 320px checks actual object-fit:contain content bounds, rather than the wider CSS image box.
+- No document overflow, unchanged global viewport settings, no browser-zoom prohibition, no page errors.
+
+Browser coverage: desktop Chromium and mobile WebKit for controls, layout and synthetic cancellation; separate Chromium phone 390x844 hasTouch context for trusted CDP gestures. WebKit has no CDP equivalent. Browser emulation does not claim physical iPhone acceptance.
+
+The existing carousel, gallery bounding-box/thumbnail-layout and completely mocked public story/article/food/guest-order workflows remain enabled. Pinch changes must preserve quote/cart and guest-order behavior.
+
+Focused final command (Terra preview with NUXT_API_INTERNAL_URL=http://127.0.0.1:3180/api/v1):
+BASE_URL=http://127.0.0.1:3184 npx playwright test tests/e2e/product-pinch.ui.spec.ts --project=desktop --project=mobile --workers=2 --output=runtime/pinch-results
+Result: 7 passed, 1 intentional desktop CDP duplicate skipped, 0 failed (13.8s).
+
+An initial preview used the container-only SSR hostname http://web, which cannot resolve from Windows; homepage/SPA entry stalled and timed out. Terra restarted with the existing local read-only public API endpoint above. Final verification uses one runner at a time with distinct output directories. Native dialog close and SPA disposal update scroll state asynchronously, so assertions poll actual DOM state rather than assume URL or hidden state guarantees the close event has run. No arbitrary sleeps or removed functional checks were used.
+
+Regression command:
+BASE_URL=http://127.0.0.1:3184 npx playwright test tests/e2e/product-carousel.ui.spec.ts tests/e2e/product-gallery-layout.ui.spec.ts tests/e2e/figma-redesign.ui.spec.ts --grep "product gallery|missing main|thumbnail and circular|lightbox synchronizes|horizontal touch|single image|zero images|duplicate main|navigating away|fresh touch|public story" --project=desktop --project=mobile --workers=2 --output=runtime/pinch-regression-results
+Result: 43 passed, 1 intentional desktop touch duplicate skipped, 0 failed (1.2m). Combined with the new focused suite: 50 passed, 2 intentional skips, 0 failures.
+
+Additional user steering: mobile authentication focus / viewport — 2026-10-16
+Terra corrected an invalid font shorthand in the shared field controls to explicit inherited font-family / 16px font-size and added min-width:0 to prevent intrinsically wide inputs. The original compiled UI already computed 16px from later design-token rules: this verification does NOT claim the actual cascade was 14px, nor that a physical iOS keyboard bug was reproduced.
+
+Read-only QA compared the original compiled http://localhost:3180 with the updated http://127.0.0.1:3184 preview:
+- Chromium and WebKit mobile emulation, widths 320 and 390, each with login / registration / password reset / first-login change-password: 16 cases per version, 32 total passed.
+- Each visible input computed 16px before and after, remained inside the viewport, and focus / fill / blur preserved visualViewport.scale and scrollX without document horizontal overflow.
+- Viewport meta stayed unchanged; browser zoom was not disabled. No page errors.
+- All browser API calls were mocked, including the synthetic first-login user; no form was submitted and zero POST/PUT/OTP calls occurred.
+- Physical Safari/iPhone keyboard behavior remains a device acceptance check; browser-emulation results cannot prove it.
+
+Ignored evidence in the Luna worktree: runtime/verify-mobile-auth.cjs, runtime/mobile-auth-before.json and runtime/mobile-auth-after.json. Both commands printed 16 passed cases with unique computed font size [16].
+
+Compiled local verification after integration 10331f6:
+- Docker frontend rebuilt; http://localhost:3180 focused pinch suite: 7 passed, 1 intentional desktop CDP duplicate skipped, 0 failed (11.1s).
+- The same compiled UI passed all 16 mocked authentication viewport cases; inputs computed 16px, focus/fill/blur kept page X and viewport scale stable, and zero credential/OTP/API mutations were submitted.
+- The user subsequently confirmed the login issue was resolved. No additional speculative login changes or physical-device claims were added.
+
+GCP final verification — release 10331f66518bcea335103accf88d0c41fe5305b4
+- After Terra's successful deployment and BEFORE reading any product detail, python runtime/figma-gcp-audit.py after verified all 19 application-table hashes and all 174 uploaded-file hashes unchanged from the saved deployment baseline. Non-3r container identities remained identical and both py / 3r health endpoints passed.
+- Then a read-only live smoke checked real products 9 and 10 at phone 390px and desktop 1440px: all four cases passed. Phone cases used trusted Chromium CDP two-finger pinch to 300% and single-finger panning; desktop cases used the zoom control to 150%. Thumbnail selection, unchanged photo while panning, reset to 100%, changing photo, closing, focus return and scroll unlock all worked, with no overflow, page errors, HTTP 5xx or write requests.
+- The GCP authentication mock check separately passed 16 cases (Chromium / WebKit at 320 / 390, four auth modes), with computed field size 16px, stable viewport / page X, and zero form submissions or credential / OTP requests.
+- Mobile product 9 at 300% and desktop product 10 at 150% screenshots were visually inspected: photos clip within the viewer, detail remains clear, and close / navigation / reset controls remain visible. All test browser contexts closed.
+- Existing public product reads can increment view statistics, so the preservation audit intentionally ran first. No user, role, content, order, or attachment was edited by verification.
+
+Ignored final evidence: primary checkout runtime/figma-gcp-after.json; Luna worktree runtime/pinch-gcp-live-report.json, runtime/pinch-gcp-live-report-{9,10}-{390,1440}.png, runtime/mobile-auth-compiled.json and runtime/mobile-auth-gcp.json. The verification scripts remain ignored runtime helpers and are not production application code.
