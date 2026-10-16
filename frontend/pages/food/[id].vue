@@ -72,34 +72,13 @@ watch([selected, quantity], () => {
       <NuxtLink class="back-link" to="/food">← 回到愛心好食</NuxtLink>
     </div>
     <div class="container grid responsive-two product-layout">
-      <div class="product-gallery" data-testid="product-gallery">
-        <img
-          v-if="data?.data?.image_id"
-          class="product-detail-image"
-          :src="`/api/v1/files/${data.data.image_id}/download`"
-          :alt="data.data.title"
-        />
-        <PastryIllustration
-          v-else-if="
-            ['classic-yolk-pastry', 'taro-yolk-pastry'].includes(data?.data?.slug)
-          "
-          :flavor="data?.data?.slug === 'taro-yolk-pastry' ? 'taro' : 'red-bean'"
-        />
-        <div v-else class="product-fallback" aria-hidden="true">🍞</div>
-        <div
-          v-if="data?.data?.metadata?.gallery_ids?.length"
-          class="product-gallery-thumbnails"
-          data-testid="product-gallery-thumbnails"
-        >
-          <div v-for="id in data.data.metadata.gallery_ids" :key="id">
-            <img
-              :src="`/api/v1/files/${id}/download`"
-              :alt="`${data.data.title}商品附圖`"
-              class="product-gallery-image"
-            />
-          </div>
-        </div>
-      </div>
+      <ProductGallery
+        :key="String(route.params.id)"
+        :title="data?.data?.title || '商品'"
+        :main-id="data?.data?.image_id"
+        :gallery-ids="data?.data?.metadata?.gallery_ids || []"
+        :slug="data?.data?.slug"
+      />
       <article>
         <p class="eyebrow">愛心好食</p>
         <p class="product-title serif">{{ data?.data?.title }}</p>
@@ -175,37 +154,8 @@ watch([selected, quantity], () => {
   grid-template-columns: minmax(0, 14fr) minmax(0, 15fr);
   gap: 40px;
 }
-.product-gallery {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-.product-gallery-thumbnails {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-.product-gallery-thumbnails > div {
-  min-width: 0;
-}
-.product-gallery .product-detail-image,
-.product-gallery .product-gallery-image {
-  display: block;
-  width: 100%;
-}
-.product-gallery .product-gallery-image {
-  height: 96px;
-  border-radius: 16px;
-}
 @media (max-width: 760px) {
-  .product-layout.grid {
-    gap: 24px;
-  }
-  .product-gallery .product-gallery-image {
-    height: 80px;
-  }
+  .product-layout.grid { gap: 24px; }
 }
 .product-cart-actions {
   margin-top: 18px;
