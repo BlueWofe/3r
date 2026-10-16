@@ -9,7 +9,7 @@
     "5:1733",
     "5:651"
   ],
-  "usage": "Presentation imagery only; uploaded article/product/association media takes priority. Story fallback photos are labelled 情境示意. No sample names, products, prices, contacts or dates imported.",
+  "usage": "Presentation imagery only; uploaded article/product/association media takes priority. Story fallback photos are labelled 情境示意. No sample names, products, prices, contacts or dates imported. On 2026-10-16 the user explicitly requested importing Figma product imagery into the two existing products; see figma-product-images.json for the four-image-per-product mapping.",
   "assets": {
     "about-imgMissionVisual.png": "4ba81341d3701544e7da18c4d9a523b10b0b338335d374b9bf3f25fe2304bb96",
     "contact-imgHeroImage.png": "d46ea7504139d14ce1c1591a4cfdb934b1c479594e0c1ec290044e8ece138063",

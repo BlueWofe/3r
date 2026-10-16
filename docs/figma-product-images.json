@@ -1,0 +1,46 @@
+{
+  "file_key": "UOLMCw50qbCQFpLVG66f2L",
+  "assets": {
+    "classic": {
+      "node": "14:17803",
+      "sha256": "a0def77f80a841f858d74a47477ee8fc4a0d6c4d6da26c2e06d6db835a9111a8",
+      "title": "Figma product classic"
+    },
+    "taro": {
+      "node": "14:17826",
+      "sha256": "82a7756a04f3eec5357fa4f2903385c5f5e179e6d35114a9374c8e189d9e24af",
+      "title": "Figma product taro"
+    },
+    "detail": {
+      "node": "14:18269",
+      "sha256": "2f890f115fcca8b16a9bd0d6d86ca3ef4a013186a479dfce02d28ff51d440e42",
+      "title": "Figma product detail"
+    },
+    "wrapped": {
+      "node": "14:18270",
+      "sha256": "aeb18d32314375bbefe29279ad5761d6ecd111e2fee36f4cc2e5d2548cd09538",
+      "title": "Figma product wrapped"
+    },
+    "wood-box": {
+      "node": "14:18271",
+      "sha256": "4acaa35cf81da673c590d8bcc25e42fbcbc92100a83e0153ac1bee7723251f20",
+      "title": "Figma product wood-box"
+    }
+  },
+  "products": {
+    "classic-yolk-pastry": [
+      "classic",
+      "detail",
+      "wrapped",
+      "wood-box"
+    ],
+    "taro-yolk-pastry": [
+      "taro",
+      "detail",
+      "wrapped",
+      "wood-box"
+    ]
+  },
+  "updated": "2026-10-16",
+  "usage": "Existing two products each have one distinct Figma catalog main image and the shared three Figma detail/packaging images. Stored as ordinary public media records; uploaded bytes/backups remain outside Git. Only image_id, metadata.gallery_ids and product version changed, with audit history. Prices, stock, specifications and other content retained."
+}
