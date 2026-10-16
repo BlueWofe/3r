@@ -17,6 +17,8 @@ function step(direction: number) {
   if (images.value.length > 1) current.value = (current.value + direction + images.value.length) % images.value.length;
 }
 function touchStart(event: TouchEvent) {
+  // A new tap is intentional; only suppress the synthetic click from the preceding swipe.
+  if (event.touches.length === 1) suppressClickUntil = 0;
   const touch = event.touches[0];
   gesture = event.touches.length === 1 && touch ? { x: touch.clientX, y: touch.clientY, horizontal: false } : null;
 }
