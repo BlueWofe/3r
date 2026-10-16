@@ -39,3 +39,17 @@ Read-only QA compared the original compiled http://localhost:3180 with the updat
 - Physical Safari/iPhone keyboard behavior remains a device acceptance check; browser-emulation results cannot prove it.
 
 Ignored evidence in the Luna worktree: runtime/verify-mobile-auth.cjs, runtime/mobile-auth-before.json and runtime/mobile-auth-after.json. Both commands printed 16 passed cases with unique computed font size [16].
+
+Compiled local verification after integration 10331f6:
+- Docker frontend rebuilt; http://localhost:3180 focused pinch suite: 7 passed, 1 intentional desktop CDP duplicate skipped, 0 failed (11.1s).
+- The same compiled UI passed all 16 mocked authentication viewport cases; inputs computed 16px, focus/fill/blur kept page X and viewport scale stable, and zero credential/OTP/API mutations were submitted.
+- The user subsequently confirmed the login issue was resolved. No additional speculative login changes or physical-device claims were added.
+
+GCP final verification — release 10331f66518bcea335103accf88d0c41fe5305b4
+- After Terra's successful deployment and BEFORE reading any product detail, python runtime/figma-gcp-audit.py after verified all 19 application-table hashes and all 174 uploaded-file hashes unchanged from the saved deployment baseline. Non-3r container identities remained identical and both py / 3r health endpoints passed.
+- Then a read-only live smoke checked real products 9 and 10 at phone 390px and desktop 1440px: all four cases passed. Phone cases used trusted Chromium CDP two-finger pinch to 300% and single-finger panning; desktop cases used the zoom control to 150%. Thumbnail selection, unchanged photo while panning, reset to 100%, changing photo, closing, focus return and scroll unlock all worked, with no overflow, page errors, HTTP 5xx or write requests.
+- The GCP authentication mock check separately passed 16 cases (Chromium / WebKit at 320 / 390, four auth modes), with computed field size 16px, stable viewport / page X, and zero form submissions or credential / OTP requests.
+- Mobile product 9 at 300% and desktop product 10 at 150% screenshots were visually inspected: photos clip within the viewer, detail remains clear, and close / navigation / reset controls remain visible. All test browser contexts closed.
+- Existing public product reads can increment view statistics, so the preservation audit intentionally ran first. No user, role, content, order, or attachment was edited by verification.
+
+Ignored final evidence: primary checkout runtime/figma-gcp-after.json; Luna worktree runtime/pinch-gcp-live-report.json, runtime/pinch-gcp-live-report-{9,10}-{390,1440}.png, runtime/mobile-auth-compiled.json and runtime/mobile-auth-gcp.json. The verification scripts remain ignored runtime helpers and are not production application code.
