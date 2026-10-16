@@ -66,3 +66,26 @@ Do not treat local test success as evidence that GCP was updated.
 At recheck time GCP still had about 7.2 GB free, below that guard.
 Deployment is pending disk resolution; the unknown-origin unused Docker
 image has not been deleted by these validation agents.
+
+Final deployment and preservation verification (2026-10-16)
+After explicit user approval to remove the single unused, locally backed-up
+image, Terra completed deployment. GCP current now resolves to
+/opt/3r/releases/9641e9f1a93379ea682521c2b24e670091f6ad5f.
+The release required no new migrations and did not seed the real database.
+Luna then ran the coordinator's fresh before/after preservation audit:
+all 19 application-table fingerprints, all 169 uploaded-file hashes and
+all non-3r container identities were unchanged. Both py and 3r health
+endpoints returned healthy. Free disk was about 11 GB as shown by df -h.
+
+Independent GCP browser smoke was read-only: the same nine public routes
+at 390 and 1440 pixels all returned 200 with no horizontal overflow,
+JavaScript exception or HTTP 5xx (18 route/viewport combinations).
+Seven public/health API reads returned valid JSON and HTTP 200; sessions,
+users, roles, cases, notifications and orders all returned expected 401
+when anonymous. Recent r3-uat web/backend logs contained zero HTTP 5xx,
+ERROR or CRITICAL entries. No authenticated write test ran on GCP.
+Ignored evidence: runtime/figma-gcp-after.json,
+runtime/luna-gcp-readonly-report.json and Terra's release log.
+Only the r3-figma-ci synthetic local Compose project and its own volumes
+were removed after verification; r3-dev and the remote projects were
+not cleanup targets.
