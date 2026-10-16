@@ -89,7 +89,7 @@ onBeforeUnmount(() => { dialog.value?.close(); unlockScroll(); });
     <div v-else class="product-fallback" aria-label="尚無商品圖片">🍞</div>
     <div v-if="thumbnails.length" class="product-gallery-thumbnails" data-testid="product-gallery-thumbnails" aria-label="選擇商品圖片">
       <button v-for="image in thumbnails" :key="image.id" type="button" class="gallery-thumbnail" :class="{ 'is-current': current === image.index }" :data-testid="`product-gallery-thumbnail-${image.index}`" :aria-label="`檢視第 ${image.index + 1} 張商品圖片`" :aria-pressed="current === image.index" @click="select(image.index)">
-        <img :src="imageUrl(image.id)" :alt="`${title}商品附圖 ${image.index}`" class="product-gallery-image" draggable="false" />
+        <img :src="imageUrl(image.id)" :alt="`${title}商品附圖 ${image.index + 1}`" class="product-gallery-image" draggable="false" />
       </button>
     </div>
     <dialog ref="dialog" class="product-lightbox" data-testid="product-lightbox" aria-label="商品圖片檢視" @close="closed" @click="($event.target === dialog) && close()">
